@@ -10,7 +10,7 @@ Code for data science. Not project specific, but general ones which can be used 
 
 ### Build a docker image for this repo's environment
 
-`cd` to the directory where Dockerfile is loaceted, then type below. 
+`cd` to the directory where Dockerfile is located, then type below. 
 
 ```
 docker build -t shotahorii/datascience-code .
