@@ -17,8 +17,8 @@ class KNNClassifier:
     """ 
     K Nearest Neighbors classifier
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     k: int
         The number of nearest data points that we use to 
         determine the class of the sample to predict.
@@ -57,8 +57,6 @@ class KNNClassifier:
 
     def predict(self, X):
         """ 
-        Predict.
-        
         Parameters
         ----------
         X: np.ndarray
