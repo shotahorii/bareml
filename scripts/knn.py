@@ -29,29 +29,29 @@ class KNNClassifier:
         self.X = None
         self.y = None
 
-    def fit(self, X_train, y_train):
+    def fit(self, X, y):
         """ 
         Just store the training data. Nothing else.
         
         Parameters
         ----------
-        X_train: np.ndarray
+        X: np.ndarray
             predictor variables 
-            num of rows (X_train.shape[0]) is the num of samples 
-            num of columns (X_train.shape[1]) is the num of variables
+            num of rows (X.shape[0]) is the num of samples 
+            num of columns (X.shape[1]) is the num of variables
         
-        y_train: np.ndarray
+        y: np.ndarray
             one-hot encoded target variable 
-            num of rows (y_train.shape[0]) is the num of samples 
-            num of columns (y_train.shape[1]) is the num of classes
+            num of rows (y.shape[0]) is the num of samples 
+            num of columns (y.shape[1]) is the num of classes
             each value is 0 or 1, where sum of values in a row is always 1
 
         Returns
         -------
         self: KNNClassifier
         """
-        self.X = X_train
-        self.y = y_train
+        self.X = X
+        self.y = y
 
         return self 
 

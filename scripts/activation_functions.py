@@ -11,10 +11,8 @@ import numpy as np
 
 class Sigmoid:
 
-    @classmethod
-    def value(self, x):
+    def __call__(self, x):
         return 1 / (1 + np.exp(-x))
     
-    @classmethod
-    def derivative(self, x):
+    def gradient(self, x):
         return self.value(x) * (1 - self.value(x))
