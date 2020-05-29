@@ -9,6 +9,9 @@ Y. Yajima et al. (1992). 自然科学の統計学. 東京大学出版会. 231-24
 T. Kubo (2012). データ解析のための統計モデリング入門. 岩波書店. 114-127.
 Y. Hirai (2012). はじめてのパターン認識. 森北出版. 88-95.
 H. Toyoda (2017). 実践ベイズモデリング. 朝倉書店. 64-66.
+
+ToDo:
+- Regularization
 """
 
 # Author: Shota Horii <sh.sinker@gmail.com>
@@ -16,7 +19,7 @@ H. Toyoda (2017). 実践ベイズモデリング. 朝倉書店. 64-66.
 import math
 import numpy as np
 
-from scripts.activation_functions import Sigmoid
+from scripts.activation_functions import Sigmoid, Softmax
 from scripts.loss_functions import CrossEntropy
 
 class LogisticRegressionClassifer:
@@ -65,6 +68,12 @@ class LogisticRegressionClassifer:
             y is a 1d-array with value of 0 or 1. 
             num of elements (y_train.shape[0]) is the num of samples 
 
+        n_iterations: int
+            number of iterations that we update w with gradient descent
+
+        learning_rate: float
+            learning rate multiplied to gradient in each updation
+
         Returns
         -------
         self: LogisticRegressionClassifer
@@ -106,3 +115,103 @@ class LogisticRegressionClassifer:
         return y_pred
 
             
+class LogisticRegressionClassiferMulti:
+    """ 
+    Ligistic Regression classifier (Multi Class Classification)
+    """
+
+    def __init__(self):
+        self.w = None
+        self.b = None
+
+        self.softmax = Softmax()
+        self.cross_entropy = CrossEntropy()
+
+    def _initialise_weights_bias(self, n_features, n_classes):
+        """
+        Initialise the value of weights and bias.
+
+        Parameters
+        ----------
+        n_features: int
+            number of predictor variables in input data X
+
+        n_classes: int
+            number of classes in target data y
+        """
+
+        # initialise weights in [-1/sqrt(n), 1/sqrt(n)) 
+        # why? see below articles. 
+        # https://leimao.github.io/blog/Weights-Initialization/
+        # https://stats.stackexchange.com/questions/47590/what-are-good-initial-weights-in-a-neural-network
+        limit = 1 / math.sqrt(n_features)
+        self.w = np.random.uniform(-limit, limit, (n_features, n_classes))
+        self.b = np.zeros(n_classes)
+
+    def fit(self, X, y, n_iterations=2000, learning_rate=0.1):
+        """ 
+        Train the logistic regression model. Binary classification only. 
+        
+        Parameters
+        ----------
+        X: np.ndarray
+            predictor variables 
+            num of rows (X_train.shape[0]) is the num of samples 
+            num of columns (X_train.shape[1]) is the num of variables
+        
+        y: np.ndarray
+            one-hot encoded target variable 
+            num of rows (y.shape[0]) is the num of samples 
+            num of columns (y.shape[1]) is the num of classes
+            each value is 0 or 1, where sum of values in a row is always 1
+
+        n_iterations: int
+            number of iterations that we update w with gradient descent
+
+        learning_rate: float
+            learning rate multiplied to gradient in each updation
+
+        Returns
+        -------
+        self: LogisticRegressionClassiferMulti
+        """
+        n_samples = X.shape[0]
+        n_features = X.shape[1]
+        n_classes = y.shape[1]
+
+        self._initialise_weights_bias(n_features, n_classes)
+
+        for _ in range(n_iterations):
+
+            y_pred = self.softmax(np.dot(X,self.w)+self.b)
+            # loss = self.cross_entropy(y, y_pred) # no need to calculate loss in every iteration
+            loss_grad = self.cross_entropy.gradient(y, y_pred)
+            
+            # calculate gradient for weights and bias
+            w_grad = np.dot(X.T, loss_grad)/n_samples
+            b_grad = np.sum(loss_grad,axis=0)/n_samples
+            # update weights and bias
+            self.w = self.w - learning_rate * w_grad
+            self.b = self.b - learning_rate * b_grad
+
+        return self
+
+    def predict(self, X):
+        """ 
+        Predict.
+        
+        Parameters
+        ----------
+        X: np.ndarray
+            predictor variables of the samples you wish to predict.
+        
+        Returns
+        -------
+        y_pred: np.ndarray
+            one-hot encoded target variable
+        """
+        y_pred = self.softmax(np.dot(X,self.w)+self.b)
+        # probability to 1/0
+        y_pred = (y_pred == y_pred.max(axis=1)[:,None]).astype(int)
+
+        return y_pred
