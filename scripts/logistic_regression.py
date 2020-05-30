@@ -78,8 +78,7 @@ class LogisticRegressionClassifer:
         -------
         self: LogisticRegressionClassifer
         """
-        n_samples = X.shape[0]
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         self._initialise_weights_bias(n_features)
 
         for _ in range(n_iterations):
@@ -175,8 +174,7 @@ class LogisticRegressionClassiferMulti:
         -------
         self: LogisticRegressionClassiferMulti
         """
-        n_samples = X.shape[0]
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         n_classes = y.shape[1]
 
         self._initialise_weights_bias(n_features, n_classes)
