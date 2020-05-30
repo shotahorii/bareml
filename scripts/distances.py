@@ -1,3 +1,12 @@
+"""
+Distance Metrics 
+
+References:
+Y. Hirai (2012). はじめてのパターン認識. 森北出版. 153-154.
+"""
+
+# Author: Shota Horii <sh.sinker@gmail.com>
+
 import math
 import numpy as np
 
