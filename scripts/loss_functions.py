@@ -59,3 +59,4 @@ class CrossEntropy:
             if it's a binary classification, this can also be 1d array.
         """
         return y_pred - y
+        
