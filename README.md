@@ -4,20 +4,20 @@ Code for data science. Not project specific, but general ones which can be used 
 
 ## Getting Started
 
-### Prerequisites
+Only prerequisites is numpy installed.
+
+### Example Environment
+
+#### Prerequisites
 - docker installed 
-- jupyter/scipy-notebook image is pulled by docker pull jupyter/scipy-notebook
+- jupyter/minimal-notebook image is pulled by `docker pull jupyter/scipy-notebook`
 
-### Build a docker image for this repo's environment
+#### Run 
 
-`cd` to the directory where Dockerfile is located, then type below. 
-
-```
-docker build -t shotahorii/datascience-code .
-```
-
-### Run
+`cd` to the directory where README.md is located, then type below. 
 
 ```
-docker run --rm -p 8888:8888 -v "$PWD":/home/jovyan/work shotahorii/datascience-code
+docker run --rm -p 8888:8888 -v "$PWD":/home/jovyan/work jupyter/scipy-notebook
+
+cd samples
 ```
