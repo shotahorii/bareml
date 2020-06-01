@@ -18,6 +18,6 @@ Only prerequisites is numpy installed.
 
 ```
 docker run --rm -p 8888:8888 -v "$PWD":/home/jovyan/work jupyter/scipy-notebook
-
-cd samples
 ```
+
+Then run notebooks in samples folder.
