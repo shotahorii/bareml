@@ -8,6 +8,8 @@ K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 546
 Y. Hirai (2012). はじめてのパターン認識. 森北出版. 176-187.
 """
 
+# Author: Shota Horii <sh.sinker@gmail.com>
+
 import math
 import numpy as np
 from scripts.metrics import entropy, gini_impurity, variance, mean_deviation

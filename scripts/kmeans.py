@@ -11,6 +11,8 @@ K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 354
 Y. Hirai (2012). はじめてのパターン認識. 森北出版. 155-156.
 """
 
+# Author: Shota Horii <sh.sinker@gmail.com>
+
 import math
 import numpy as np
 from scripts.distances import euclidean_distance
