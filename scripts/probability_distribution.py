@@ -67,7 +67,7 @@ class Binomial(DiscreteProbabilityDistribution):
 
     def pmf(self, k):
 
-        if k > self.n or round(k) != k:
+        if k > self.n or k < 0 or round(k) != k:
             raise ValueError("invalid input.")
 
         return ncr(self.n,k) * (self.p ** k) * ( (1-self.p) ** (self.n-k) )
