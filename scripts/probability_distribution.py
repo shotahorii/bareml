@@ -9,7 +9,7 @@ References:
 
 import operator as op
 from functools import reduce
-from abc import ABC
+from abc import ABC, abstractmethod
 import math
 import numpy as np
 
