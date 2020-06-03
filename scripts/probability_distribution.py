@@ -13,6 +13,8 @@ from abc import ABC, abstractmethod
 import math
 import numpy as np
 
+from scripts.activation_functions import Sigmoid
+
 def ncr(n, r):
     """
     Calculates nCr in efficient manner. 
@@ -37,42 +39,225 @@ class DiscreteProbabilityDistribution(ABC):
 
 
 class Bernoulli(DiscreteProbabilityDistribution):
+    """ Bernoulli distribution """
 
-    def __init__(self, p):
-        if p > 1 or p < 0:
-            raise ValueError("invalid input.")
+    def pmf(self, p, y):
+        """
+        Probability mass function.
 
-        self.p = p
+        Parameters
+        ----------
+        p: float [0,1]
+            Parameter of Bernoulli distribution
+        y: int {0,1}
+            Realised value of the random variable
 
-    def pmf(self, x):
-
-        if x != 0 and x != 1:
-            raise ValueError("input needs to be either 0 or 1.")
-
-        return (self.p ** x) * ( (1-self.p) ** (1-x) )
+        Returns
+        -------
+        float
+            Probability
+        """
+        return ( p ** y ) * ( (1-p) ** (1-y) )
             
-    def stats(self):
-        mu = self.p
-        var = self.p * (1-self.p)
+    def stats(self, p):
+        """
+        Calculates statistics
+
+        Parameters
+        ----------
+        p: float [0,1]
+            Parameter of Bernoulli distribution
+
+        Returns
+        -------
+        mu: float
+            Mean
+        var: float
+            Variance
+        """
+        mu = p
+        var = p * (1-p)
         return mu, var
+
+    def link(self, z):
+        """ Link function (for GLM) """
+        return 1 / (1 + np.exp(-z))
+    
+    def llh(self, p, y):
+        """
+        Calculates log likelihood.
+
+        Parameters
+        ----------
+        p: np.array (n,)
+            parameter for each data point
+            each element is in [0,1]
+            n: number of data points
+
+        y: np.array (n,)
+            observed value of each data point
+            each element is either 0 or 1
+            n: number of data points
+
+        Returns
+        -------
+        float
+            Log likelihood
+        """
+        return np.sum(y * np.log(p) + (1-y) * np.log(1-p))
+
 
 class Binomial(DiscreteProbabilityDistribution):
+    """ Binomial distribution """
 
-    def __init__(self, p, n):
-        if p > 1 or p < 0 or n < 1 or round(n) != n:
-            raise ValueError("invalid input.")
+    def pmf(self, p, n, k):
+        """
+        Probability mass function.
 
-        self.p = p
-        self.n = n
+        Parameters
+        ----------
+        p: float [0,1]
+            Parameter of Binomial distribution
+        n: int 0 < n
+            number of trial
+        k: int 0 <= k <= n
+            number of success
 
-    def pmf(self, k):
+        Returns
+        -------
+        float
+            Probability
+        """
+        return ncr(n,k) * ( p ** k ) * ( (1-p) ** (n-k) )
 
-        if k > self.n or k < 0 or round(k) != k:
-            raise ValueError("invalid input.")
+    def stats(self, p, n):
+        """
+        Calculates statistics
 
-        return ncr(self.n,k) * (self.p ** k) * ( (1-self.p) ** (self.n-k) )
+        Parameters
+        ----------
+        p: float [0,1]
+            Parameter of Binomial distribution
+        n: int 0 < n
+            Number of trial
 
-    def stats(self):
-        mu = self.n * self.p
-        var = self.n * self.p * (1-self.p)
+        Returns
+        -------
+        mu: float
+            Mean
+        var: float
+            Variance
+        """
+        mu = n * p
+        var = n * p * (1-p)
         return mu, var
+
+    def link(self, z):
+        """ Link function (for GLM) """
+        return 1 / (1 + np.exp(-z))
+
+    def llh(self, p, y):
+        """
+        Calculates ~ log likelihood.
+        Note that this function doesn't return exact log likelihood, 
+        but returns a value ~ log likelihood.
+        Actual log likelihood of binomial distribution is
+        \sum_i{ log(n_iCk_i) + k_i log(p_i) + (n_i - k_i) log(1 - p_i) }
+        But this function returns \sum_i{ k_i log(p_i) + (n_i - k_i) log(1 - p_i) }
+        and it's totally fine for argmax calculation purpose. 
+
+        Parameters
+        ----------
+        p: np.array (m,)
+            parameter for each data point
+            each element is in [0,1]
+            m: number of data points
+
+        y: np.array (m,2)
+            each row is a tuple of (n, k)
+            where m is the number of trial, and
+            k is the number of success in observed data point.
+            m: number of data points
+
+        Returns
+        -------
+        float
+            ~ log likelihood
+        """
+        n = y[:,0]
+        k = y[:,1]
+        return np.sum(k * np.log(p) + (n-k) * np.log(1-p))
+
+
+class Poisson(DiscreteProbabilityDistribution):
+    """ Poisson distribution """
+
+    def pmf(self, p, k):
+        """
+        Probability mass function.
+
+        Parameters
+        ----------
+        p: float p > 0
+            Parameter of Poisson distribution (usually called lambda)
+        k: int 0 in {0, 1, 2, ...}
+            Realised value of the random variable
+
+        Returns
+        -------
+        float
+            Probability
+        """
+        return ( p ** k ) * np.exp(-p) / math.factorial(k)
+
+    def stats(self, p):
+        """
+        Calculates statistics
+
+        Parameters
+        ----------
+        p: float p > 0
+            Parameter of Poisson distribution (usually called lambda)
+
+        Returns
+        -------
+        mu: float
+            Mean
+        var: float
+            Variance
+        """
+        mu = var = p
+        return mu, var
+
+    def link(self, z):
+        """ Link function (for GLM) """
+        return np.exp(z)
+
+    def llh(self, p, y):
+        """
+        Calculates ~ log likelihood.
+        Note that this function doesn't return exact log likelihood, 
+        but returns a value ~ log likelihood.
+        Actual log likelihood of poisson distribution is
+        \sum_i{ y_i log(p_i) - p_i - log(y_i!) }
+        But this function returns \sum_i{ y_i log(p_i) - p_i  }
+        and it's totally fine for argmax calculation purpose. 
+
+        Parameters
+        ----------
+        p: np.array (n,)
+            parameter for each data point
+            each element is a float > 0
+            n: number of data points
+
+        y: np.array (n,)
+            observed value of each data point
+            each element is in {0,1,2,...}
+            n: number of data points
+
+        Returns
+        -------
+        float
+            ~ log likelihood
+        """
+        return np.sum(y * np.log(p) - p)
