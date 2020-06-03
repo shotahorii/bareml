@@ -2,10 +2,6 @@
 Generalised Linear Model
 
 References:
-C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 124-127.
-K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 511-512.
-T. Hastie, R. Tibshirani and J. Friedman (2009). The Elements of Statistical Leraning. Springer. 463-481.
-Y. Hirai (2012). はじめてのパターン認識. 森北出版. 54-69.
 """
 
 # Author: Shota Horii <sh.sinker@gmail.com>
