@@ -9,7 +9,7 @@ References:
 import math
 import numpy as np
 import scipy.optimize
-from scripts.probability_distribution import Bernoulli, Binomial, Poisson
+from scripts.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
 
 class GLM:
     """ Generalised Linear Model """
@@ -43,7 +43,7 @@ class GLM:
         # init params
         params = self._initialise_params(X.shape[1])
 
-        minimise_func = lambda params, X, y: -self.prob.llh(self.prob.link(params @ X.T), y)
+        minimise_func = lambda params, X, y: -self.prob.llh(y=y, p=self.prob.link(params @ X.T), opt_for_minimise=True)
 
         opt_params = scipy.optimize.minimize(minimise_func, params, args=(X, y))
 
@@ -64,7 +64,6 @@ class LogisticRegression(GLM):
     def __init__(self):
         super().__init__(Bernoulli())
 
-
 class LogisticRegressionBinom(GLM):
     """ 
     Logistic Regression 
@@ -77,3 +76,8 @@ class PoissonRegression(GLM):
     """ Poisson Regression """
     def __init__(self):
         super().__init__(Poisson())
+
+class LinearRegression(GLM):
+    """ Linear Regression """
+    def __init__(self):
+        super().__init__(Gaussian())
