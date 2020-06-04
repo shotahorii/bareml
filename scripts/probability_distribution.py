@@ -104,6 +104,8 @@ class Bernoulli(DiscreteProbabilityDistribution):
         float
             Log likelihood
         """
+        # Avoid log(0)
+        p = np.clip(p, 1e-15, 1 - 1e-15)
         return np.sum(y * np.log(p) + (1-y) * np.log(1-p))
 
 
@@ -184,6 +186,9 @@ class Binomial(DiscreteProbabilityDistribution):
         float
             ~ log likelihood
         """
+        # Avoid log(0)
+        p = np.clip(p, 1e-15, 1 - 1e-15)
+        
         n = y[:,0]
         k = y[:,1]
         return np.sum(k * np.log(p) + (n-k) * np.log(1-p))
