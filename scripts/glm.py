@@ -73,7 +73,7 @@ class LogisticRegressionBinom(GLM):
     def __init__(self):
         super().__init__(Binomial())
 
-class PoissonRegresssion(GLM):
+class PoissonRegression(GLM):
     """ Poisson Regression """
     def __init__(self):
         super().__init__(Poisson())
