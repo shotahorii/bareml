@@ -12,6 +12,7 @@ import scipy.optimize
 from scripts.probability_distribution import Bernoulli, Binomial, Poisson
 
 class GLM:
+    """ Generalised Linear Model """
     
     def __init__(self, prob):
         self.prob = prob
@@ -56,10 +57,23 @@ class GLM:
 
 
 class LogisticRegression(GLM):
-    pass
+    """ 
+    Logistic Regression 
+    where the target variable is {0,1}
+    """
+    def __init__(self):
+        super().__init__(Bernoulli())
+
 
 class LogisticRegressionBinom(GLM):
-    pass
+    """ 
+    Logistic Regression 
+    where the target variable is described as a pair of values (n, k)
+    """
+    def __init__(self):
+        super().__init__(Binomial())
 
 class PoissonRegresssion(GLM):
-    pass
+    """ Poisson Regression """
+    def __init__(self):
+        super().__init__(Poisson())
