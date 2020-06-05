@@ -2,6 +2,9 @@
 Generalised Linear Model
 
 References:
+
+ToDo:
+Reguralisation
 """
 
 # Author: Shota Horii <sh.sinker@gmail.com>
@@ -43,7 +46,7 @@ class GLM:
         # init params
         params = self._initialise_params(X.shape[1])
 
-        minimise_func = lambda params, X, y: -self.prob.llh(y=y, p=self.prob.link(params @ X.T), opt_for_minimise=True)
+        minimise_func = lambda params, X, y: -np.sum(self.prob.llh(y, self.prob.link(params @ X.T), opt_for_minimise=True))
 
         opt_params = scipy.optimize.minimize(minimise_func, params, args=(X, y))
 

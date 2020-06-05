@@ -51,6 +51,9 @@ class ContinuousProbabilityDistribution(ABC):
 class Bernoulli(DiscreteProbabilityDistribution):
     """ Bernoulli distribution """
 
+    def __init__(self):
+        self.param_names = ['p']
+
     def pmf(self, p, y):
         """
         Probability mass function.
@@ -121,11 +124,13 @@ class Bernoulli(DiscreteProbabilityDistribution):
         """
         # Avoid log(0)
         p = np.clip(p, 1e-15, 1 - 1e-15)
-        return np.sum(y * np.log(p) + (1-y) * np.log(1-p))
+        return y * np.log(p) + (1-y) * np.log(1-p)
 
 
 class Binomial(DiscreteProbabilityDistribution):
     """ Binomial distribution """
+    def __init__(self):
+        self.param_names = ['p']
 
     def pmf(self, p, n, k):
         """
@@ -208,21 +213,23 @@ class Binomial(DiscreteProbabilityDistribution):
         k = y[:,1]
 
         if opt_for_minimise:
-            return np.sum(k * np.log(p) + (n-k) * np.log(1-p))
+            return k * np.log(p) + (n-k) * np.log(1-p)
         else:
             nck = np.array([ncr(nk[0], nk[1]) for nk in y])
-            return np.sum( np.log(nck) + k * np.log(p) + (n-k) * np.log(1-p))
+            return np.log(nck) + k * np.log(p) + (n-k) * np.log(1-p)
 
 class Poisson(DiscreteProbabilityDistribution):
     """ Poisson distribution """
+    def __init__(self):
+        self.param_names = ['lmd']
 
-    def pmf(self, p, k):
+    def pmf(self, lmd, k):
         """
         Probability mass function.
 
         Parameters
         ----------
-        p: float p > 0
+        lmd: float lmd > 0
             Parameter of Poisson distribution (usually called lambda)
         k: int 0 in {0, 1, 2, ...}
             Realised value of the random variable
@@ -232,15 +239,15 @@ class Poisson(DiscreteProbabilityDistribution):
         float
             Probability
         """
-        return ( p ** k ) * np.exp(-p) / math.factorial(k)
+        return ( lmd ** k ) * np.exp(-lmd) / math.factorial(k)
 
-    def stats(self, p):
+    def stats(self, lmd):
         """
         Calculates statistics
 
         Parameters
         ----------
-        p: float p > 0
+        lmd: float lmd > 0
             Parameter of Poisson distribution (usually called lambda)
 
         Returns
@@ -250,14 +257,14 @@ class Poisson(DiscreteProbabilityDistribution):
         var: float
             Variance
         """
-        mu = var = p
+        mu = var = lmd
         return mu, var
 
     def link(self, z):
         """ Link function (for GLM) """
         return np.exp(z)
 
-    def llh(self, y, p, opt_for_minimise=False):
+    def llh(self, y, lmd, opt_for_minimise=False):
         """
         Calculates log likelihood.
         \sum_i{ y_i log(p_i) - p_i - log(y_i!) }
@@ -266,7 +273,7 @@ class Poisson(DiscreteProbabilityDistribution):
 
         Parameters
         ----------
-        p: np.array (n,)
+        lmd: np.array (n,)
             parameter for each data point
             each element is a float > 0
             n: number of data points
@@ -286,14 +293,17 @@ class Poisson(DiscreteProbabilityDistribution):
         """
 
         if opt_for_minimise:
-            return np.sum(y * np.log(p) - p)
+            return y * np.log(lmd) - lmd
         else:
             fct = np.array([math.factorial(v) for v in y])
-            return np.sum(y * np.log(p) - p - np.log(fct))
+            return y * np.log(lmd) - lmd - np.log(fct)
 
 
 class Gaussian(ContinuousProbabilityDistribution):
     """ Gaussian distribution (univariate) """
+
+    def __init__(self):
+        self.param_names = ['mu','var']
 
     def pdf(self, mu, var, x):
         """
@@ -322,7 +332,7 @@ class Gaussian(ContinuousProbabilityDistribution):
         """ Link function (for GLM) = identity function """
         return z
 
-    def llh(self, y, p, q=None, opt_for_minimise=False):
+    def llh(self, y, mu, var=None, opt_for_minimise=False):
         """
         Calculates log likelihood.
         \sum_i{ -1/2 log(2*pi*q_i) - 1/(2*q_i) (y_i - p_i)^2 }
@@ -332,11 +342,11 @@ class Gaussian(ContinuousProbabilityDistribution):
 
         Parameters
         ----------
-        p: np.array (n,) float in (-inf, inf)
+        mu: np.array (n,) float in (-inf, inf)
             'mean' parameter for each data point
             n: number of data points
 
-        q: np.array (n,) float in (0, inf)
+        var: np.array (n,) float in (0, inf)
             'variance' parameter for each data point
             n: number of data points
 
@@ -353,6 +363,31 @@ class Gaussian(ContinuousProbabilityDistribution):
             log likelihood
         """
         if opt_for_minimise:
-            return np.sum( -np.power(y-p, 2) )
+            return -np.power(y-mu, 2)
         else:
-            return np.sum( -np.log(2*math.pi*q)/2 - np.power(y-p, 2)/(2*q) )
+            return -np.log(2*math.pi*var)/2 - np.power(y-mu, 2)/(2*var)
+
+    def mle(self, y, param):
+        """
+        Estimates parameters from data by Maximum Likelihood Estimation.
+
+        Parameters
+        ----------
+        y: np.ndarray (n,) float in (-inf, inf)
+            data points which we assume realisations from a Gaussian distribution
+        
+        param: string {'mu', 'var'}
+            parameter to estimate
+
+        Returns
+        -------
+        float
+            estimated value of the parameter (mu or var)
+        """
+
+        if param=='mu':
+            return y.mean()
+        elif param=='var':
+            return y.var()
+        else:
+            raise ValueError('param must be either "mu" or "var".')
