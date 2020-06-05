@@ -3,7 +3,9 @@ Naive Bayes Classifier
 
 References:
 
-ToDo: smoothing
+ToDo: 
+bernoulli & multinomial NB
+smoothing
 """
 
 # Author: Shota Horii <sh.sinker@gmail.com>
