@@ -10,12 +10,8 @@ import math
 from itertools import combinations_with_replacement
 import numpy as np
 
-def flatten(l):
-    """ 
-    flatten a nested list.
-    https://stackoverflow.com/questions/952914/how-to-make-a-flat-list-out-of-list-of-lists
-    """
-    return [item for sublist in l for item in sublist]
+from scripts.util import flatten
+
 
 def binarise(X, threshold=0.5):
     """

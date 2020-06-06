@@ -13,18 +13,8 @@ from abc import ABC, abstractmethod
 import math
 import numpy as np
 
+from scripts.util import ncr
 from scripts.activation_functions import Sigmoid
-
-def ncr(n, r):
-    """
-    Calculates nCr in efficient manner. 
-    This function is not my original code, but copied from below url.
-    https://stackoverflow.com/questions/4941753/is-there-a-math-ncr-function-in-python
-    """
-    r = min(r, n-r)
-    numer = reduce(op.mul, range(n, n-r, -1), 1)
-    denom = reduce(op.mul, range(1, r+1), 1)
-    return numer / denom
 
 
 class DiscreteProbabilityDistribution(ABC):

@@ -7,7 +7,12 @@ References:
 
 # Author: Shota Horii <sh.sinker@gmail.com>
 
+import math
 import numpy as np
+
+#############################
+# Metrics for data impurity #
+#############################
 
 def entropy(y):
     """ 
@@ -135,6 +140,47 @@ def classification_error(y):
     return 1 - n_max_class/n_total
 
 
+def variance(y):
+    """ 
+    Computes variance of the given list of real numbers.
+    
+    Parameters
+    ----------
+    y: np.ndarray (1d array)
+        a 1d array of real numbers.
+
+    Returns
+    -------
+    float
+        variance
+    """
+    mu = np.mean(y)
+    var = np.mean(np.power(y-mu,2))
+    return var
+
+
+def mean_deviation(y):
+    """ 
+    Computes mean deviation of the given list of real numbers.
+    
+    Parameters
+    ----------
+    y: np.ndarray (1d array)
+        a 1d array of real numbers.
+
+    Returns
+    -------
+    float
+        mean deviation
+    """
+    mu = np.mean(y)
+    md = np.mean(np.abs(y-mu))
+    return md
+
+##########################
+# Metrics for regression #
+##########################
+
 def mean_square_error(y, y_pred):
     """ 
     Computes mean square error.
@@ -156,6 +202,7 @@ def mean_square_error(y, y_pred):
     """
     mse = 0.5*np.mean(np.power(y-y_pred,2))
     return mse
+
 
 def mean_absolute_error(y, y_pred):
     """ 
@@ -179,38 +226,24 @@ def mean_absolute_error(y, y_pred):
     mae = np.mean(np.abs(y-y_pred))
     return mae
 
-def variance(y):
-    """ 
-    Computes variance of the given list of real numbers.
-    
-    Parameters
-    ----------
-    y: np.ndarray (1d array)
-        a 1d array of real numbers.
 
-    Returns
-    -------
-    float
-        variance
-    """
-    mu = np.mean(y)
-    var = np.mean(np.power(y-mu,2))
-    return var
+def r_squqred(y, y_pred):
+    numer = np.sum(np.power(y-y_pred,2))
+    denom = np.sum(np.power(y-y.mean(),2))
+    return 1 - numer/denom
 
-def mean_deviation(y):
-    """ 
-    Computes mean deviation of the given list of real numbers.
-    
-    Parameters
-    ----------
-    y: np.ndarray (1d array)
-        a 1d array of real numbers.
+##############################
+# Metrics for classification #
+##############################
 
-    Returns
-    -------
-    float
-        mean deviation
-    """
-    mu = np.mean(y)
-    md = np.mean(np.abs(y-mu))
-    return md
+def false_positive(y, y_pred):
+    pass
+
+def true_positive(y, y_pred):
+    pass
+
+def false_negative(y, y_pred):
+    pass
+
+def true_negative(y, y_pred):
+    pass
