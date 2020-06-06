@@ -2,7 +2,7 @@
 Linear Regression
 
 References:
-https://qiita.com/fujiisoup/items/e7f703fc57e2dfc441ad
+https://qiita.com/fujiisoup/items/f2fe3b508763b0cc6832
 
 ToDo:
 """
@@ -16,12 +16,13 @@ from scripts.preprocessing import add_bias, polynomial_features
 from scripts.weight_initialisation import initialise_random, initialise_zero
 from scripts.loss_functions import SquareError, L1Regularization, L2Regularization
 from scripts.hyperparameter_optimisation import auto_learning_rate_mse
+from scripts.solvers import PInv
 
 class LinearRegression:
 
-    # solver is analytical or gradient_descent
+    # solver is pinv or gradient_descent
     
-    def __init__(self, solver='analytical', lambda_l2=0, lambda_l1=0, 
+    def __init__(self, solver='pinv', lambda_l2=0, lambda_l1=0, 
                 polynomial_degree=1, n_iterations=1000, learning_rate=None):
         self.solver = solver
         self.lambda_l2 = lambda_l2
@@ -47,12 +48,12 @@ class LinearRegression:
 
         self.w = initialise_zero(X.shape[1])
 
-        if self.solver == 'analytical':
+        if self.solver == 'pinv':
             if self.lambda_l1 != 0:
                 raise ValueError('L1 reguralisation cannot be solved analytically.')
-            
-            d = X.shape[1]
-            self.w = np.dot( np.dot(np.linalg.pinv( np.dot(X.T, X) + self.lambda_l2 * np.eye(d) ), X.T), y)
+
+            pinv = Pinv(alpha=self.lambda_l2)
+            self.w = pinv.solve(X, y)
             
             # log error
             y_pred = np.dot(self.w, X.T)
@@ -95,7 +96,7 @@ class LinearRegression:
 class RidgeRegression(LinearRegression):
     def __init__(self, 
                 lambda_l2, 
-                solver='analytical', 
+                solver='pinv', 
                 polynomial_degree=1, 
                 n_iterations=1000, 
                 learning_rate=None):

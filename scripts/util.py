@@ -7,6 +7,8 @@ References:
 
 # Author: Shota Horii <sh.sinker@gmail.com>
 
+import operator as op
+from functools import reduce
 import math
 import numpy as np
 

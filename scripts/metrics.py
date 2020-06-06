@@ -226,11 +226,13 @@ def mean_absolute_error(y, y_pred):
     mae = np.mean(np.abs(y-y_pred))
     return mae
 
+def rss(y, y_pred):
+    """ residual sum of squares """
+    return np.sum(np.power(y-y_pred,2))
 
 def r_squqred(y, y_pred):
-    numer = np.sum(np.power(y-y_pred,2))
     denom = np.sum(np.power(y-y.mean(),2))
-    return 1 - numer/denom
+    return 1 - rss(y, y_pred)/denom
 
 ##############################
 # Metrics for classification #
