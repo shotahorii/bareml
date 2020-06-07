@@ -12,71 +12,55 @@ ToDo:
 import math
 import numpy as np
 
-from scripts.preprocessing import add_bias, polynomial_features
-from scripts.weight_initialisation import initialise_random, initialise_zero
-from scripts.loss_functions import SquareError, L1Regularization, L2Regularization
-from scripts.hyperparameter_optimisation import auto_learning_rate_mse
-from scripts.solvers import PInv
+from scripts.preprocessing import polynomial_features
+from scripts.solvers import PInv, LassoISTA, LeastSquareGD
 
 class LinearRegression:
 
     # solver is pinv or gradient_descent
     
-    def __init__(self, solver='pinv', lambda_l2=0, lambda_l1=0, 
-                polynomial_degree=1, n_iterations=1000, learning_rate=None):
-        self.solver = solver
-        self.lambda_l2 = lambda_l2
-        self.lambda_l1 = lambda_l1
-        self.polynomial_degree = polynomial_degree
-        self.n_iterations = n_iterations
-        self.learning_rate = learning_rate
-        self.w = None
-        self.train_errors = np.array([])
-        self.loss = SquareError()
-        self.l1 = L1Regularization(lambda_l1)
-        self.l2 = L2Regularization(lambda_l2)    
+    def __init__(self, solver='pinv', alpha_l1=0, alpha_l2=0, polynomial_degree=1, 
+        max_iterations=1000, tol=1e-4, learning_rate=None):
+        
+        # some obvious warnings.
+        if solver == 'pinv' and alpha_l1 != 0:
+            raise ValueError('L1 reguralisation cannot be solved analytically.')
 
-    def _log_mse(self, y, y_pred):
-        # though we add l1 & l2 penalties in loss function to minimise, 
-        # for monitoring train error, not include penalties.
-        mse = np.mean(self.loss(y, y_pred)) # + self.l1(self.w) + self.l2(self.w))
-        self.train_errors = np.append(self.train_errors, mse)
+        if solver == 'gradient_descent' and alpha_l1 != 0:
+            raise ValueError('"gradient_descent" solver here is the simple one, which \
+                cannot solve Lasso. Use "lasso" solver instead, which is ISTA.')
+        
+        self.solver = solver
+        self.alpha_l1 = alpha_l1
+        self.alpha_l2 = alpha_l2
+
+        self.polynomial_degree = polynomial_degree
+
+        self.max_iterations = max_iterations
+        self.tol = tol
+        self.learning_rate = learning_rate
+
+        self.w = None
 
     def fit(self, X, y):
 
         X = polynomial_features(X, self.polynomial_degree)
 
-        self.w = initialise_zero(X.shape[1])
-
         if self.solver == 'pinv':
-            if self.lambda_l1 != 0:
-                raise ValueError('L1 reguralisation cannot be solved analytically.')
-
-            pinv = Pinv(alpha=self.lambda_l2)
+            pinv = Pinv(alpha=self.alpha_l2)
             self.w = pinv.solve(X, y)
-            
-            # log error
-            y_pred = np.dot(self.w, X.T)
-            self._log_mse(y, y_pred)
+
+        elif self.solver == 'lasso':
+            lasso = LassoISTA(self.alpha_l1, self.max_iterations, self.tol)
+            self.w = lasso.solve(X, y)
 
         elif self.solver == 'gradient_descent':
-            
-            # if learning rate is not given, set automatically
-            lr = self.learning_rate if self.learning_rate else auto_learning_rate_mse(X)
-            
-            for i in range(self.n_iterations):
-                y_pred = np.dot(self.w, X.T)
-                self._log_mse(y, y_pred)
-
-                grad_w = np.dot(self.loss.gradient(y, y_pred), X) + self.l1.gradient(self.w) + self.l2.gradient(self.w)
-                self.w -= lr * grad_w
-
-            # result of the training
-            y_pred = np.dot(self.w, X.T)
-            self._log_mse(y, y_pred)
+            gd = LeastSquareGD(self.alpha_l2, self.max_iterations, self.tol, self.learning_rate)
+            self.w = gd.solve(X,y)
 
         else:
-            raise ValueError('solver must be "analytical" or "gradient_descent".')
+            raise ValueError(self.solver + 'solver not found.', \
+                'solver must be "pinv", "lasso" or "gradient_descent".')
 
         return self
 
@@ -85,57 +69,52 @@ class LinearRegression:
         X = polynomial_features(X, self.polynomial_degree)
         return np.dot(self.w, X.T)
 
-    def train_error(self):
-        if len(self.train_errors)==0:
-            print('Not trained yet.')
-            return None
-        else:
-            return self.train_errors[-1]
-
 
 class RidgeRegression(LinearRegression):
     def __init__(self, 
-                lambda_l2, 
+                alpha, 
                 solver='pinv', 
                 polynomial_degree=1, 
-                n_iterations=1000, 
+                max_iterations=1000, 
+                tol=1e-4,
                 learning_rate=None):
 
         super().__init__(solver=solver, 
-                lambda_l2=lambda_l2, 
-                lambda_l1=0, 
+                alpha_l2=alpha, 
                 polynomial_degree=polynomial_degree, 
-                n_iterations=n_iterations, 
+                max_iterations=max_iterations, 
+                tol=tol,
                 learning_rate=learning_rate)
+
 
 class LassoRegression(LinearRegression):
     def __init__(self, 
-                lambda_l1, 
+                alpha, 
                 polynomial_degree=1, 
-                n_iterations=1000, 
-                learning_rate=None):
+                max_iterations=1000, 
+                tol=tol):
 
-        super().__init__(solver='gradient_descent', 
-                lambda_l2=0, 
-                lambda_l1=lambda_l1, 
+        super().__init__(solver='lasso', 
+                alpha_l1=alpha, 
                 polynomial_degree=polynomial_degree, 
-                n_iterations=n_iterations, 
-                learning_rate=learning_rate)
+                max_iterations=max_iterations, 
+                tol=tol)
+
 
 class ElasticNetRegression(LinearRegression):
     def __init__(self, 
                 alpha,
                 l1_ratio,
                 polynomial_degree=1, 
-                n_iterations=1000, 
+                max_iterations=1000, 
                 learning_rate=None):
 
-        lambda_l1 = alpha * l1_ratio
-        lambda_l2 = alpha * (1 - l1_ratio)
+        alpha_l1 = alpha * l1_ratio
+        alpha_l2 = alpha * (1 - l1_ratio)
         
-        super().__init__(solver='gradient_descent', 
-                lambda_l2=lambda_l2, 
-                lambda_l1=lambda_l1, 
+        super().__init__(solver='NOT IMPLEMENTED YET!!!', 
+                alpha_l1=alpha_l1, 
+                alpha_l2=alpha_l2, 
                 polynomial_degree=polynomial_degree, 
-                n_iterations=n_iterations, 
+                max_iterations=max_iterations, 
                 learning_rate=learning_rate)

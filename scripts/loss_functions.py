@@ -71,23 +71,23 @@ class CrossEntropy:
         
 
 class L1Regularization:
-    """ Regularization for Lasso Regression """
-    def __init__(self, lambda_l1):
-        self.lambda_l1 = lambda_l1
+    """ L1 Regularization """
+    def __init__(self, alpha):
+        self.alpha = alpha
     
     def __call__(self, w):
-        return self.lambda_l1 * np.linalg.norm(w)
+        return self.alpha * np.linalg.norm(w)
 
     def gradient(self, w):
-        return self.lambda_l1 * np.sign(w)
+        raise ValueError('L1 loss is not differenciatable.')
 
 class L2Regularization:
-    """ Regularization for Ridge Regression """
-    def __init__(self, lambda_l2):
-        self.lambda_l2 = lambda_l2
+    """ L2 Regularization """
+    def __init__(self, alpha):
+        self.alpha = alpha
     
     def __call__(self, w):
-        return 0.5 * self.lambda_l2 * np.dot(w.T, w)
+        return 0.5 * self.alpha * np.dot(w.T, w)
     
     def gradient(self, w):
-        return self.lambda_l2 * w
+        return self.alpha * w

@@ -14,7 +14,7 @@ import numpy as np
 
 from scripts.util import supremum_eigen
 
-def auto_learning_rate_mse(X):
+def auto_learning_rate_se(X):
     """
     Find good learning rate for square error minimisation. 
     opt learning rate = 1/p where p is max eigen value of X.T @ X
