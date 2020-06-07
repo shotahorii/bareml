@@ -14,6 +14,7 @@ import numpy as np
 
 from scripts.preprocessing import polynomial_features
 from scripts.solvers import PInv, LassoISTA, LeastSquareGD
+from scripts.metrics import mean_square_error
 
 class LinearRegression:
 
@@ -41,13 +42,14 @@ class LinearRegression:
         self.learning_rate = learning_rate
 
         self.w = None
+        self.train_error = None
 
     def fit(self, X, y):
 
         X = polynomial_features(X, self.polynomial_degree)
 
         if self.solver == 'pinv':
-            pinv = Pinv(alpha=self.alpha_l2)
+            pinv = PInv(alpha=self.alpha_l2)
             self.w = pinv.solve(X, y)
 
         elif self.solver == 'lasso':
@@ -59,8 +61,12 @@ class LinearRegression:
             self.w = gd.solve(X,y)
 
         else:
-            raise ValueError(self.solver + 'solver not found.', \
+            raise ValueError('"' + self.solver + '" solver not found. ' + \
                 'solver must be "pinv", "lasso" or "gradient_descent".')
+
+        # log training error
+        y_pred = np.dot(self.w, X.T)
+        self.train_error = mean_square_error(y, y_pred)
 
         return self
 

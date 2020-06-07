@@ -89,6 +89,8 @@ class LeastSquareGD(Solver):
         loss = SquareError()
         l2 = L2Regularization(self.alpha)
 
+        n_samples = X.shape[0]
+
         # if learning rate is not given, set automatically
         lr = self.learning_rate if self.learning_rate else auto_learning_rate_se(X)
         # initialise the weights as 0
@@ -170,7 +172,7 @@ class LassoISTA(Solver):
         # initialise w_t (w of t-th step)
         w_t = initialise_zero(n_features)
         # rho is the maximum eigen value of the square matrix X.T @ X
-        rho = supermum_eigen(X.T @ X)
+        rho = supremum_eigen(X.T @ X)
         # threshold of soft threshold function. weighted with num of samples.
         threshold = n_samples * self.alpha / rho
 
@@ -190,7 +192,7 @@ class LassoISTA(Solver):
         print('Not converged.')
         return w_t
 
-    def _soft_threashold(lw, threshold):
+    def _soft_threashold(self, lw, threshold):
         """
         Soft threshold function
 
