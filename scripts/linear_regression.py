@@ -92,7 +92,7 @@ class LassoRegression(LinearRegression):
                 alpha, 
                 polynomial_degree=1, 
                 max_iterations=1000, 
-                tol=tol):
+                tol=1e-4):
 
         super().__init__(solver='lasso', 
                 alpha_l1=alpha, 
