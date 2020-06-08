@@ -81,6 +81,7 @@ class L1Regularization:
     def gradient(self, w):
         raise ValueError('L1 loss is not differenciatable.')
 
+
 class L2Regularization:
     """ L2 Regularization """
     def __init__(self, alpha):

@@ -12,7 +12,7 @@ ToDo:
 import math
 import numpy as np
 
-from scripts.preprocessing import polynomial_features
+from scripts.preprocessing import polynomial_features, StandardScaler
 from scripts.solvers import PInv, LassoISTA, LeastSquareGD
 from scripts.metrics import mean_square_error
 
@@ -30,6 +30,9 @@ class LinearRegression:
         if solver == 'gradient_descent' and alpha_l1 != 0:
             raise ValueError('"gradient_descent" solver here is the simple one, which \
                 cannot solve Lasso. Use "lasso" solver instead, which is ISTA.')
+
+        # GD and LassoISTA solver need feature scaling 
+        self.scaler = StandardScaler() if solver in ['gradient_descent', 'lasso'] else None
         
         self.solver = solver
         self.alpha_l1 = alpha_l1
@@ -48,13 +51,30 @@ class LinearRegression:
 
         X = polynomial_features(X, self.polynomial_degree)
 
+        if self.scaler:
+            # exclude bias (all 1) from scaling 
+            X[:,1:] = self.scaler.fit(X[:,1:]).transform(X[:,1:])
+
         if self.solver == 'pinv':
             pinv = PInv(alpha=self.alpha_l2)
             self.w = pinv.solve(X, y)
 
         elif self.solver == 'lasso':
-            lasso = LassoISTA(self.alpha_l1, self.max_iterations, self.tol)
-            self.w = lasso.solve(X, y)
+            if self.alpha_l2==0: # Lasso regression
+                lasso = LassoISTA(self.alpha_l1, self.max_iterations, self.tol)
+                self.w = lasso.solve(X, y)
+            else: # Elastic Net
+                # we solve elastic net as lasso. (Murphy 2012)
+                d = X.shape[1] # num features 
+                c = np.power(1+self.alpha_l2, -0.5)
+                X_concat = math.sqrt(self.alpha_l2) * np.eye(d)
+                y_concat = np.zeros(d)
+
+                X_new = c * np.concatenate([X, X_concat], axis=0)
+                y_new = np.concatenate([y, y_concat], axis=0)
+
+                elastic = LassoISTA(c * self.alpha_l1, self.max_iterations, self.tol)
+                self.w = c * elastic.solve(X_new, y_new)
 
         elif self.solver == 'gradient_descent':
             gd = LeastSquareGD(self.alpha_l2, self.max_iterations, self.tol, self.learning_rate)
@@ -73,6 +93,11 @@ class LinearRegression:
     def predict(self, X):
 
         X = polynomial_features(X, self.polynomial_degree)
+
+        if self.scaler:
+            # exclude bias (all 1) from scaling 
+            X[:,1:] = self.scaler.transform(X[:,1:])
+
         return np.dot(self.w, X.T)
 
 
@@ -113,14 +138,14 @@ class ElasticNetRegression(LinearRegression):
                 l1_ratio,
                 polynomial_degree=1, 
                 max_iterations=1000, 
-                learning_rate=None):
+                tol=1e-4):
 
         alpha_l1 = alpha * l1_ratio
         alpha_l2 = alpha * (1 - l1_ratio)
         
-        super().__init__(solver='NOT IMPLEMENTED YET!!!', 
+        super().__init__(solver='lasso', 
                 alpha_l1=alpha_l1, 
                 alpha_l2=alpha_l2, 
                 polynomial_degree=polynomial_degree, 
                 max_iterations=max_iterations, 
-                learning_rate=learning_rate)
+                tol=tol)

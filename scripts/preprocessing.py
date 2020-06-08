@@ -81,8 +81,17 @@ def polynomial_features(X, degree):
     
     return np.array([np.prod(X[:, comb], axis=1) for comb in index_combinations]).T  
 
-def normalise(X):
-    pass
 
-def standardise(X):
-    pass
+class StandardScaler:
+
+    def __init__(self):
+        self.mu = None
+        self.s = None
+    
+    def fit(self, X):
+        self.mu = np.mean(X, axis=0)
+        self.s = np.std(X, axis=0)
+        return self
+
+    def transform(self, X):
+        return (X - self.mu) / self.s
