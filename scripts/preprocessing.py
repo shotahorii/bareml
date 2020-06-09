@@ -83,15 +83,39 @@ def polynomial_features(X, degree):
 
 
 class StandardScaler:
+    """ 
+    Feature Scaler (Standardisation)
+    X -> (X - mu) / std 
+    """
 
     def __init__(self):
         self.mu = None
         self.s = None
     
     def fit(self, X):
+        """
+        Compute and store mean and standard deviation 
+        for each column (feature) of the given matrix X.
+
+        Parameters
+        ----------
+        X: np.array (n, d) float in (-inf, inf)
+            n: number of samples 
+            d: number of features
+        """
         self.mu = np.mean(X, axis=0)
         self.s = np.std(X, axis=0)
         return self
 
     def transform(self, X):
+        """
+        Transform the given matrix X using the stored mean and std. 
+        X -> (X - mu) / std
+
+        Parameters
+        ----------
+        X: np.array (n, d) float in (-inf, inf)
+            n: number of samples 
+            d: number of features
+        """
         return (X - self.mu) / self.s

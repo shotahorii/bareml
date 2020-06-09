@@ -1,10 +1,13 @@
 """
-Linear Regression
+Linear Regression (Ridge, Lasso and ElasticNet)
 
 References:
-https://qiita.com/fujiisoup/items/f2fe3b508763b0cc6832
+<Lasso>
+https://qiita.com/fujiisoup/items/f2fe3b508763b0cc6832 (in JP)
 
-ToDo:
+<Elastic Net>
+K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 458, 477.
+
 """
 
 # Author: Shota Horii <sh.sinker@gmail.com>
@@ -17,37 +20,70 @@ from scripts.solvers import PInv, LassoISTA, LeastSquareGD
 from scripts.metrics import mean_square_error
 
 class LinearRegression:
+    """
+    Linear Regression Model. 
+    Base class for Ridge Regression, Lasso Regression and ElasticNet Regression.
+    
+    Parameters
+    ----------
+    solver: string {'pinv','gradient_descent','lasso'}
+        Solver to be used in fit function.
 
-    # solver is pinv or gradient_descent
+    alpha_l1: float >=0
+        L1 reguralisation parameter.
+    
+    alpha_l2: float >= 0
+        L2 reguralisation parameter.
+
+    polynomial_degree: int {1,2,3,...}
+        If more than 1, generate polynomial and interaction features from 
+        input predictor variable X, with the given degree.
+
+    max_iterations: int > 0
+        Maximum number of iterations. Applicable to solvers using iterative method. 
+    
+    tol: float >= 0
+        Conversion criterion. Applicable to solvers using iterative method.
+        In each step, if delta is smaller than tol, algorighm considers it's converged.
+    
+    learning_rate: float in (0,1)
+        Learning rate parameter for Gradient Descent algorithm.
+    """
     
     def __init__(self, solver='pinv', alpha_l1=0, alpha_l2=0, polynomial_degree=1, 
         max_iterations=1000, tol=1e-4, learning_rate=None):
         
-        # some obvious warnings.
-        if solver == 'pinv' and alpha_l1 != 0:
-            raise ValueError('L1 reguralisation cannot be solved analytically.')
-
-        if solver == 'gradient_descent' and alpha_l1 != 0:
-            raise ValueError('"gradient_descent" solver here is the simple one, which \
-                cannot solve Lasso. Use "lasso" solver instead, which is ISTA.')
-
-        # GD and LassoISTA solver need feature scaling 
-        self.scaler = StandardScaler() if solver in ['gradient_descent', 'lasso'] else None
-        
         self.solver = solver
         self.alpha_l1 = alpha_l1
         self.alpha_l2 = alpha_l2
-
         self.polynomial_degree = polynomial_degree
-
         self.max_iterations = max_iterations
         self.tol = tol
         self.learning_rate = learning_rate
-
         self.w = None
         self.train_error = None
 
+        # GD and LassoISTA solver need feature scaling 
+        self.scaler = StandardScaler() if solver in ['gradient_descent', 'lasso'] else None
+
+
     def fit(self, X, y):
+        """
+        Parameters
+        ----------
+        X: np.ndarray (n, d) 
+            predictor variables matrix
+            n: number of samples
+            d: number of features
+        
+        y: np.ndarray (n,)
+            target variables
+            n: number of samples
+
+        Returns
+        -------
+        self: LinearRegression
+        """
 
         X = polynomial_features(X, self.polynomial_degree)
 
@@ -91,6 +127,20 @@ class LinearRegression:
         return self
 
     def predict(self, X):
+        """
+        Parameters
+        ----------
+        X: np.ndarray (n, d) 
+            predictor variables matrix
+            n: number of samples
+            d: number of features
+
+        Returns
+        -------
+        y_pred: np.ndarray (n,)
+            predicted target variables
+            n: number of samples
+        """
 
         X = polynomial_features(X, self.polynomial_degree)
 
@@ -102,6 +152,31 @@ class LinearRegression:
 
 
 class RidgeRegression(LinearRegression):
+    """
+    Ridge Regression Model.
+    
+    Parameters
+    ----------
+    solver: string {'pinv','gradient_descent'}
+        Solver to be used in fit function.
+    
+    alpha: float >= 0
+        L2 reguralisation parameter.
+
+    polynomial_degree: int {1,2,3,...}
+        If more than 1, generate polynomial and interaction features from 
+        input predictor variable X, with the given degree.
+
+    max_iterations: int > 0
+        Maximum number of iterations. Applicable to solvers using iterative method. 
+    
+    tol: float >= 0
+        Conversion criterion. Applicable to solvers using iterative method.
+        In each step, if delta is smaller than tol, algorighm considers it's converged.
+    
+    learning_rate: float in (0,1)
+        Learning rate parameter for Gradient Descent algorithm.
+    """
     def __init__(self, 
                 alpha, 
                 solver='pinv', 
@@ -119,6 +194,25 @@ class RidgeRegression(LinearRegression):
 
 
 class LassoRegression(LinearRegression):
+    """
+    Lasso Regression Model.
+    
+    Parameters
+    ----------
+    alpha: float >=0
+        L1 reguralisation parameter.
+
+    polynomial_degree: int {1,2,3,...}
+        If more than 1, generate polynomial and interaction features from 
+        input predictor variable X, with the given degree.
+
+    max_iterations: int > 0
+        Maximum number of iterations. Applicable to solvers using iterative method. 
+    
+    tol: float >= 0
+        Conversion criterion. Applicable to solvers using iterative method.
+        In each step, if delta is smaller than tol, algorighm considers it's converged.
+    """
     def __init__(self, 
                 alpha, 
                 polynomial_degree=1, 
@@ -133,6 +227,30 @@ class LassoRegression(LinearRegression):
 
 
 class ElasticNetRegression(LinearRegression):
+    """
+    ElasticNet Regression Model.
+    
+    Parameters
+    ----------
+    alpha: float >=0
+        Reguralisation parameter distributed to L1 and L2 penalty factors
+    
+    l1_ratio: float in [0,1]
+        Parameter to define distribution ratio of alpha between L1 and L2 
+        penalty factors. If l1_ratio=1, it's Lasso Regression.
+        If l1_ratio=0, it's Ridge Regression.
+
+    polynomial_degree: int {1,2,3,...}
+        If more than 1, generate polynomial and interaction features from 
+        input predictor variable X, with the given degree.
+
+    max_iterations: int > 0
+        Maximum number of iterations. Applicable to solvers using iterative method. 
+    
+    tol: float >= 0
+        Conversion criterion. Applicable to solvers using iterative method.
+        In each step, if delta is smaller than tol, algorighm considers it's converged.
+    """
     def __init__(self, 
                 alpha,
                 l1_ratio,
