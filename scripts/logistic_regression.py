@@ -20,39 +20,32 @@ import math
 import numpy as np
 
 from scripts.activation_functions import Sigmoid, Softmax
-from scripts.loss_functions import CrossEntropy
+from scripts.preprocessing import add_bias, polynomial_features, StandardScaler
+from scripts.solvers import CrossEntropyGD, CrossEntropyMultiGD
 
 class LogisticRegressionClassifer:
     """ 
     Ligistic Regression classifier (Binary Classification only)
     """
 
-    def __init__(self):
+    def __init__(self, multiclass=False, alpha_l2=0, polynomial_degree=1, 
+        max_iterations=1000, tol=1e-4, learning_rate=None):
+        
+        self.multiclass = multiclass
+        self.alpha_l2 = alpha_l2
+        self.polynomial_degree = polynomial_degree
+        self.max_iterations = max_iterations
+        self.tol = tol
+        self.learning_rate = learning_rate
         self.w = None
-        self.b = None
+        self.train_error = None
 
-        self.sigmoid = Sigmoid()
-        self.cross_entropy = CrossEntropy()
+        self.activation = Softmax() if multiclass else Sigmoid()
+        self.solver = CrossEntropyMultiGD if multiclass else CrossEntropyGD
 
-    def _initialise_weights_bias(self, n_features):
-        """
-        Initialise the value of weights and bias.
+        self.scaler = StandardScaler()
 
-        Parameters
-        ----------
-        n_features: int
-            number of predictor variables in input data X
-        """
-
-        # initialise weights in [-1/sqrt(n), 1/sqrt(n)) 
-        # why? see below articles. 
-        # https://leimao.github.io/blog/Weights-Initialization/
-        # https://stats.stackexchange.com/questions/47590/what-are-good-initial-weights-in-a-neural-network
-        limit = 1 / math.sqrt(n_features)
-        self.w = np.random.uniform(-limit, limit, n_features)
-        self.b = 0.0
-
-    def fit(self, X, y, n_iterations=2000, learning_rate=0.1):
+    def fit(self, X, y):
         """ 
         Train the logistic regression model. Binary classification only. 
         
@@ -78,21 +71,12 @@ class LogisticRegressionClassifer:
         -------
         self: LogisticRegressionClassifer
         """
-        n_samples, n_features = X.shape
-        self._initialise_weights_bias(n_features)
 
-        for _ in range(n_iterations):
+        X = polynomial_features(X, self.polynomial_degree)
+        X[:,1:] = self.scaler.fit(X[:,1:]).transform(X[:,1:])
 
-            y_pred = self.sigmoid(np.dot(self.w, X.T)+self.b)
-            # loss = self.cross_entropy(y, y_pred) # no need to calculate loss in every iteration
-            loss_grad = self.cross_entropy.gradient(y, y_pred)
-            
-            # calculate gradient for weights and bias
-            w_grad = np.dot(X.T, loss_grad.T)/n_samples
-            b_grad = np.sum(loss_grad)/n_samples
-            # update weights and bias
-            self.w = self.w - learning_rate * w_grad
-            self.b = self.b - learning_rate * b_grad
+        gd = self.solver(self.alpha_l2, self.max_iterations, self.tol, self.learning_rate)
+        self.w = gd.solve(X,y)
 
         return self
 
@@ -110,106 +94,15 @@ class LogisticRegressionClassifer:
         y_pred: np.ndarray (1d array)
             target variable. 
         """
-        y_pred = np.round(self.sigmoid(np.dot(self.w, X.T)+self.b)).astype(int)
-        return y_pred
+        X = polynomial_features(X, self.polynomial_degree)
+        X[:,1:] = self.scaler.transform(X[:,1:])
 
-            
-class LogisticRegressionClassiferMulti:
-    """ 
-    Ligistic Regression classifier (Multi Class Classification)
-    """
+        y_pred = self.activation(np.dot(X,self.w))
 
-    def __init__(self):
-        self.w = None
-        self.b = None
-
-        self.softmax = Softmax()
-        self.cross_entropy = CrossEntropy()
-
-    def _initialise_weights_bias(self, n_features, n_classes):
-        """
-        Initialise the value of weights and bias.
-
-        Parameters
-        ----------
-        n_features: int
-            number of predictor variables in input data X
-
-        n_classes: int
-            number of classes in target data y
-        """
-
-        # initialise weights in [-1/sqrt(n), 1/sqrt(n)) 
-        # why? see below articles. 
-        # https://leimao.github.io/blog/Weights-Initialization/
-        # https://stats.stackexchange.com/questions/47590/what-are-good-initial-weights-in-a-neural-network
-        limit = 1 / math.sqrt(n_features)
-        self.w = np.random.uniform(-limit, limit, (n_features, n_classes))
-        self.b = np.zeros(n_classes)
-
-    def fit(self, X, y, n_iterations=2000, learning_rate=0.1):
-        """ 
-        Train the logistic regression model. Binary classification only. 
-        
-        Parameters
-        ----------
-        X: np.ndarray
-            predictor variables 
-            num of rows (X_train.shape[0]) is the num of samples 
-            num of columns (X_train.shape[1]) is the num of variables
-        
-        y: np.ndarray
-            one-hot encoded target variable 
-            num of rows (y.shape[0]) is the num of samples 
-            num of columns (y.shape[1]) is the num of classes
-            each value is 0 or 1, where sum of values in a row is always 1
-
-        n_iterations: int
-            number of iterations that we update w with gradient descent
-
-        learning_rate: float
-            learning rate multiplied to gradient in each updation
-
-        Returns
-        -------
-        self: LogisticRegressionClassiferMulti
-        """
-        n_samples, n_features = X.shape
-        n_classes = y.shape[1]
-
-        self._initialise_weights_bias(n_features, n_classes)
-
-        for _ in range(n_iterations):
-
-            y_pred = self.softmax(np.dot(X,self.w)+self.b)
-            # loss = self.cross_entropy(y, y_pred) # no need to calculate loss in every iteration
-            loss_grad = self.cross_entropy.gradient(y, y_pred)
-            
-            # calculate gradient for weights and bias
-            w_grad = np.dot(X.T, loss_grad)/n_samples
-            b_grad = np.sum(loss_grad,axis=0)/n_samples
-            # update weights and bias
-            self.w = self.w - learning_rate * w_grad
-            self.b = self.b - learning_rate * b_grad
-
-        return self
-
-    def predict(self, X):
-        """ 
-        Predict.
-        
-        Parameters
-        ----------
-        X: np.ndarray
-            predictor variables of the samples you wish to predict.
-        
-        Returns
-        -------
-        y_pred: np.ndarray
-            one-hot encoded target variable
-        """
-        y_pred = self.softmax(np.dot(X,self.w)+self.b)
         # probability to 1/0
-        y_pred = (y_pred == y_pred.max(axis=1)[:,None]).astype(int)
+        if self.multiclass:
+            y_pred = (y_pred == y_pred.max(axis=1)[:,None]).astype(int)
+        else:
+            y_pred = np.round(y_pred).astype(int)
 
         return y_pred

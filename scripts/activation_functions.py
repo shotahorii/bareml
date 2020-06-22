@@ -9,6 +9,15 @@ References:
 
 import numpy as np
 
+class Identity:
+
+    def __call__(self, x):
+        return x
+    
+    def gradient(self, x):
+        return 1.0
+
+
 class Sigmoid:
 
     def __call__(self, x):

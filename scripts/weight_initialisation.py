@@ -10,7 +10,7 @@ References:
 import math
 import numpy as np
 
-def initialise_random(n_weights):
+def initialise_random(n_weights, n_classes=None):
     """
     Initialise weights randomly.
 
@@ -18,6 +18,8 @@ def initialise_random(n_weights):
     ----------
     n_weights: int
         number of weights to initialise
+
+    n_classes: int
 
     Returns
     -------
@@ -29,10 +31,13 @@ def initialise_random(n_weights):
     # https://leimao.github.io/blog/Weights-Initialization/
     # https://stats.stackexchange.com/questions/47590/what-are-good-initial-weights-in-a-neural-network
     limit = 1 / math.sqrt(n_weights)
-    w = np.random.uniform(-limit, limit, n_weights)
+    if n_classes is None:
+        w = np.random.uniform(-limit, limit, n_weights)
+    else:
+        w = np.random.uniform(-limit, limit, (n_weights, n_classes))
     return w
 
-def initialise_zero(n_weights):
+def initialise_zero(n_weights, n_classes=None):
     """
     Initialise weights to zero. 
 
@@ -41,10 +46,15 @@ def initialise_zero(n_weights):
     n_weights: int
         number of weights to initialise
     
+    n_classes: int
+    
     Returns
     -------
     w: np.ndarray (d,) float
         d: number of weights
     """
-    w = np.zeros(n_weights)
+    if n_classes is None:
+        w = np.zeros(n_weights)
+    else:
+        w = np.zeros((n_weights, n_classes))
     return w

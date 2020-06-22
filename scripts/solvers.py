@@ -14,13 +14,15 @@ import numpy as np
 from scripts.util import supremum_eigen
 from scripts.weight_initialisation import initialise_random, initialise_zero
 from scripts.hyperparameter_optimisation import auto_learning_rate_se
-from scripts.loss_functions import SquareError, L2Regularization
+from scripts.loss_functions import SquareError, L2Regularization, CrossEntropy
+from scripts.activation_functions import Sigmoid, Softmax, Identity
 
 class Solver(ABC):
 
     @abstractmethod
     def solve(self):
         pass
+
 
 class PInv(Solver):
     """
@@ -54,9 +56,9 @@ class PInv(Solver):
         return np.dot( np.dot(np.linalg.pinv( np.dot(X.T, X) + self.alpha * np.eye(d) ), X.T), y)
 
 
-class LeastSquareGD(Solver):
+class GradientDescent(Solver):
     """
-    Gradient Descent for differentiable least square loss functions.
+    Gradient Descent
 
     Parameters
     ----------
@@ -64,11 +66,14 @@ class LeastSquareGD(Solver):
         l2 reguralisation parameter
     """
 
-    def __init__(self, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
-        self.alpha = alpha
+    def __init__(self, activation, loss, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
         self.max_iterations = max_iterations
         self.tol = tol
         self.learning_rate = learning_rate
+
+        self.activation = activation
+        self.loss = loss
+        self.l2 = L2Regularization(alpha)
 
     def solve(self, X, y):
         """
@@ -86,19 +91,17 @@ class LeastSquareGD(Solver):
             n: number of samples
         """
 
-        loss = SquareError()
-        l2 = L2Regularization(self.alpha)
-
-        n_samples = X.shape[0]
-
         # if learning rate is not given, set automatically
         lr = self.learning_rate if self.learning_rate else auto_learning_rate_se(X)
-        # initialise the weights as 0
-        w = initialise_zero(X.shape[1])
+        # initialise the weights as zero
+        if y.ndim > 1: # multi class classification
+            w = initialise_zero(X.shape[1], y.shape[1])
+        else:
+            w = initialise_zero(X.shape[1])
         
         for _ in range(self.max_iterations):
-            y_pred = np.dot(w, X.T)
-            grad_w = np.dot(loss.gradient(y, y_pred), X) + l2.gradient(w)
+            y_pred = self.activation(np.dot(X, w))
+            grad_w = np.dot(X.T, self.loss.gradient(y, y_pred)) + self.l2.gradient(w)
             w_new = w - lr * grad_w
 
             if (np.abs(w_new - w) < self.tol).all():
@@ -109,6 +112,37 @@ class LeastSquareGD(Solver):
         print('Not converged.')
         return w
 
+
+class LeastSquareGD(GradientDescent):
+    def __init__(self, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
+        super().__init__(
+            activation = Identity(), 
+            loss = SquareError(), 
+            alpha=alpha, 
+            max_iterations=max_iterations, 
+            tol=tol,
+            learning_rate=learning_rate)
+
+class CrossEntropyGD(GradientDescent):
+    def __init__(self, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
+        super().__init__(
+            activation = Sigmoid(), 
+            loss = CrossEntropy(), 
+            alpha=alpha, 
+            max_iterations=max_iterations, 
+            tol=tol,
+            learning_rate=learning_rate)
+
+class CrossEntropyMultiGD(GradientDescent):
+    def __init__(self, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
+        super().__init__(
+            activation = Softmax(), 
+            loss = CrossEntropy(), 
+            alpha=alpha, 
+            max_iterations=max_iterations, 
+            tol=tol,
+            learning_rate=learning_rate)
+    
 
 class LassoISTA(Solver):
     """

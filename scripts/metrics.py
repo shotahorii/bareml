@@ -238,6 +238,10 @@ def r_squqred(y, y_pred):
 # Metrics for classification #
 ##############################
 
+def accuracy(y, y_pred):
+    num_errors = np.sum(np.abs(y - y_pred))/2
+    return 1 - num_errors/len(y)
+
 def false_positive(y, y_pred):
     pass
 
