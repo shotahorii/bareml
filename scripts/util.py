@@ -51,3 +51,15 @@ def supremum_eigen(X):
     X: np.ndarray (d,d)
     """
     return np.max(np.sum(np.abs(X), axis=0))
+
+
+def prob2binary(y):
+    """
+    Convert probability to binary data. 
+    For example, [0.6, 0.2, 0.8] -> [1, 0, 1]
+    Also, [[0.2, 0.5, 0.3], [0.1, 0.2, 0.7]] -> [[0, 1, 0], [0, 0, 1]]
+    """
+    if y.ndim == 1:
+        return np.round(y).astype(int)
+    else:
+        return (y == y.max(axis=1)[:,None]).astype(int)

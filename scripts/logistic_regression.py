@@ -22,6 +22,7 @@ import numpy as np
 from scripts.activation_functions import Sigmoid, Softmax
 from scripts.preprocessing import add_bias, polynomial_features, StandardScaler
 from scripts.solvers import CrossEntropyGD, CrossEntropyMultiGD
+from scripts.util import prob2binary
 
 class LogisticRegressionClassifer:
     """ 
@@ -31,7 +32,6 @@ class LogisticRegressionClassifer:
     def __init__(self, multiclass=False, alpha_l2=0, polynomial_degree=1, 
         max_iterations=1000, tol=1e-4, learning_rate=None):
         
-        self.multiclass = multiclass
         self.alpha_l2 = alpha_l2
         self.polynomial_degree = polynomial_degree
         self.max_iterations = max_iterations
@@ -99,10 +99,4 @@ class LogisticRegressionClassifer:
 
         y_pred = self.activation(np.dot(X,self.w))
 
-        # probability to 1/0
-        if self.multiclass:
-            y_pred = (y_pred == y_pred.max(axis=1)[:,None]).astype(int)
-        else:
-            y_pred = np.round(y_pred).astype(int)
-
-        return y_pred
+        return prob2binary(y_pred)
