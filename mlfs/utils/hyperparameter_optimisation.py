@@ -12,7 +12,7 @@ ToDo:
 import math
 import numpy as np
 
-from scripts.util import supremum_eigen
+from mlfs.utils.misc import supremum_eigen
 
 def auto_learning_rate_se(X):
     """

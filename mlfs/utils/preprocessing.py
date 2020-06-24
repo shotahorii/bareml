@@ -10,7 +10,7 @@ import math
 from itertools import combinations_with_replacement
 import numpy as np
 
-from scripts.util import flatten
+from mlfs.utils.misc import flatten
 
 
 def binarise(X, threshold=0.5):

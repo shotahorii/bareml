@@ -12,7 +12,7 @@ Reguralisation
 import math
 import numpy as np
 import scipy.optimize
-from scripts.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
+from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
 
 class GLM:
     """ Generalised Linear Model """

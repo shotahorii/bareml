@@ -12,7 +12,7 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 176-187.
 
 import math
 import numpy as np
-from scripts.metrics import entropy, gini_impurity, variance, mean_deviation
+from mlfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation
 
 class DecisionTree:
     """

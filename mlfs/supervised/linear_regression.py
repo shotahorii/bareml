@@ -15,9 +15,9 @@ K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 458
 import math
 import numpy as np
 
-from scripts.preprocessing import polynomial_features, StandardScaler
-from scripts.solvers import PInv, LassoISTA, LeastSquareGD
-from scripts.metrics import mean_square_error
+from mlfs.utils.preprocessing import polynomial_features, StandardScaler
+from mlfs.utils.solvers import PInv, LassoISTA, LeastSquareGD
+from mlfs.utils.metrics import mean_square_error
 
 class LinearRegression:
     """

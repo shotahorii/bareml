@@ -19,10 +19,10 @@ ToDo:
 import math
 import numpy as np
 
-from scripts.activation_functions import Sigmoid, Softmax
-from scripts.preprocessing import add_bias, polynomial_features, StandardScaler
-from scripts.solvers import CrossEntropyGD, CrossEntropyMultiGD
-from scripts.util import prob2binary
+from mlfs.utils.activation_functions import Sigmoid, Softmax
+from mlfs.utils.preprocessing import add_bias, polynomial_features, StandardScaler
+from mlfs.utils.solvers import CrossEntropyGD, CrossEntropyMultiGD
+from mlfs.utils.misc import prob2binary
 
 class LogisticRegressionClassifer:
     """ 

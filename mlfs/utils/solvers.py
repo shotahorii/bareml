@@ -11,11 +11,11 @@ from abc import ABC, abstractmethod
 import math
 import numpy as np
 
-from scripts.util import supremum_eigen
-from scripts.weight_initialisation import initialise_random, initialise_zero
-from scripts.hyperparameter_optimisation import auto_learning_rate_se
-from scripts.loss_functions import SquareError, L2Regularization, CrossEntropy
-from scripts.activation_functions import Sigmoid, Softmax, Identity
+from mlfs.utils.misc import supremum_eigen
+from mlfs.utils.weight_initialisation import initialise_random, initialise_zero
+from mlfs.utils.hyperparameter_optimisation import auto_learning_rate_se
+from mlfs.utils.loss_functions import SquareError, L2Regularization, CrossEntropy
+from mlfs.utils.activation_functions import Sigmoid, Softmax, Identity
 
 class Solver(ABC):
 
@@ -93,6 +93,7 @@ class GradientDescent(Solver):
 
         # if learning rate is not given, set automatically
         lr = self.learning_rate if self.learning_rate else auto_learning_rate_se(X)
+        
         # initialise the weights as zero
         if y.ndim > 1: # multi class classification
             w = initialise_zero(X.shape[1], y.shape[1])
