@@ -1,6 +1,6 @@
-# datascience-code
+# Machine Learning From Scratch
 
-Code for data science. Not project specific, but general ones which can be used as a template or a sample. 
+Machine learning implementation from scratch. 
 
 ## Getting Started
 
