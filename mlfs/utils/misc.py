@@ -67,3 +67,17 @@ def prob2binary(y):
         return np.round(y).astype(int)
     else:
         return (y == y.max(axis=1)[:,None]).astype(int)
+
+def split_array(a, n):
+    """
+    Split an array into n chunks.
+    https://stackoverflow.com/questions/2130016/splitting-a-list-into-n-parts-of-approximately-equal-length
+
+    Parameters
+    ----------
+    a: array-like
+    n: int 
+        number of chunks
+    """
+    k, m = divmod(len(a), n)
+    return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))

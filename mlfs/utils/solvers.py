@@ -55,12 +55,12 @@ class PInv(Solver):
         has_intercept: bool
             if X contains intercept (column filled with all 1.)
         """
-        eye = np.eye(X.shape[1])
+        I = np.eye(X.shape[1])
         if has_intercept:
             # do not penalise intercept
             # https://www.coursera.org/lecture/ml-regression/how-to-handle-the-intercept-3KZiN
-            eye[0,0] = 0
-        return np.dot( np.dot(np.linalg.pinv( np.dot(X.T, X) + self.alpha * eye ), X.T), y)
+            I[0,0] = 0
+        return (np.linalg.pinv( X.T @ X + self.alpha * I ) @ X.T ) @ y
 
 
 class GradientDescent(Solver):
@@ -126,7 +126,7 @@ class GradientDescent(Solver):
             w = initialise_zero(X.shape[1])
         
         for _ in range(self.max_iterations):
-            y_pred = self.activation(np.dot(X, w))
+            y_pred = self.activation(X @ w)
             penalty = self.l2.gradient(w)
             if has_intercept:
                 # do not penalise intercept
@@ -135,7 +135,7 @@ class GradientDescent(Solver):
                     penalty[0] = np.zeros(w.shape[1])
                 else:
                     penalty[0] = 0
-            grad_w = np.dot(X.T, self.loss.gradient(y, y_pred)) + penalty
+            grad_w = X.T @ self.loss.gradient(y, y_pred) + penalty
             w_new = w - lr * grad_w
 
             if (np.abs(w_new - w) < self.tol).all():
