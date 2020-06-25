@@ -47,8 +47,8 @@ def euclidean_distance(v1, v2):
     -------
     distance: float
     """
-    # aka math.sqrt(np.power(v1 - v2, 2).sum())
-    distance = minkowski_distance(2, v1, v2)
+    # aka minkowski_distance(2, v1, v2)
+    distance = math.sqrt(np.power(v1 - v2, 2).sum())
     return distance
 
 def manhattan_distance(v1, v2):
@@ -64,8 +64,8 @@ def manhattan_distance(v1, v2):
     -------
     distance: float
     """
-    # aka np.abs(v1-v2).sum()
-    distance = minkowski_distance(1, v1, v2)
+    # aka minkowski_distance(1, v1, v2)
+    distance = np.abs(v1-v2).sum()
     return distance
 
 def chebyshev_distance(v1, v2):

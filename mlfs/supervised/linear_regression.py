@@ -17,7 +17,6 @@ import numpy as np
 
 from mlfs.utils.preprocessing import polynomial_features, StandardScaler
 from mlfs.utils.solvers import PInv, LassoISTA, LeastSquareGD
-from mlfs.utils.metrics import mean_square_error
 
 class LinearRegression:
     """
@@ -61,7 +60,6 @@ class LinearRegression:
         self.tol = tol
         self.learning_rate = learning_rate
         self.w = None
-        self.train_error = None
 
         # GD and LassoISTA solver need feature scaling 
         self.scaler = StandardScaler() if solver in ['gradient_descent', 'lasso'] else None
@@ -119,10 +117,6 @@ class LinearRegression:
         else:
             raise ValueError('"' + self.solver + '" solver not found. ' + \
                 'solver must be "pinv", "lasso" or "gradient_descent".')
-
-        # log training error
-        y_pred = np.dot(self.w, X.T)
-        self.train_error = mean_square_error(y, y_pred)
 
         return self
 

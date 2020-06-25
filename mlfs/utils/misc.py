@@ -58,6 +58,10 @@ def prob2binary(y):
     Convert probability to binary data. 
     For example, [0.6, 0.2, 0.8] -> [1, 0, 1]
     Also, [[0.2, 0.5, 0.3], [0.1, 0.2, 0.7]] -> [[0, 1, 0], [0, 0, 1]]
+
+    Parameters
+    ----------
+    y: np.ndarray (n,d)
     """
     if y.ndim == 1:
         return np.round(y).astype(int)

@@ -181,9 +181,9 @@ def mean_deviation(y):
 # Metrics for regression #
 ##########################
 
-def mean_square_error(y, y_pred):
+def mse(y, y_pred):
     """ 
-    Computes mean square error.
+    Computes mean squared error.
     
     Parameters
     ----------
@@ -198,13 +198,34 @@ def mean_square_error(y, y_pred):
     Returns
     -------
     float
-        mean square error 
+        mean squared error 
     """
-    mse = 0.5*np.mean(np.power(y-y_pred,2))
-    return mse
+    return np.mean(np.power(y-y_pred,2))
+
+def rmse(y, y_pred):
+    """ 
+    Computes root mean squared error.
+    
+    Parameters
+    ----------
+    y: np.ndarray (1d array)
+        Target variable of regression problems.
+        Number of elements is the number of data samples. 
+    
+    y_pred: np.ndarray (1d array)
+        Predicted values for the given target variable. 
+        Number of elements is the number of data samples. 
+
+    Returns
+    -------
+    float
+        root mean squared error 
+    """
+    return np.sqrt(mse(y, y_pred))
 
 
-def mean_absolute_error(y, y_pred):
+
+def mae(y, y_pred):
     """ 
     Computes mean absolute error.
     
@@ -223,8 +244,7 @@ def mean_absolute_error(y, y_pred):
     float
         mean absolute error 
     """
-    mae = np.mean(np.abs(y-y_pred))
-    return mae
+    return np.mean(np.abs(y-y_pred))
 
 def rss(y, y_pred):
     """ residual sum of squares """

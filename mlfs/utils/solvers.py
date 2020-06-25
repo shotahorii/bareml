@@ -2,6 +2,7 @@
 Solvers
 
 References:
+https://www.coursera.org/lecture/ml-regression/how-to-handle-the-intercept-3KZiN
 
 """
 
@@ -12,8 +13,7 @@ import math
 import numpy as np
 
 from mlfs.utils.misc import supremum_eigen
-from mlfs.utils.weight_initialisation import initialise_random, initialise_zero
-from mlfs.utils.hyperparameter_optimisation import auto_learning_rate_se
+from mlfs.utils.model_tuning import initialise_random, initialise_zero, auto_learning_rate
 from mlfs.utils.loss_functions import SquareError, L2Regularization, CrossEntropy
 from mlfs.utils.activation_functions import Sigmoid, Softmax, Identity
 
@@ -37,7 +37,7 @@ class PInv(Solver):
     def __init__(self, alpha=0):
         self.alpha = alpha
 
-    def solve(self, X, y):
+    def solve(self, X, y, has_intercept=True):
         """
         Solve Linear regression and Ridge regression.
 
@@ -51,9 +51,16 @@ class PInv(Solver):
         y: np.ndarray (n,)
             target variables
             n: number of samples
+
+        has_intercept: bool
+            if X contains intercept (column filled with all 1.)
         """
-        d = X.shape[1]
-        return np.dot( np.dot(np.linalg.pinv( np.dot(X.T, X) + self.alpha * np.eye(d) ), X.T), y)
+        eye = np.eye(X.shape[1])
+        if has_intercept:
+            # do not penalise intercept
+            # https://www.coursera.org/lecture/ml-regression/how-to-handle-the-intercept-3KZiN
+            eye[0,0] = 0
+        return np.dot( np.dot(np.linalg.pinv( np.dot(X.T, X) + self.alpha * eye ), X.T), y)
 
 
 class GradientDescent(Solver):
@@ -62,8 +69,23 @@ class GradientDescent(Solver):
 
     Parameters
     ----------
+    activation: class
+        activation fucntion. options: Identity(), Sigmoid(), Softmax()
+
+    loss: class
+        loss function. options: SquareError(), CrossEntropy()
+
     alpha: float >= 0
         l2 reguralisation parameter
+
+    max_iterations: int > 0
+        max number of iterations
+    
+    tol: float >= 0
+        conversion criterion. if delta of w is smaller than tol, 
+        algorighm considers it's converged.
+
+    learning_rate: float > 0
     """
 
     def __init__(self, activation, loss, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
@@ -75,7 +97,7 @@ class GradientDescent(Solver):
         self.loss = loss
         self.l2 = L2Regularization(alpha)
 
-    def solve(self, X, y):
+    def solve(self, X, y, has_intercept=True):
         """
         Solve Linear regression and Ridge regression.
 
@@ -89,10 +111,13 @@ class GradientDescent(Solver):
         y: np.ndarray (n,)
             target variables
             n: number of samples
+
+        has_intercept: bool
+            if X contains intercept (column filled with all 1.)
         """
 
         # if learning rate is not given, set automatically
-        lr = self.learning_rate if self.learning_rate else auto_learning_rate_se(X)
+        lr = self.learning_rate if self.learning_rate else auto_learning_rate(X)
         
         # initialise the weights as zero
         if y.ndim > 1: # multi class classification
@@ -102,7 +127,15 @@ class GradientDescent(Solver):
         
         for _ in range(self.max_iterations):
             y_pred = self.activation(np.dot(X, w))
-            grad_w = np.dot(X.T, self.loss.gradient(y, y_pred)) + self.l2.gradient(w)
+            penalty = self.l2.gradient(w)
+            if has_intercept:
+                # do not penalise intercept
+                # https://www.coursera.org/lecture/ml-regression/how-to-handle-the-intercept-3KZiN
+                if w.ndim > 1:
+                    penalty[0] = np.zeros(w.shape[1])
+                else:
+                    penalty[0] = 0
+            grad_w = np.dot(X.T, self.loss.gradient(y, y_pred)) + penalty
             w_new = w - lr * grad_w
 
             if (np.abs(w_new - w) < self.tol).all():
@@ -115,6 +148,9 @@ class GradientDescent(Solver):
 
 
 class LeastSquareGD(GradientDescent):
+    """
+    Gradient Descent for Least Square Error. 
+    """
     def __init__(self, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
         super().__init__(
             activation = Identity(), 
@@ -125,6 +161,9 @@ class LeastSquareGD(GradientDescent):
             learning_rate=learning_rate)
 
 class CrossEntropyGD(GradientDescent):
+    """
+    Gradient Descent for Cross Entropy (Binary Classification). 
+    """
     def __init__(self, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
         super().__init__(
             activation = Sigmoid(), 
@@ -135,6 +174,9 @@ class CrossEntropyGD(GradientDescent):
             learning_rate=learning_rate)
 
 class CrossEntropyMultiGD(GradientDescent):
+    """
+    Gradient Descent for Cross Entropy (Multi Class Classification). 
+    """
     def __init__(self, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
         super().__init__(
             activation = Softmax(), 
