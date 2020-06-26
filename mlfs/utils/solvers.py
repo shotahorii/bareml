@@ -135,6 +135,7 @@ class GradientDescent(Solver):
                     penalty[0] = np.zeros(w.shape[1])
                 else:
                     penalty[0] = 0
+                
             grad_w = X.T @ self.loss.gradient(y, y_pred) + penalty
             w_new = w - lr * grad_w
 

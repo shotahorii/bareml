@@ -49,7 +49,7 @@ class KFold:
     seed: int
         random state.
     """
-    def __init__(self, n_splits=5, shuffle=True, seed=None):
+    def __init__(self, n_splits=5, shuffle=False, seed=None):
         self.n_splits = n_splits
         self.shuffle = shuffle
         self.seed = seed
@@ -57,6 +57,8 @@ class KFold:
     def split(self, X, y):
         indices = np.arange(len(X))
         if self.shuffle:
+            if self.seed:
+                np.random.seed(self.seed)
             np.random.shuffle(indices)
 
         for test_idx in split_array(indices, self.n_splits):
