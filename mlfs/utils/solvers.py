@@ -262,6 +262,11 @@ class LassoISTA(Solver):
             dl_dw = -X.T @ (y - X @ w_t) 
             w_new = self._soft_threashold(w_t - dl_dw/rho, threshold)
 
+            # exclude intercept from reguralisation 
+            # by setting threshold 0. 
+            w_zero_threshold = self._soft_threashold(w_t - dl_dw/rho, 0)
+            w_new[0] = w_zero_threshold[0]
+
             if (np.abs(w_new - w_t) < self.tol).all():
                 print('Converged.')
                 return w_new
