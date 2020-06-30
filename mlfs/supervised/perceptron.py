@@ -10,8 +10,9 @@ C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 192-196.
 # Author: Shota Horii <sh.sinker@gmail.com>
 
 import numpy as np
+from mlfs.supervised.base_classes import Classifier, Regressor
 
-class Perceptron:
+class Perceptron(Classifier):
     """
     Perceptron Classifier (Binary classification only)
     """

@@ -13,8 +13,9 @@ smoothing
 import math
 import numpy as np
 from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
+from mlfs.supervised.base_classes import Classifier
 
-class NaiveBayesClassifier:
+class NaiveBayes(Classifier):
 
     def __init__(self, prob):
         self.prob = prob
@@ -83,9 +84,9 @@ class NaiveBayesClassifier:
         return y_pred
                 
 
-class GaussianNB(NaiveBayesClassifier):
+class GaussianNB(NaiveBayes):
     def __init__(self):
         super().__init__(Gaussian())
 
-class BernoulliNB(NaiveBayesClassifier):
+class BernoulliNB(NaiveBayes):
     pass

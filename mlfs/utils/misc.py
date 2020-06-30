@@ -66,7 +66,11 @@ def prob2binary(y):
     if y.ndim == 1:
         return np.round(y).astype(int)
     else:
-        return (y == y.max(axis=1)[:,None]).astype(int)
+        # avoid [[0.333, 0.333, 0.333], [0.2, 0.4, 0.4]] -> [[1, 1, 1], [0, 1, 1]]
+        while True:
+            r = y + 1e-15 * np.random.rand(y.shape[0],y.shape[1])
+            if r.sum() == len(y):
+                return (r == r.max(axis=1)[:,None]).astype(int)
 
 def split_array(a, n):
     """

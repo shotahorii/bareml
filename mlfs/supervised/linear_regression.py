@@ -17,8 +17,9 @@ import numpy as np
 
 from mlfs.utils.preprocessing import polynomial_features, StandardScaler
 from mlfs.utils.solvers import PInv, LassoISTA, LeastSquareGD
+from mlfs.supervised.base_classes import Regressor
 
-class LinearRegression:
+class LinearRegression(Regressor):
     """
     Linear Regression Model. 
     Base class for Ridge Regression, Lasso Regression and ElasticNet Regression.

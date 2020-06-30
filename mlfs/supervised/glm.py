@@ -12,7 +12,9 @@ Reguralisation
 import math
 import numpy as np
 import scipy.optimize
+from mlfs.utils.misc import prob2binary
 from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
+from mlfs.supervised.base_classes import Classifier, Regressor
 
 class GLM:
     """ Generalised Linear Model """
@@ -59,7 +61,7 @@ class GLM:
         return self.prob.link(self.params.x @ X.T)
 
 
-class LogisticRegression(GLM):
+class LogisticRegression(GLM, Classifier):
     """ 
     Logistic Regression 
     where the target variable is {0,1}
@@ -67,7 +69,11 @@ class LogisticRegression(GLM):
     def __init__(self):
         super().__init__(Bernoulli())
 
-class LogisticRegressionBinom(GLM):
+    def predict(self, X):
+        y_pred = super().predict(X)
+        return prob2binary(y_pred)
+
+class LogisticRegressionBinom(GLM, Classifier):
     """ 
     Logistic Regression 
     where the target variable is described as a pair of values (n, k)
@@ -75,12 +81,16 @@ class LogisticRegressionBinom(GLM):
     def __init__(self):
         super().__init__(Binomial())
 
-class PoissonRegression(GLM):
+    def predict(self, X):
+        y_pred = super().predict(X)
+        return prob2binary(y_pred)
+
+class PoissonRegression(GLM, Regressor):
     """ Poisson Regression """
     def __init__(self):
         super().__init__(Poisson())
 
-class LinearRegression(GLM):
+class LinearRegression(GLM, Regressor):
     """ Linear Regression """
     def __init__(self):
         super().__init__(Gaussian())

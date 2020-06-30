@@ -53,7 +53,7 @@ class PInv(Solver):
             n: number of samples
 
         has_intercept: bool
-            if X contains intercept (column filled with all 1.)
+            if X contains intercept (1st column filled with all 1.)
         """
         I = np.eye(X.shape[1])
         if has_intercept:
@@ -113,7 +113,7 @@ class GradientDescent(Solver):
             n: number of samples
 
         has_intercept: bool
-            if X contains intercept (column filled with all 1.)
+            if X contains intercept (1st column filled with all 1.)
         """
 
         # if learning rate is not given, set automatically
@@ -211,7 +211,7 @@ class LassoISTA(Solver):
         self.max_iterations = max_iterations
         self.tol = tol
 
-    def solve(self, X, y):
+    def solve(self, X, y, has_intercept=True):
         """
         Solve Lasso.
         argmin_w ( 1/2 (y - Xw)^2 + alpha |w| )
@@ -244,6 +244,9 @@ class LassoISTA(Solver):
         y: np.ndarray (n,)
             target variables
             n: number of samples
+
+        has_intercept: bool
+            if X contains intercept (1st column filled with all 1.)
         """
         n_samples, n_features = X.shape
         
@@ -262,10 +265,11 @@ class LassoISTA(Solver):
             dl_dw = -X.T @ (y - X @ w_t) 
             w_new = self._soft_threashold(w_t - dl_dw/rho, threshold)
 
-            # exclude intercept from reguralisation 
-            # by setting threshold 0. 
-            w_zero_threshold = self._soft_threashold(w_t - dl_dw/rho, 0)
-            w_new[0] = w_zero_threshold[0]
+            if has_intercept:
+                # exclude intercept from reguralisation 
+                # by setting threshold 0. 
+                w_zero_threshold = self._soft_threashold(w_t - dl_dw/rho, 0)
+                w_new[0] = w_zero_threshold[0]
 
             if (np.abs(w_new - w_t) < self.tol).all():
                 print('Converged.')
