@@ -30,7 +30,8 @@ def minkowski_distance(p, v1, v2):
     """
     if len(v1) != len(v2):
         raise ValueError("2 vectors must have same dimension")
-
+    
+    # aka norm(p,v1-v2)
     distance = np.power(np.sum(np.power(np.abs(v1-v2),p)),1/p)
     return distance
 
@@ -48,6 +49,7 @@ def euclidean_distance(v1, v2):
     distance: float
     """
     # aka minkowski_distance(2, v1, v2)
+    # aka l2_norm(vi - v2)
     distance = math.sqrt(np.power(v1 - v2, 2).sum())
     return distance
 
@@ -65,7 +67,8 @@ def manhattan_distance(v1, v2):
     distance: float
     """
     # aka minkowski_distance(1, v1, v2)
-    distance = np.abs(v1-v2).sum()
+    # aka l1_norm(vi - v2)
+    distance = np.abs(v1 - v2).sum()
     return distance
 
 def chebyshev_distance(v1, v2):
@@ -83,6 +86,19 @@ def chebyshev_distance(v1, v2):
     if len(v1) != len(v2):
         raise ValueError("2 vectors must have same dimension")
 
-    #aka lim p->infinity{ minkowski_distance(p, v1, v2) }
-    distance = max(np.abs(v1-v2))
+    # aka lim p->infinity{ minkowski_distance(p, v1, v2) }
+    # aka sup_norm(v1 - v2)
+    distance = max(np.abs(v1 - v2))
     return distance
+
+def norm(p, x):
+    return np.power(np.sum(np.power(np.abs(x),p)),1/p)
+
+def l1_norm(x):
+    return np.abs(x).sum()
+
+def l2_norm(x):
+    return math.sqrt(np.power(x,2).sum())
+
+def sup_norm(x):
+    return max(np.abs(x))
