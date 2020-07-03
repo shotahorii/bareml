@@ -50,9 +50,9 @@ def decode_onehot(X):
     """
     return np.argmax(X, axis=1)
 
-def add_bias(X):
+def add_intercept(X):
     """
-    Add bias (a column filled with 1. ) to the feature matrix.
+    Add intercept (a column filled with 1. ) to the feature matrix.
 
     Parameters
     ----------
