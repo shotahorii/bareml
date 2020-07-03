@@ -44,10 +44,7 @@ class KernelRegression(Regressor):
         self.X = X
 
         N = X.shape[0]
-        K = np.zeros((N, N))
-        for i, xi in enumerate(X):
-            for j, xj in enumerate(X):
-                K[i,j] = self.kernel(xi, xj)
+        K = np.array([[self.kernel(X[i],X[j]) for i in range(N)] for j in range(N)])
 
         if self.solver == 'pinv':
             self.w = np.linalg.pinv(K + self.alpha * np.eye(N)) @ y
@@ -59,13 +56,10 @@ class KernelRegression(Regressor):
 
     def predict(self, X):
         X = self.scaler.transform(X)
-
+        
         N = self.X.shape[0]
         M = X.shape[0]
-        K = np.zeros((M, N))
-        for i, xi in enumerate(X):
-            for j, xj in enumerate(self.X):
-                K[i,j] = self.kernel(xi, xj)
+        K = np.array([[self.kernel(X[i],self.X[j]) for i in range(M)] for j in range(N)])
 
         return np.dot(self.w, K.T)
 
