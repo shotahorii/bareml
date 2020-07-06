@@ -13,16 +13,16 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 176-187.
 import math
 import numpy as np
 from mlfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation
+from mlfs.utils.misc import prob2binary
+from mlfs.supervised.base_classes import Regressor, Classifier
+from abc import ABC, abstractmethod
 
-class DecisionTree:
+class DecisionTree(ABC):
     """
     Super class of DecisionTreeClassifier and DecisionTreeRegressor.
 
     Parameters
     ----------
-    is_regression: bool
-        if this tree is for regression. if false, for classification
-    
     impurity_func: function
         function used to measure the impurity
         choices are: entropy, gini_impurity, variance, mean_deviation
@@ -43,7 +43,6 @@ class DecisionTree:
     
     def __init__(
         self, 
-        is_regression=None, 
         impurity_func=None,
         max_depth=None, 
         min_impurity_decrease=None, 
@@ -51,7 +50,6 @@ class DecisionTree:
         depth=1):
         
         # parameters to define the behaviour of the entire tree (common across all nodes in the tree)
-        self.is_regression = is_regression
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
         self.N = N
@@ -71,29 +69,23 @@ class DecisionTree:
         # a parameter for leaf nodes
         self.predictor = None
         
-        
+    @abstractmethod
     def _create_node(self):
         """
         Create a node with +1 depth.
         """
-        return DecisionTree(is_regression=self.is_regression,
-                            impurity_func=self.impurity_func, 
-                            max_depth=self.max_depth, 
-                            min_impurity_decrease=self.min_impurity_decrease,
-                            N=self.N,
-                            depth=self.depth+1)
+        raise ValueError('Not implemented.')
 
     def _compute_impurity_decrease(self, y_left, y_right):
         """
-        Computes impurity decrease (aka information gain when impurity 
-        measure is entropy) for the given split.
+        Computes impurity decrease for given split.
         
         Parameters
         -------
-        y_left : np.ndarray
+        y_left : np.ndarray (nl, c)
             list of y values which go to the left node by the split
             
-        y_right : np.ndarray
+        y_right : np.ndarray (nr, c)
              list of y values which go to the right node by the split
 
         Returns
@@ -110,7 +102,7 @@ class DecisionTree:
         else:
             left_impurity = self.impurity_func(y_left)
             right_impurity = self.impurity_func(y_right)
-            decrease = self.impurity - (left_impurity*w_left + right_impurity*w_right)
+            decrease = self.impurity - (left_impurity * w_left + right_impurity * w_right)
         
         return decrease
         
@@ -121,27 +113,14 @@ class DecisionTree:
         
         Parameters
         -------
-        x_feature : np.ndarray (1d array)
-            a predictor variable (feature) to be checked
-            number of elements is the number of data samples
+        x_feature : np.ndarray (n, )
+            A predictor variable (feature) to be checked
+            n: the number of data samples
             
-        y : np.ndarray
+        y : np.ndarray (n, c) 
             Target variable of classification or Regression problems.
-            This can be a 1d array indicating 0/1 for a binary classification
-            or real number for a regression.
-            Or a multi-dimensional array, indicating a one-hot encoded 
-            target variable for a multi-class classification. 
-
-            When 1d array:
-                Num of elements is the num of samples. 
-                Each value is 0 or 1, if classification
-                Each value is a real number if regression
-
-            When multi-dimensional array
-                Num of rows (y.shape[0]) is the num of samples.
-                Num of columns (y.shape[1]) is the num of classes.
-                Each value is either 0 or 1.
-                Sum of values in a single row is always 1.
+            c = 1 if regresssion or binary classification. 
+            else, c = num of classes for multi classification (one-hot encoded).
 
         Returns
         -------
@@ -176,28 +155,15 @@ class DecisionTree:
         
         Parameters
         -------
-        X : np.ndarray (can be 1d array if there's only 1 feature)
-            predictor variables (features) to be checked
-            num of row (X.shape[0]) is the num of data samples
-            num of columns (X.shape[1]) is the num of features
+        X : np.ndarray (n, d)
+            Predictor variables (features) to be checked
+            n: num of data samples
+            d: num of features
             
-        y : np.ndarray
+        y : np.ndarray (n, c) 
             Target variable of classification or Regression problems.
-            This can be a 1d array indicating 0/1 for a binary classification
-            or real number for a regression.
-            Or a multi-dimensional array, indicating a one-hot encoded 
-            target variable for a multi-class classification. 
-
-            When 1d array:
-                Num of elements is the num of samples. 
-                Each value is 0 or 1, if classification
-                Each value is a real number if regression
-
-            When multi-dimensional array
-                Num of rows (y.shape[0]) is the num of samples.
-                Num of columns (y.shape[1]) is the num of classes.
-                Each value is either 0 or 1.
-                Sum of values in a single row is always 1.
+            c = 1 if regresssion or binary classification. 
+            else, c = num of classes for multi classification (one-hot encoded).
 
         Returns
         -------
@@ -233,6 +199,13 @@ class DecisionTree:
         
         return best_split_feature_idx, best_split_threshold, max_decrease
             
+    def _stop_criteria(self):
+        """ Criteria to stop tree growth. """
+        reached_max_depth = (self.max_depth is not None and self.depth >= self.max_depth)
+        too_small_impurity_decrease = (self.min_impurity_decrease is not None and self.impurity_decrease < self.min_impurity_decrease)
+        
+        return reached_max_depth or too_small_impurity_decrease
+
 
     def fit(self, X, y):
         """
@@ -240,36 +213,20 @@ class DecisionTree:
         
         Parameters
         -------
-        X : np.ndarray (can be 1d array if there's only 1 feature)
-            predictor variables (features) to be checked
-            num of row (X.shape[0]) is the num of data samples
-            num of columns (X.shape[1]) is the num of features
+        X : np.ndarray (n, d)
+            Predictor variables (features) to be checked
+            n: num of data samples
+            d: num of features
             
-        y : np.ndarray
+        y : np.ndarray (n, c) 
             Target variable of classification or Regression problems.
-            This can be a 1d array indicating 0/1 for a binary classification
-            or real number for a regression.
-            Or a multi-dimensional array, indicating a one-hot encoded 
-            target variable for a multi-class classification. 
-
-            When 1d array:
-                Num of elements is the num of samples. 
-                Each value is 0 or 1, if classification
-                Each value is a real number if regression
-
-            When multi-dimensional array
-                Num of rows (y.shape[0]) is the num of samples.
-                Num of columns (y.shape[1]) is the num of classes.
-                Each value is either 0 or 1.
-                Sum of values in a single row is always 1.
+            c = 1 if regresssion or binary classification. 
+            else, c = num of classes for multi classification (one-hot encoded).
 
         Returns
         -------
         self: DecisionTree
         """
-
-        if self.is_regression and y.ndim > 1:
-            raise ValueError("Target variable for regression must be in R^1 space.")
         
         # if this is a root node, store the size of entire training data set
         if self.depth == 1:
@@ -294,11 +251,7 @@ class DecisionTree:
         self.impurity_decrease = max_decrease * (1.0*len(y)/self.N)
         
         # update 
-        if self.max_depth is not None and self.depth >= self.max_depth:
-            self.predictor = np.mean(y, axis=0)
-        elif self.min_impurity_decrease is not None and self.impurity_decrease < self.min_impurity_decrease:
-            self.predictor = np.mean(y, axis=0)
-        elif left_idx.sum()==0 or right_idx.sum()==0:
+        if self._stop_criteria() or left_idx.sum()==0 or right_idx.sum()==0:
             self.predictor = np.mean(y, axis=0)
         else:
             # fit left
@@ -317,47 +270,33 @@ class DecisionTree:
         
         Parameters
         -------
-        X : np.ndarray (can be 1d array if there's only 1 feature)
-            predictor variables (features) to be used for the prediction.
-            num of row (X.shape[0]) is the num of data samples
-            num of columns (X.shape[1]) is the num of features
+        X : np.ndarray (n, d)
+            Predictor variables (features) to be checked
+            n: num of data samples
+            d: num of features
             
         Returns
         -------
-        pred: np.ndarray
+        pred: np.ndarray (n, c)
             Predicted target variable of classification or Regression problems.
-            This can be a 1d array indicating 0/1 for a binary classification
-            or real number for a regression.
-            Or a multi-dimensional array, indicating a one-hot encoded 
-            target variable for a multi-class classification. 
-
-            When 1d array:
-                Num of elements is the num of samples. 
-                Each value is 0 or 1, if classification
-                Each value is a real number if regression
-
-            When multi-dimensional array
-                Num of rows (y.shape[0]) is the num of samples.
-                Num of columns (y.shape[1]) is the num of classes.
-                Each value is either 0 or 1.
-                Sum of values in a single row is always 1.
+            c = 1 if regresssion or binary classification. 
+            else, c = num of classes for multi classification (one-hot encoded).
 
         """
         
         if self.left is None or self.right is None: # this is a leaf node
             num_x = len(X) # number of samples to predict
-            if self.predictor.ndim == 0:
+
+            if self.predictor.ndim == 0: # binary classification or regression
                 pred = np.zeros(num_x) + self.predictor
-                if not self.is_regression: # classification: convert to 0/1
-                    pred = np.round(pred).astype(int)
-            else:
-                num_y = self.predictor.shape[0] # number of y to predict (= number of classes if it's classification)
+                if isinstance(self, Classifier):
+                    pred = prob2binary(pred)
+            
+            else: # multi classification
+                num_y = self.predictor.shape[0] # number of classes
                 pred = np.zeros((num_x, num_y)) + self.predictor
-                if not self.is_regression: # classification
-                    cls_pred = np.zeros((num_x, num_y),dtype=int)
-                    for i_sample, i_class in enumerate(np.argmax(pred,axis=1)):
-                        cls_pred[i_sample, i_class] = 1
-                    pred = cls_pred
+                pred = prob2binary(pred)
+
         
         else: # this isn't a leaf node   
 
@@ -384,7 +323,7 @@ class DecisionTree:
             
         return pred
 
-class DecisionTreeClassifier(DecisionTree):
+class DecisionTreeClassifier(DecisionTree, Classifier):
     """
     Decision tree for classification. 
 
@@ -406,7 +345,12 @@ class DecisionTreeClassifier(DecisionTree):
         self, 
         criterion='gini',
         max_depth=None, 
-        min_impurity_decrease=None):
+        min_impurity_decrease=None,
+        N=None,
+        depth=1
+        ):
+
+        self.criterion = criterion
 
         if criterion == 'gini':
             impurity_func = gini_impurity
@@ -416,15 +360,22 @@ class DecisionTreeClassifier(DecisionTree):
             raise ValueError('metric parameter needs to be either "gini" or "entropy".')
         
         super().__init__(
-            is_regression=False,
             impurity_func=impurity_func,
             max_depth=max_depth,
             min_impurity_decrease=min_impurity_decrease,
-            N=None,
-            depth=1
+            N=N,
+            depth=depth
         )
+    
+    def _create_node(self):
+        return DecisionTreeClassifier(
+                criterion=self.criterion, 
+                max_depth=self.max_depth, 
+                min_impurity_decrease=self.min_impurity_decrease,
+                N=self.N,
+                depth=self.depth+1)
 
-class DecisionTreeRegressor(DecisionTree):
+class DecisionTreeRegressor(DecisionTree, Regressor):
     """
     Decision tree for regression. 
 
@@ -446,7 +397,11 @@ class DecisionTreeRegressor(DecisionTree):
         self, 
         criterion='mse',
         max_depth=None, 
-        min_impurity_decrease=None):
+        min_impurity_decrease=None,
+        N=None,
+        depth=1):
+
+        self.criterion = criterion
 
         if criterion == 'mse':
             impurity_func = variance
@@ -456,10 +411,17 @@ class DecisionTreeRegressor(DecisionTree):
             raise ValueError('metric parameter needs to be either "mse" or "mae".')
         
         super().__init__(
-            is_regression=True,
             impurity_func=impurity_func,
             max_depth=max_depth,
             min_impurity_decrease=min_impurity_decrease,
-            N=None,
-            depth=1
+            N=N,
+            depth=depth
         )
+    
+    def _create_node(self):
+        return DecisionTreeRegressor(
+                criterion=self.criterion, 
+                max_depth=self.max_depth, 
+                min_impurity_decrease=self.min_impurity_decrease,
+                N=self.N,
+                depth=self.depth+1)

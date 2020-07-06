@@ -1,5 +1,5 @@
 """
-Random Forest
+Bagging
 
 References:
 """
