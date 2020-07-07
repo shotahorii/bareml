@@ -11,6 +11,7 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 176-187.
 # Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
+import random
 import numpy as np
 from mlfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation
 from mlfs.utils.misc import prob2binary
@@ -68,6 +69,7 @@ class DecisionTree(ABC):
         
         # a parameter for leaf nodes
         self.predictor = None
+
         
     @abstractmethod
     def _create_node(self):
@@ -75,6 +77,7 @@ class DecisionTree(ABC):
         Create a node with +1 depth.
         """
         raise ValueError('Not implemented.')
+
 
     def _compute_impurity_decrease(self, y_left, y_right):
         """
@@ -189,8 +192,7 @@ class DecisionTree(ABC):
                 best_split_threshold = threshold
 
         else: # more than 2 features in the data
-            n_features = X.shape[1]
-            for feature_idx in range(n_features):
+            for feature_idx in self._search_scope(X):
                 x_feature = X[:,feature_idx]
                 decrease, threshold = self._find_best_split_threshold(x_feature, y)
                 if decrease > max_decrease:
@@ -198,6 +200,13 @@ class DecisionTree(ABC):
                     best_split_threshold = threshold
         
         return best_split_feature_idx, best_split_threshold, max_decrease
+
+
+    def _search_scope(self, X):
+        """ Returns indices of features to serch best split."""
+        n_features = X.shape[1]
+        return range(n_features)
+
             
     def _stop_criteria(self):
         """ Criteria to stop tree growth. """
@@ -323,6 +332,50 @@ class DecisionTree(ABC):
             
         return pred
 
+
+class RandomTree(DecisionTree):
+    """ 
+    Base class for RandomTreeClassifier and RandomTreeRegressor. 
+    Just overriding _search_scope method from DecisionTree.
+    """
+
+    def __init__(
+        self, 
+        impurity_func,
+        max_features='sqrt',
+        max_depth=None, 
+        min_impurity_decrease=None,
+        N=None,
+        depth=1
+        ):
+
+        self.max_features = max_features
+        
+        super().__init__(
+            impurity_func=impurity_func,
+            max_depth=max_depth,
+            min_impurity_decrease=min_impurity_decrease,
+            N=N,
+            depth=depth
+        )
+
+    def _search_scope(self, X):
+        """ Returns indices of features to serch best split."""
+        n_features = X.shape[1]
+
+        if self.max_features == 'sqrt':
+            n_pick = round(math.sqrt(n_features))
+        elif self.max_features == 'log2':
+            n_pick = max(1, round(math.log2(n_features)))
+        elif isinstance(self.max_features, int):
+            n_pick = min(n_features, max(1, self.max_features))
+        else:
+            n_pick = n_features
+        
+        indices = random.sample(range(n_features), n_pick)
+        return indices
+
+
 class DecisionTreeClassifier(DecisionTree, Classifier):
     """
     Decision tree for classification. 
@@ -375,6 +428,7 @@ class DecisionTreeClassifier(DecisionTree, Classifier):
                 N=self.N,
                 depth=self.depth+1)
 
+
 class DecisionTreeRegressor(DecisionTree, Regressor):
     """
     Decision tree for regression. 
@@ -421,6 +475,131 @@ class DecisionTreeRegressor(DecisionTree, Regressor):
     def _create_node(self):
         return DecisionTreeRegressor(
                 criterion=self.criterion, 
+                max_depth=self.max_depth, 
+                min_impurity_decrease=self.min_impurity_decrease,
+                N=self.N,
+                depth=self.depth+1)
+
+
+class RandomTreeClassifier(RandomTree, Classifier):
+    """
+    Base class for Random forest classifier.
+
+    Parameters
+    ----------
+    max_features: string or int
+        The number of features to consider when looking for the best split.
+        if "sqrt": sqrt(n_features)
+        if "log2": log2(n_features)
+        if any int: min(n_features, max_features)
+        else: n_features
+
+    criterion: string
+        criterion to be used for measuring the impurity.
+        either "gini" or "entropy"
+
+    max_depth: int
+        maximum depth that the tree can grow
+    
+    min_impurity_decrease: float
+        if the impurity decrease is smaller than this, 
+        tree doesn't split.
+    """
+
+    def __init__(
+        self, 
+        criterion='gini',
+        max_features='sqrt',
+        max_depth=None, 
+        min_impurity_decrease=None,
+        N=None,
+        depth=1
+        ):
+
+        self.criterion = criterion
+
+        if criterion == 'gini':
+            impurity_func = gini_impurity
+        elif criterion == 'entropy':
+            impurity_func = entropy
+        else:
+            raise ValueError('metric parameter needs to be either "gini" or "entropy".')
+        
+        super().__init__(
+            impurity_func=impurity_func,
+            max_features=max_features,
+            max_depth=max_depth,
+            min_impurity_decrease=min_impurity_decrease,
+            N=N,
+            depth=depth
+        )
+    
+    def _create_node(self):
+        return RandomTreeClassifier(
+                criterion=self.criterion, 
+                max_features = self.max_features,
+                max_depth=self.max_depth, 
+                min_impurity_decrease=self.min_impurity_decrease,
+                N=self.N,
+                depth=self.depth+1)
+
+
+class RandomTreeRegressor(RandomTree, Regressor):
+    """
+    Base class for Random forest regressor.
+
+    Parameters
+    ----------
+    max_features: string or int
+        The number of features to consider when looking for the best split.
+        if "sqrt": sqrt(n_features)
+        if "log2": log2(n_features)
+        if any int: min(n_features, max_features)
+        else: n_features
+
+    criterion: string
+        criterion to be used for measuring the impurity.
+        either "mse" or "mae"
+
+    max_depth: int
+        maximum depth that the tree can grow
+    
+    min_impurity_decrease: float
+        if the impurity decrease is smaller than this, 
+        tree doesn't split.
+    """
+
+    def __init__(
+        self, 
+        criterion='mse',
+        max_features='sqrt',
+        max_depth=None, 
+        min_impurity_decrease=None,
+        N=None,
+        depth=1):
+
+        self.criterion = criterion
+
+        if criterion == 'mse':
+            impurity_func = variance
+        elif criterion == 'mae':
+            impurity_func = mean_deviation
+        else:
+            raise ValueError('metric parameter needs to be either "mse" or "mae".')
+        
+        super().__init__(
+            impurity_func=impurity_func,
+            max_features = max_features,
+            max_depth=max_depth,
+            min_impurity_decrease=min_impurity_decrease,
+            N=N,
+            depth=depth
+        )
+
+    def _create_node(self):
+        return RandomTreeRegressor(
+                criterion=self.criterion, 
+                max_features = self.max_features,
                 max_depth=self.max_depth, 
                 min_impurity_decrease=self.min_impurity_decrease,
                 N=self.N,
