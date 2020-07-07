@@ -48,7 +48,7 @@ class DecisionTree(ABC):
         max_depth=None, 
         min_impurity_decrease=None, 
         N=None,
-        depth=1):
+        depth=0):
         
         # parameters to define the behaviour of the entire tree (common across all nodes in the tree)
         self.max_depth = max_depth
@@ -238,7 +238,7 @@ class DecisionTree(ABC):
         """
         
         # if this is a root node, store the size of entire training data set
-        if self.depth == 1:
+        if self.depth == 0:
             self.N = len(y)
         
         # calculate this node's impurity 
@@ -346,7 +346,7 @@ class RandomTree(DecisionTree):
         max_depth=None, 
         min_impurity_decrease=None,
         N=None,
-        depth=1
+        depth=0
         ):
 
         self.max_features = max_features
@@ -400,7 +400,7 @@ class DecisionTreeClassifier(DecisionTree, Classifier):
         max_depth=None, 
         min_impurity_decrease=None,
         N=None,
-        depth=1
+        depth=0
         ):
 
         self.criterion = criterion
@@ -453,7 +453,7 @@ class DecisionTreeRegressor(DecisionTree, Regressor):
         max_depth=None, 
         min_impurity_decrease=None,
         N=None,
-        depth=1):
+        depth=0):
 
         self.criterion = criterion
 
@@ -513,7 +513,7 @@ class RandomTreeClassifier(RandomTree, Classifier):
         max_depth=None, 
         min_impurity_decrease=None,
         N=None,
-        depth=1
+        depth=0
         ):
 
         self.criterion = criterion
@@ -576,7 +576,7 @@ class RandomTreeRegressor(RandomTree, Regressor):
         max_depth=None, 
         min_impurity_decrease=None,
         N=None,
-        depth=1):
+        depth=0):
 
         self.criterion = criterion
 

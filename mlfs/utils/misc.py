@@ -67,11 +67,17 @@ def prob2binary(y):
         return np.round(y).astype(int)
     else:
         # avoid [[0.333, 0.333, 0.333], [0.2, 0.4, 0.4]] -> [[1, 1, 1], [0, 1, 1]]
-        while True:
-            y_plus_r = y + 1e-15 * np.random.rand(y.shape[0],y.shape[1])
-            binary = (y_plus_r == y_plus_r.max(axis=1)[:,None]).astype(int)
-            if binary.sum() == len(y):
-                return binary
+        # instead [[0.333, 0.333, 0.333], [0.2, 0.4, 0.4]] -> [[1, 0, 0], [0, 1, 0]]
+        y_bin = np.zeros_like(y)
+        y_bin[np.arange(len(y)), y.argmax(axis=1)] = 1 
+        return y_bin
+        
+        # random pick
+        #while True:
+        #    y_plus_r = y + 1e-15 * np.random.rand(y.shape[0],y.shape[1])
+        #    binary = (y_plus_r == y_plus_r.max(axis=1)[:,None]).astype(int)
+        #    if binary.sum() == len(y):
+        #        return binary
 
 def split_array(a, n):
     """
