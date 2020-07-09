@@ -27,7 +27,7 @@ from mlfs.supervised.base_classes import Classifier
 
 class LogisticRegression(Classifier):
     """ 
-    Ligistic Regression classifier (Binary Classification only)
+    Ligistic Regression classifier
     """
 
     def __init__(self, multiclass=False, alpha_l2=0, polynomial_degree=1, 

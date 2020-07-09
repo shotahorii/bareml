@@ -14,6 +14,7 @@ import math
 import numpy as np
 from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
 from mlfs.supervised.base_classes import Classifier
+from mlfs.utils.misc import prob2binary
 
 class NaiveBayes(Classifier):
 
@@ -79,7 +80,7 @@ class NaiveBayes(Classifier):
         posteriors = posteriors.T
 
         # probability to 1/0
-        y_pred = (posteriors == posteriors.max(axis=1)[:,None]).astype(int)
+        y_pred = prob2binary(posteriors)
 
         return y_pred
                 

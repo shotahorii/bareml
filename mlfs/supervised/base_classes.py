@@ -11,3 +11,10 @@ class Classifier(ABC):
 
 class Regressor(ABC):
     pass
+
+class Weighted(ABC):
+    """ 
+    Weighted samples are used for training.
+    fit() takes X, y and weights as parameters.
+    """
+    pass

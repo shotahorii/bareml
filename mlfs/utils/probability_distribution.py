@@ -184,7 +184,7 @@ class Binomial(DiscreteProbabilityDistribution):
 
         y: np.array (m,2)
             each row is a tuple of (n, k)
-            where m is the number of trial, and
+            where n is the number of trial, and
             k is the number of success in observed data point.
             m: number of data points
 
