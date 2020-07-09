@@ -13,7 +13,7 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 176-187.
 import math
 import random
 import numpy as np
-from mlfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation
+from mlfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation, classification_error
 from mlfs.utils.misc import prob2binary
 from mlfs.supervised.base_classes import Regressor, Classifier, Weighted
 from abc import ABC, abstractmethod
@@ -919,5 +919,30 @@ class WeightedDecisionTreeRegressor(WeightedDecisionTree, Regressor):
                 criterion=self.criterion, 
                 max_depth=self.max_depth, 
                 min_impurity_decrease=self.min_impurity_decrease,
+                N=self.N,
+                depth=self.depth+1)
+
+
+class WeightedDecisionStump(WeightedDecisionTree, Classifier):
+    """
+    Weak Learner for AdaBoost.
+    """
+
+    def __init__(
+        self, 
+        N=None,
+        depth=0
+        ):
+        
+        super().__init__(
+            impurity_func=classification_error,
+            max_depth=1,
+            min_impurity_decrease=None,
+            N=N,
+            depth=depth
+        )
+    
+    def _create_node(self):
+        return WeightedDecisionStump(
                 N=self.N,
                 depth=self.depth+1)
