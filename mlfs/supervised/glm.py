@@ -54,6 +54,8 @@ class GLM:
 
         self.params = opt_params
 
+        return self
+
     def predict(self, X):
         # add a column of 1 for bias 
         X = np.insert(X, 0, 1, axis=1)
@@ -70,7 +72,7 @@ class LogisticRegression(GLM, Classifier):
         super().__init__(Bernoulli())
 
     def fit(self, X, y):
-        super().fit(X, y)
+        return super().fit(X, y)
 
     def predict(self, X):
         y_pred = super().predict(X)
@@ -85,7 +87,7 @@ class LogisticRegressionBinom(GLM, Classifier):
         super().__init__(Binomial())
 
     def fit(self, X, y):
-        super().fit(X, y)
+        return super().fit(X, y)
 
     def predict(self, X):
         y_pred = super().predict(X)
@@ -97,7 +99,7 @@ class PoissonRegression(GLM, Regressor):
         super().__init__(Poisson())
 
     def fit(self, X, y):
-        super().fit(X, y)
+        return super().fit(X, y)
 
     def predict(self, X):
         return super().predict(X)
@@ -108,7 +110,7 @@ class LinearRegression(GLM, Regressor):
         super().__init__(Gaussian())
 
     def fit(self, X, y):
-        super().fit(X, y)
+        return super().fit(X, y)
 
     def predict(self, X):
         return super().predict(X)

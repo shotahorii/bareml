@@ -71,7 +71,7 @@ class RandomForestClassifier(Bagging, Classifier):
         )
 
     def fit(self, X, y):
-        super().fit(X, y)
+        return super().fit(X, y)
 
     def predict(self, X):
         return super().predict(X)
@@ -101,7 +101,7 @@ class RandomForestRegressor(Bagging, Regressor):
         )
     
     def fit(self, X, y):
-        super().fit(X, y)
+        return super().fit(X, y)
 
     def predict(self, X):
         return super().predict(X)

@@ -641,7 +641,7 @@ class DecisionTreeClassifier(DecisionTree, Classifier):
                 depth=self.depth+1)
 
     def fit(self, X, y):
-        super().fit(X, y)
+        return super().fit(X, y)
 
     def predict(self, X):
         return super().predict(X)
@@ -699,7 +699,7 @@ class DecisionTreeRegressor(DecisionTree, Regressor):
                 depth=self.depth+1)
 
     def fit(self, X, y):
-        super().fit(X, y)
+        return super().fit(X, y)
 
     def predict(self, X):
         return super().predict(X)
@@ -768,7 +768,7 @@ class RandomTreeClassifier(RandomTree, Classifier):
                 depth=self.depth+1)
 
     def fit(self, X, y):
-        super().fit(X, y)
+        return super().fit(X, y)
 
     def predict(self, X):
         return super().predict(X)
@@ -836,7 +836,7 @@ class RandomTreeRegressor(RandomTree, Regressor):
                 depth=self.depth+1)
     
     def fit(self, X, y):
-        super().fit(X, y)
+        return super().fit(X, y)
 
     def predict(self, X):
         return super().predict(X)
@@ -895,7 +895,7 @@ class WeightedDecisionTreeClassifier(WeightedDecisionTree, Classifier):
                 depth=self.depth+1)
 
     def fit(self, X, y, w=None):
-        super().fit(X, y, w)
+        return super().fit(X, y, w)
 
     def predict(self, X):
         return super().predict(X)
@@ -953,7 +953,7 @@ class WeightedDecisionTreeRegressor(WeightedDecisionTree, Regressor):
                 depth=self.depth+1)
 
     def fit(self, X, y, w=None):
-        super().fit(X, y, w)
+        return super().fit(X, y, w)
 
     def predict(self, X):
         return super().predict(X)
@@ -984,7 +984,7 @@ class WeightedDecisionStump(WeightedDecisionTree, Classifier):
                 depth=self.depth+1)
 
     def fit(self, X, y, w=None):
-        super().fit(X, y, w)
+        return super().fit(X, y, w)
 
     def predict(self, X):
         return super().predict(X)

@@ -326,8 +326,8 @@ def precision_recall_f1(y, y_pred, average='macro'):
     cm = confusion_matrix(y, y_pred)
 
     if y.ndim == 1: # binary classification
-        pr = cm.diagonal()/cm.sum(axis=0)[0]
-        rc = cm.diagonal()/cm.sum(axis=1)[0]
+        pr = (cm.diagonal()/cm.sum(axis=0))[0]
+        rc = (cm.diagonal()/cm.sum(axis=1))[0]
         f1 = 2*pr*rc / (pr+rc)
     elif average == 'macro': # multiclass - macro average
         pr_per_class = cm.diagonal()/cm.sum(axis=0)
