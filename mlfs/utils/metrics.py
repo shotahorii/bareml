@@ -10,6 +10,8 @@ References:
 import math
 import numpy as np
 
+from mlfs.utils.misc import binary2onehot
+
 #############################
 # Metrics for data impurity #
 #############################
@@ -277,18 +279,66 @@ def r_squqred(y, y_pred):
 # Metrics for classification #
 ##############################
 
-def accuracy(y, y_pred):
-    num_errors = np.sum(np.abs(y - y_pred))/2
-    return 1 - num_errors/len(y)
+def _weighted_sum(score, weights, normalise=False):
+    """
+    Parameters
+    ----------
+    score: np.ndarray (n,)
+    weights: np.ndarray (n,)
+    normalise: bool
 
-def false_positive(y, y_pred):
-    pass
+    Returns
+    -------
+    float
+    """
+    if normalise:
+        return np.average(score, weights=weights)
+    elif weights is not None:
+        return score @ weights
+    else:
+        return score.sum()
 
-def true_positive(y, y_pred):
-    pass
 
-def false_negative(y, y_pred):
-    pass
+def accuracy(y, y_pred, normalise=True, w=None):
+    
+    if y.ndim == 1: # binary classification
+        score = y == y_pred
+    else: # multiclass classification
+        score = (y == y_pred).all(axis=1)
 
-def true_negative(y, y_pred):
-    pass
+    return _weighted_sum(score, w, normalise)
+
+
+def confusion_matrix(y, y_pred):
+
+    if y.ndim == 1: # binary classification
+        y = binary2onehot(y)
+        y_pred = binary2onehot(y_pred)
+
+    return y.T @ y_pred
+
+
+def precision_recall_f1(y, y_pred, average='macro'):
+    """
+    average: str {'macro', 'micro'}
+    """
+    
+    cm = confusion_matrix(y, y_pred)
+
+    if y.ndim == 1: # binary classification
+        pr = cm.diagonal()/cm.sum(axis=0)[0]
+        rc = cm.diagonal()/cm.sum(axis=1)[0]
+        f1 = 2*pr*rc / (pr+rc)
+    elif average == 'macro': # multiclass - macro average
+        pr_per_class = cm.diagonal()/cm.sum(axis=0)
+        rc_per_class = cm.diagonal()/cm.sum(axis=1)
+        f1_per_class = 2*pr_per_class*rc_per_class / (pr_per_class+rc_per_class)
+        pr = np.mean(pr_per_class)
+        rc = np.mean(rc_per_class)
+        f1 = np.mean(f1_per_class)
+    elif average == 'micro': # multiclass - micro average
+        pr = rc = f1 = accuracy(y, y_pred)
+    else:
+        raise ValueError('select "macro" or "micro" average for multiclass.')
+
+    return pr, rc, f1

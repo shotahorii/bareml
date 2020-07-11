@@ -79,6 +79,7 @@ def prob2binary(y):
         #    if binary.sum() == len(y):
         #        return binary
 
+
 def split_array(a, n):
     """
     Split an array into n chunks.
@@ -92,3 +93,19 @@ def split_array(a, n):
     """
     k, m = divmod(len(a), n)
     return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
+
+
+def binary2onehot(y):
+    """
+    Convert binary to one-hot expression. 
+    e.g. np.array([1,0,0,1]) -> np.array([[0,1], [1,0], [1,0], [0,1]])
+
+    Parameters
+    ----------
+    y: np.array (n,) int {0,1}
+
+    Returns
+    -------
+    np.array (n,2)
+    """
+    return np.array([y, (y!=1).astype(int)]).T

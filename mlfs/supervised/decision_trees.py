@@ -640,6 +640,12 @@ class DecisionTreeClassifier(DecisionTree, Classifier):
                 N=self.N,
                 depth=self.depth+1)
 
+    def fit(self, X, y):
+        super().fit(X, y)
+
+    def predict(self, X):
+        return super().predict(X)
+
 
 class DecisionTreeRegressor(DecisionTree, Regressor):
     """
@@ -691,6 +697,12 @@ class DecisionTreeRegressor(DecisionTree, Regressor):
                 min_impurity_decrease=self.min_impurity_decrease,
                 N=self.N,
                 depth=self.depth+1)
+
+    def fit(self, X, y):
+        super().fit(X, y)
+
+    def predict(self, X):
+        return super().predict(X)
 
 
 class RandomTreeClassifier(RandomTree, Classifier):
@@ -755,6 +767,12 @@ class RandomTreeClassifier(RandomTree, Classifier):
                 N=self.N,
                 depth=self.depth+1)
 
+    def fit(self, X, y):
+        super().fit(X, y)
+
+    def predict(self, X):
+        return super().predict(X)
+
 
 class RandomTreeRegressor(RandomTree, Regressor):
     """
@@ -816,6 +834,12 @@ class RandomTreeRegressor(RandomTree, Regressor):
                 min_impurity_decrease=self.min_impurity_decrease,
                 N=self.N,
                 depth=self.depth+1)
+    
+    def fit(self, X, y):
+        super().fit(X, y)
+
+    def predict(self, X):
+        return super().predict(X)
 
 
 class WeightedDecisionTreeClassifier(WeightedDecisionTree, Classifier):
@@ -870,6 +894,12 @@ class WeightedDecisionTreeClassifier(WeightedDecisionTree, Classifier):
                 N=self.N,
                 depth=self.depth+1)
 
+    def fit(self, X, y, w=None):
+        super().fit(X, y, w)
+
+    def predict(self, X):
+        return super().predict(X)
+
 
 class WeightedDecisionTreeRegressor(WeightedDecisionTree, Regressor):
     """
@@ -922,6 +952,12 @@ class WeightedDecisionTreeRegressor(WeightedDecisionTree, Regressor):
                 N=self.N,
                 depth=self.depth+1)
 
+    def fit(self, X, y, w=None):
+        super().fit(X, y, w)
+
+    def predict(self, X):
+        return super().predict(X)
+
 
 class WeightedDecisionStump(WeightedDecisionTree, Classifier):
     """
@@ -946,3 +982,9 @@ class WeightedDecisionStump(WeightedDecisionTree, Classifier):
         return WeightedDecisionStump(
                 N=self.N,
                 depth=self.depth+1)
+
+    def fit(self, X, y, w=None):
+        super().fit(X, y, w)
+
+    def predict(self, X):
+        return super().predict(X)

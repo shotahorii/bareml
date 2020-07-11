@@ -70,6 +70,12 @@ class RandomForestClassifier(Bagging, Classifier):
             sampling_ratio=sampling_ratio
         )
 
+    def fit(self, X, y):
+        super().fit(X, y)
+
+    def predict(self, X):
+        return super().predict(X)
+
 class RandomForestRegressor(Bagging, Regressor):
 
     def __init__(self, 
@@ -93,7 +99,12 @@ class RandomForestRegressor(Bagging, Regressor):
             n_estimators=n_estimators,
             sampling_ratio=sampling_ratio
         )
-            
+    
+    def fit(self, X, y):
+        super().fit(X, y)
+
+    def predict(self, X):
+        return super().predict(X)
 
             
 

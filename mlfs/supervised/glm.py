@@ -69,6 +69,9 @@ class LogisticRegression(GLM, Classifier):
     def __init__(self):
         super().__init__(Bernoulli())
 
+    def fit(self, X, y):
+        super().fit(X, y)
+
     def predict(self, X):
         y_pred = super().predict(X)
         return prob2binary(y_pred)
@@ -81,6 +84,9 @@ class LogisticRegressionBinom(GLM, Classifier):
     def __init__(self):
         super().__init__(Binomial())
 
+    def fit(self, X, y):
+        super().fit(X, y)
+
     def predict(self, X):
         y_pred = super().predict(X)
         return prob2binary(y_pred)
@@ -90,7 +96,19 @@ class PoissonRegression(GLM, Regressor):
     def __init__(self):
         super().__init__(Poisson())
 
+    def fit(self, X, y):
+        super().fit(X, y)
+
+    def predict(self, X):
+        return super().predict(X)
+
 class LinearRegression(GLM, Regressor):
     """ Linear Regression """
     def __init__(self):
         super().__init__(Gaussian())
+
+    def fit(self, X, y):
+        super().fit(X, y)
+
+    def predict(self, X):
+        return super().predict(X)
