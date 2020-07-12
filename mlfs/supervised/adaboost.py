@@ -1,5 +1,5 @@
 """
-Ada Boost
+AdaBoost
 
 References:
 [1] Y. Freund and R.E. Schapire (1997). 
@@ -16,10 +16,20 @@ References:
     Improved boosting algorithms using confidence-rated prediction. 
     Machine Learning 37(3). 297–336.
     (https://sci2s.ugr.es/keel/pdf/algorithm/articulo/1999-ML-Improved%20boosting%20algorithms%20using%20confidence-rated%20predictions%20(Schapire%20y%20Singer).pdf)
-
-[5] C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 657-663.
-[6] Y. Hirai (2012). はじめてのパターン認識. 森北出版. 188-192.
-[7] Nikolaos Nikolaou. Introduction to AdaBoost. (https://nnikolaou.github.io/files/Introduction_to_AdaBoost.pdf)
+[5] T. Hastie, S. Rosset, J. Zhu, H. Zou (2009). Multi-class AdaBoost.
+    Statistics and its Interface, Volume 2 (2009). 349-360.
+    (https://www.intlpress.com/site/pub/files/_fulltext/journals/sii/2009/0002/0003/SII-2009-0002-0003-a008.pdf)
+[6] D.P. Solomatine, D.L. Shrestha (2004). 
+    AdaBoost.RT: a boosting algorithm for regression problems.
+    2004 IEEE International Joint Conference on Neural Networks (IEEE Cat. No.04CH37541).
+    (https://www.researchgate.net/publication/4116773_AdaBoostRT_A_boosting_algorithm_for_regression_problems)
+[7] H. Drucker (1997). Improving Regressors using Boosting Techniques.
+    ICML '97: Proceedings of the Fourteenth International Conference on Machine LearningJuly 1997. 107–115.
+    (http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.31.314&rep=rep1&type=pdf)
+    
+[8] C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 657-663.
+[9] Y. Hirai (2012). はじめてのパターン認識. 森北出版. 188-192.
+[10] Nikolaos Nikolaou. Introduction to AdaBoost. (https://nnikolaou.github.io/files/Introduction_to_AdaBoost.pdf)
 """
 
 # Author: Shota Horii <sh.sinker@gmail.com>
@@ -188,7 +198,82 @@ class AdaBoostM1(Classifier):
         return self.onehot.decode(y_pred)
 
     
+class AdaBoostSamme(Classifier):
+    """
+    AdaBoost SAMME Classifier
+    Implementation based on the refference [5].
+    """
 
+    def __init__(self, max_iterations=10, estimator=WeightedDecisionStump, estimator_params={}):
+        self.max_iterations = max_iterations
+        self.estimator = estimator
+        self.estimator_params = estimator_params
+        self.estimators = []
+        self.alphas = []
+        self.onehot = BinaryOnehotEncoder()
+
+    def fit(self, X, y):
+
+        # init weights
+        w = np.full(len(y), 1/len(y))
+
+        # treat binary classification as same data format as multi-class
+        if y.ndim == 1:
+            y_onehot = self.onehot.encode(y)
+        else:
+            y_onehot = y
+
+        k = y_onehot.shape[1]
+
+        for _ in range(self.max_iterations):
+            clf = self.estimator(**self.estimator_params)
+            y_pred = clf.fit(X, y, w).predict(X) # fit with original y NOT y_onehot
+
+            # treat binary classification as same data format as multi-class
+            if y.ndim == 1:
+                y_pred = self.onehot.encode(y_pred)
+            
+            # assign 1 to the samples which are wrongly predicted, 
+            # and assign 0 to the samples which are correctly predicted.
+            y_error = (~(y_onehot == y_pred).all(axis=1)).astype(int)
+
+            # calculate weighted error
+            epsilon = np.sum(y_error * w) / np.sum(w)
+
+            # avoid 0 division
+            epsilon = np.clip(epsilon, 1e-15, 1 - 1e-15)
+
+            # calculate alpha: how good this prediction is.
+            # alpha > 0 when 1 - epsilon > 1/k
+            alpha = np.log((1.0 - epsilon) / epsilon) + np.log(k-1)
+
+            # update weights
+            w = w * np.exp(alpha * y_error)
+            w = w/np.sum(w) # normalisation
+
+            # store m-th model & beta
+            self.estimators.append(clf)
+            self.alphas.append(alpha)
+
+        return self
+
+    def predict(self, X):
+
+        # y_preds.shape is (max_iterations, len(X), c) where c = number of classes
+        y_preds = np.array([clf.predict(X) for clf in self.estimators])
+
+        # treat binary classification as same data format as multi-class
+        if y_preds[0].ndim == 1:
+            y_preds = np.array([self.onehot.encode(y_pred) for y_pred in y_preds])
+        
+        # weighted majority vote
+        y_pred = np.zeros(y_preds[0].shape)
+        for t in range(len(y_preds)): # number of estimators
+            y_pred = y_pred + alphas[t] * y_preds[t]
+        
+        y_pred = prob2binary(y_pred)
+
+        return self.onehot.decode(y_pred)
 
 
 
