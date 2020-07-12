@@ -11,6 +11,7 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 54-69.
 # Author: Shota Horii <sh.sinker@gmail.com>
 
 import numpy as np
+
 from mlfs.utils.distances import euclidean_distance
 from mlfs.supervised.base_classes import Classifier
 

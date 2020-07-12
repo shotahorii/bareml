@@ -10,13 +10,15 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 176-187.
 
 # Author: Shota Horii <sh.sinker@gmail.com>
 
+from abc import ABC, abstractmethod
 import math
 import random
 import numpy as np
+
 from mlfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation, classification_error
 from mlfs.utils.transformers import prob2binary
 from mlfs.supervised.base_classes import Regressor, Classifier
-from abc import ABC, abstractmethod
+
 
 class DecisionTree(ABC):
     """

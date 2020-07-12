@@ -26,7 +26,8 @@ References:
 
 import math
 import numpy as np
-from mlfs.utils.misc import prob2binary
+
+from mlfs.utils.transformers import prob2binary
 from mlfs.supervised.base_classes import Classifier, Regressor
 from mlfs.supervised.decision_trees import WeightedDecisionStump
 

@@ -12,6 +12,7 @@ Reguralisation
 import math
 import numpy as np
 import scipy.optimize
+
 from mlfs.utils.transformers import prob2binary
 from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
 from mlfs.supervised.base_classes import Classifier, Regressor

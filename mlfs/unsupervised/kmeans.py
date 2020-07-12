@@ -15,6 +15,7 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 155-156.
 
 import math
 import numpy as np
+
 from mlfs.utils.distances import euclidean_distance
 
 class KMeans:

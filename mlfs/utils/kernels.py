@@ -8,6 +8,7 @@ References:
 
 import math
 import numpy as np
+
 from mlfs.utils.distances import l2_norm
 
 class LinearKernel:

@@ -5,6 +5,7 @@ base classes
 # Author: Shota Horii <sh.sinker@gmail.com>
 
 from abc import ABC, abstractmethod
+
 from mlfs.utils.metrics import accuracy, precision_recall_f1, mae, rmse, r_squqred
 
 class Classifier(ABC):

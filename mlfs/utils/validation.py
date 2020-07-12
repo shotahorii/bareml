@@ -7,6 +7,7 @@ References:
 # Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
+
 import numpy as np
 
 from mlfs.utils.misc import split_array
@@ -23,6 +24,7 @@ def shuffle_data(X, y, seed=None):
     np.random.shuffle(idx)
     return X[idx], y[idx]
 
+
 def train_test_split(X, y, test_ratio=0.5, shuffle=True, seed=None):
     """ 
     Split the data into train and test sets 
@@ -35,6 +37,7 @@ def train_test_split(X, y, test_ratio=0.5, shuffle=True, seed=None):
     y_train, y_test = y[:split_i], y[split_i:]
 
     return X_train, X_test, y_train, y_test
+
 
 class KFold:
     """
