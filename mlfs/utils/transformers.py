@@ -1,5 +1,5 @@
 """
-Preprocessing
+Transformer functions and classes
 
 References:
 """
@@ -13,13 +13,13 @@ import numpy as np
 from mlfs.utils.misc import flatten
 
 
-def binarise(X, threshold=0.5):
+def real2binary(X, threshold=0.5):
     """
-    Binarises values in array
+    Convert real values (-inf, inf) -> binary values {0,1}
 
     Parameters
     ----------
-    X: np.array (any shape) float/int in (-inf, inf)
+    X: np.array (n, m) float/int in (-inf, inf)
 
     threshold: float in (-inf, inf)
         value greater than this is converted into 1, otherwise 0
@@ -120,27 +120,48 @@ class StandardScaler:
         """
         return (X - self.mu) / self.s
 
+class OnehotEncoder:
+    pass
 
-def shuffle_data(X, y, seed=None):
-    """ 
-    Random shuffle of the samples in X and y 
-    https://github.com/eriklindernoren/ML-From-Scratch/blob/master/mlfromscratch/utils/data_manipulation.py
+
+def prob2binary(y):
     """
-    if seed:
-        np.random.seed(seed)
-    idx = np.arange(X.shape[0])
-    np.random.shuffle(idx)
-    return X[idx], y[idx]
+    Convert probability to binary data. 
+    For example, [0.6, 0.2, 0.8] -> [1, 0, 1]
+    Also, [[0.2, 0.5, 0.3], [0.1, 0.2, 0.7]] -> [[0, 1, 0], [0, 0, 1]]
 
-def train_test_split(X, y, test_ratio=0.5, shuffle=True, seed=None):
-    """ 
-    Split the data into train and test sets 
-    https://github.com/eriklindernoren/ML-From-Scratch/blob/master/mlfromscratch/utils/data_manipulation.py
+    Parameters
+    ----------
+    y: np.ndarray (n,d)
     """
-    if shuffle:
-        X, y = shuffle_data(X, y, seed)
-    split_i = len(y) - int(len(y) // (1 / test_ratio))
-    X_train, X_test = X[:split_i], X[split_i:]
-    y_train, y_test = y[:split_i], y[split_i:]
+    if y.ndim == 1:
+        return np.round(y).astype(int)
+    else:
+        # avoid [[0.333, 0.333, 0.333], [0.2, 0.4, 0.4]] -> [[1, 1, 1], [0, 1, 1]]
+        # instead [[0.333, 0.333, 0.333], [0.2, 0.4, 0.4]] -> [[1, 0, 0], [0, 1, 0]]
+        y_bin = np.zeros_like(y)
+        y_bin[np.arange(len(y)), y.argmax(axis=1)] = 1 
+        return y_bin
+        
+        # random pick
+        #while True:
+        #    y_plus_r = y + 1e-15 * np.random.rand(y.shape[0],y.shape[1])
+        #    binary = (y_plus_r == y_plus_r.max(axis=1)[:,None]).astype(int)
+        #    if binary.sum() == len(y):
+        #        return binary
+        
 
-    return X_train, X_test, y_train, y_test
+def binary2onehot(y):
+    """
+    Convert binary to one-hot expression. 
+    e.g. np.array([1,0,0,1]) -> np.array([[0,1], [1,0], [1,0], [0,1]])
+
+    Parameters
+    ----------
+    y: np.array (n,) int {0,1}
+
+    Returns
+    -------
+    np.array (n,2)
+    """
+    return np.array([y, (y!=1).astype(int)]).T

@@ -14,7 +14,7 @@ import math
 import numpy as np
 from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
 from mlfs.supervised.base_classes import Classifier
-from mlfs.utils.misc import prob2binary, binary2onehot
+from mlfs.utils.transformers import prob2binary, binary2onehot
 
 class NaiveBayes(Classifier):
 

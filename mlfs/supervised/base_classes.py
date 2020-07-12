@@ -5,7 +5,7 @@ base classes
 # Author: Shota Horii <sh.sinker@gmail.com>
 
 from abc import ABC, abstractmethod
-from mlfs.utils.metrics import accuracy, precision_recall_f1
+from mlfs.utils.metrics import accuracy, precision_recall_f1, mae, rmse, r_squqred
 
 class Classifier(ABC):
     
@@ -37,11 +37,12 @@ class Regressor(ABC):
         pass
 
     def score(self, X, y):
-        pass
+        y_pred = self.predict(X)
 
-class Weighted(ABC):
-    """ 
-    Weighted samples are used for training.
-    fit() takes X, y and weights as parameters.
-    """
-    pass
+        rmse_ = rmse(y, y_pred)
+        mae_ = mae(y, y_pred)
+        r2 = r_squqred(y, y_pred)
+
+        return {'rmse':rmse_, 'mae':mae_, 'r_squared':r2}
+
+

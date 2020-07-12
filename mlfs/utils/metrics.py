@@ -10,7 +10,7 @@ References:
 import math
 import numpy as np
 
-from mlfs.utils.misc import binary2onehot
+from mlfs.utils.transformers import binary2onehot
 
 #############################
 # Metrics for data impurity #

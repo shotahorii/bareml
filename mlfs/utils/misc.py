@@ -40,6 +40,21 @@ def flatten(l):
     return [item for sublist in l for item in sublist]
 
 
+def split_array(a, n):
+    """
+    Split an array into n chunks.
+    https://stackoverflow.com/questions/2130016/splitting-a-list-into-n-parts-of-approximately-equal-length
+
+    Parameters
+    ----------
+    a: array-like
+    n: int 
+        number of chunks
+    """
+    k, m = divmod(len(a), n)
+    return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
+
+
 def supremum_eigen(X):
     """
     Estimates approximate supremum of eigen values of a square matrix
@@ -78,22 +93,7 @@ def prob2binary(y):
         #    binary = (y_plus_r == y_plus_r.max(axis=1)[:,None]).astype(int)
         #    if binary.sum() == len(y):
         #        return binary
-
-
-def split_array(a, n):
-    """
-    Split an array into n chunks.
-    https://stackoverflow.com/questions/2130016/splitting-a-list-into-n-parts-of-approximately-equal-length
-
-    Parameters
-    ----------
-    a: array-like
-    n: int 
-        number of chunks
-    """
-    k, m = divmod(len(a), n)
-    return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
-
+        
 
 def binary2onehot(y):
     """

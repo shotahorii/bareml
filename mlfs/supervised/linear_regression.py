@@ -15,7 +15,7 @@ K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 458
 import math
 import numpy as np
 
-from mlfs.utils.preprocessing import polynomial_features, StandardScaler
+from mlfs.utils.transformers import polynomial_features, StandardScaler
 from mlfs.utils.solvers import PInv, LassoISTA, LeastSquareGD
 from mlfs.supervised.base_classes import Regressor
 

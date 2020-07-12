@@ -20,9 +20,8 @@ import math
 import numpy as np
 
 from mlfs.utils.activation_functions import Sigmoid, Softmax
-from mlfs.utils.preprocessing import add_bias, polynomial_features, StandardScaler
+from mlfs.utils.transformers import add_bias, polynomial_features, StandardScaler, prob2binary
 from mlfs.utils.solvers import CrossEntropyGD, CrossEntropyMultiGD
-from mlfs.utils.misc import prob2binary
 from mlfs.supervised.base_classes import Classifier
 
 class LogisticRegression(Classifier):

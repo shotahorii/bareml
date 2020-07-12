@@ -14,8 +14,8 @@ import math
 import random
 import numpy as np
 from mlfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation, classification_error
-from mlfs.utils.misc import prob2binary
-from mlfs.supervised.base_classes import Regressor, Classifier, Weighted
+from mlfs.utils.transformers import prob2binary
+from mlfs.supervised.base_classes import Regressor, Classifier
 from abc import ABC, abstractmethod
 
 class DecisionTree(ABC):
@@ -336,7 +336,7 @@ class DecisionTree(ABC):
         return pred
 
 
-class WeightedDecisionTree(DecisionTree, Weighted):
+class WeightedDecisionTree(DecisionTree):
 
     def __init__(self, impurity_func=None, max_depth=None, min_impurity_decrease=None, N=None, depth=0):
         super().__init__(
