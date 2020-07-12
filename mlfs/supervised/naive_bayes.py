@@ -15,7 +15,7 @@ import numpy as np
 
 from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
 from mlfs.supervised.base_classes import Classifier
-from mlfs.utils.transformers import prob2binary, binary2onehot
+from mlfs.utils.transformers import prob2binary, BinaryOnehotEncoder
 
 class NaiveBayes(Classifier):
 
@@ -23,13 +23,14 @@ class NaiveBayes(Classifier):
         self.prob = prob
         self.priors = None
         self.params = None
+        self.onehot = BinaryOnehotEncoder()
     
     def fit(self, X, y):
         
         # if binary classification, change the format of y
         # to make it same as multi class classification
         if y.ndim == 1:
-            y = binary2onehot(y)
+            y = self.onehot.encode(y)
 
         n_classes = y.shape[1]
         n_features = X.shape[1]
@@ -82,7 +83,7 @@ class NaiveBayes(Classifier):
         # probability to 1/0
         y_pred = prob2binary(posteriors)
 
-        return y_pred
+        return self.onehot.decode(y_pred)
                 
 
 class GaussianNB(NaiveBayes):

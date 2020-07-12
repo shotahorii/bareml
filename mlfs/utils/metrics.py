@@ -10,7 +10,7 @@ References:
 import math
 import numpy as np
 
-from mlfs.utils.transformers import binary2onehot
+from mlfs.utils.transformers import BinaryOnehotEncoder
 
 #############################
 # Metrics for data impurity #
@@ -311,9 +311,11 @@ def accuracy(y, y_pred, normalise=True, w=None):
 
 def confusion_matrix(y, y_pred):
 
+    onehot = BinaryOnehotEncoder()
+
     if y.ndim == 1: # binary classification
-        y = binary2onehot(y)
-        y_pred = binary2onehot(y_pred)
+        y = onehot.encode(y)
+        y_pred = onehot.encode(y_pred)
 
     return y.T @ y_pred
 

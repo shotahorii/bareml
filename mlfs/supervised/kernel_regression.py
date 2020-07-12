@@ -9,7 +9,7 @@ References:
 import math
 import numpy as np
 
-from mlfs.utils.preprocessing import StandardScaler
+from mlfs.utils.transformers import StandardScaler
 from mlfs.utils.solvers import LeastSquareGD
 from mlfs.utils.kernels import LinearKernel, PolynomialKernel, RBFKernel, SigmoidKernel
 from mlfs.supervised.base_classes import Regressor

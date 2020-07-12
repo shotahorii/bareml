@@ -7,7 +7,6 @@ References:
 # Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
-
 import numpy as np
 
 from mlfs.utils.misc import split_array
