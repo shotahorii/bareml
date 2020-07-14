@@ -14,8 +14,10 @@ import numpy as np
 import scipy.optimize
 
 from mlfs.utils.transformers import prob2binary
+from mlfs.utils.model_tuning import initialise_random
 from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
 from mlfs.supervised.base_classes import Classifier, Regressor
+
 
 class GLM:
     """ Generalised Linear Model """
@@ -24,30 +26,13 @@ class GLM:
         self.prob = prob
         self.params = None
 
-    def _initialise_params(self, n_params):
-        """
-        Initialise the value of parameters to estimate
-
-        Parameters
-        ----------
-        n_params: int
-            number of parameters to estimate
-        """
-
-        # initialise params in [-1/sqrt(n), 1/sqrt(n)) 
-        # why? see below articles. 
-        # https://leimao.github.io/blog/Weights-Initialization/
-        # https://stats.stackexchange.com/questions/47590/what-are-good-initial-weights-in-a-neural-network
-        limit = 1 / math.sqrt(n_params)
-        return np.random.uniform(-limit, limit, n_params)
-
     def fit(self, X, y):
 
         # add a column of 1 for bias 
         X = np.insert(X, 0, 1, axis=1)
 
         # init params
-        params = self._initialise_params(X.shape[1])
+        params = initialise_random(X.shape[1])
 
         minimise_func = lambda params, X, y: -np.sum(self.prob.llh(y, self.prob.link(params @ X.T), opt_for_minimise=True))
 
@@ -79,6 +64,7 @@ class LogisticRegression(GLM, Classifier):
         y_pred = super().predict(X)
         return prob2binary(y_pred)
 
+
 class LogisticRegressionBinom(GLM, Classifier):
     """ 
     Logistic Regression 
@@ -94,6 +80,7 @@ class LogisticRegressionBinom(GLM, Classifier):
         y_pred = super().predict(X)
         return prob2binary(y_pred)
 
+
 class PoissonRegression(GLM, Regressor):
     """ Poisson Regression """
     def __init__(self):
@@ -104,6 +91,7 @@ class PoissonRegression(GLM, Regressor):
 
     def predict(self, X):
         return super().predict(X)
+
 
 class LinearRegression(GLM, Regressor):
     """ Linear Regression """

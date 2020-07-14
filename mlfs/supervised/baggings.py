@@ -11,6 +11,7 @@ import random
 import numpy as np
 
 from mlfs.utils.transformers import prob2binary
+from mlfs.utils.validation import bootstrap_sampling
 from mlfs.supervised.base_classes import Classifier, Regressor
 from mlfs.supervised.decision_trees import RandomTreeClassifier, RandomTreeRegressor
 
@@ -25,12 +26,12 @@ class Bagging:
 
     def fit(self, X, y):
 
-        n_samples = int( round( len(X) * self.sampling_ratio ) )
-
         for _ in range(self.n_estimators):
-            sample_idx = random.choices( np.arange(len(X)), k=n_samples)
+
+            X_bootstrap, y_bootstrap = bootstrap_sampling(X, y, self.sampling_ratio)
+
             estimator = self.estimator(**self.estimator_params)
-            estimator.fit(X[sample_idx], y[sample_idx])
+            estimator.fit(X_bootstrap, y_bootstrap)
             self.estimators.append(estimator)
         
         return self
