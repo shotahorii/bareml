@@ -12,9 +12,11 @@ import numpy as np
 
 from mlfs.utils.transformers import BinaryOnehotEncoder
 
+
 #############################
 # Metrics for data impurity #
 #############################
+
 
 def entropy(y, w=None):
     """ 
@@ -198,9 +200,77 @@ def mean_deviation(y, w=None):
     md = np.average(np.abs(y-mu), weights=w)
     return md
 
+
 ##########################
 # Metrics for regression #
 ##########################
+
+
+def squared_errors(y, y_pred):
+    """ 
+    Computes squared error for each sample.
+    
+    Parameters
+    ----------
+    y: np.ndarray (1d array)
+        Target variable of regression problems.
+        Number of elements is the number of data samples. 
+    
+    y_pred: np.ndarray (1d array)
+        Predicted values for the given target variable. 
+        Number of elements is the number of data samples. 
+
+    Returns
+    -------
+    np.ndarray (1d array)
+        squared error for each sample
+    """
+    return np.power(y-y_pred,2)
+
+
+def absolute_errors(y, y_pred):
+    """ 
+    Computes absolute error for each sample.
+    
+    Parameters
+    ----------
+    y: np.ndarray (1d array)
+        Target variable of regression problems.
+        Number of elements is the number of data samples. 
+    
+    y_pred: np.ndarray (1d array)
+        Predicted values for the given target variable. 
+        Number of elements is the number of data samples. 
+
+    Returns
+    -------
+    np.ndarray (1d array)
+        absolute error for each sample
+    """
+    return np.abs(y-y_pred)
+
+
+def absolute_relative_errors(y, y_pred):
+    """ 
+    Computes absolute relative error for each sample.
+    
+    Parameters
+    ----------
+    y: np.ndarray (1d array)
+        Target variable of regression problems.
+        Number of elements is the number of data samples. 
+    
+    y_pred: np.ndarray (1d array)
+        Predicted values for the given target variable. 
+        Number of elements is the number of data samples. 
+
+    Returns
+    -------
+    np.ndarray (1d array)
+        absolute relative error for each sample 
+    """
+    return np.abs((y-y_pred)/y)
+
 
 def mse(y, y_pred):
     """ 
@@ -221,7 +291,8 @@ def mse(y, y_pred):
     float
         mean squared error 
     """
-    return np.mean(np.power(y-y_pred,2))
+    return np.mean(squared_errors(y, y_pred))
+
 
 def rmse(y, y_pred):
     """ 
@@ -245,7 +316,6 @@ def rmse(y, y_pred):
     return np.sqrt(mse(y, y_pred))
 
 
-
 def mae(y, y_pred):
     """ 
     Computes mean absolute error.
@@ -265,19 +335,25 @@ def mae(y, y_pred):
     float
         mean absolute error 
     """
-    return np.mean(np.abs(y-y_pred))
+    return np.mean(absolute_errors(y, y_pred))
+
+
+
 
 def rss(y, y_pred):
     """ residual sum of squares """
-    return np.sum(np.power(y-y_pred,2))
+    return np.sum(squared_errors(y, y_pred))
+
 
 def r_squqred(y, y_pred):
     denom = np.sum(np.power(y-y.mean(),2))
     return 1 - rss(y, y_pred)/denom
 
+
 ##############################
 # Metrics for classification #
 ##############################
+
 
 def _weighted_sum(score, weights, normalise=False):
     """

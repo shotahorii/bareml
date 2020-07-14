@@ -961,9 +961,9 @@ class WeightedDecisionTreeRegressor(WeightedDecisionTree, Regressor):
         return super().predict(X)
 
 
-class WeightedDecisionStump(WeightedDecisionTree, Classifier):
+class WeightedDecisionStumpClassifier(WeightedDecisionTree, Classifier):
     """
-    Weak Learner for AdaBoost.
+    Weak Learner for AdaBoost Classifiers.
     """
 
     def __init__(
@@ -981,7 +981,38 @@ class WeightedDecisionStump(WeightedDecisionTree, Classifier):
         )
     
     def _create_node(self):
-        return WeightedDecisionStump(
+        return WeightedDecisionStumpClassifier(
+                N=self.N,
+                depth=self.depth+1)
+
+    def fit(self, X, y, w=None):
+        return super().fit(X, y, w)
+
+    def predict(self, X):
+        return super().predict(X)
+
+
+class WeightedDecisionStumpRegressor(WeightedDecisionTree, Regressor):
+    """
+    Weak Learner for AdaBoost Regressors.
+    """
+
+    def __init__(
+        self, 
+        N=None,
+        depth=0
+        ):
+        
+        super().__init__(
+            impurity_func=mean_deviation,
+            max_depth=1,
+            min_impurity_decrease=None,
+            N=N,
+            depth=depth
+        )
+    
+    def _create_node(self):
+        return WeightedDecisionStumpRegressor(
                 N=self.N,
                 depth=self.depth+1)
 
