@@ -10,6 +10,7 @@ import math
 import numpy as np
 
 from mlfs.utils.misc import split_array
+from mlfs.utils.transformers import OnehotEncoder
 
 
 def shuffle_data(X, y, seed=None):
@@ -44,6 +45,7 @@ def bootstrap_sampling(X, y, sampling_ratio=1.0):
     sample_idx = random.choices( np.arange(len(X)), k=n_samples)
     return X[sample_idx], y[sample_idx]
 
+
 class KFold:
     """
     KFold cross validation.
@@ -73,3 +75,49 @@ class KFold:
             train_idx = np.setdiff1d(indices, test_idx)
             yield train_idx, test_idx
         
+
+class StratifiedKFold:
+    """
+    Stratified KFold cross validation.
+
+    Parameters
+    ----------
+    n_splits: int >= 2
+        Number of folds
+    shuffle: bool
+        Whether to shuffle the data before splitting into batches
+    seed: int
+        random state.
+    """
+    def __init__(self, n_splits=5, shuffle=False, seed=None):
+        self.n_splits = n_splits
+        self.shuffle = shuffle
+        self.seed = seed
+
+    def split(self, X, y):
+
+        if y.ndim != 1: # multi-class classification
+            onehot = OnehotEncoder()
+            y = onehot.decode(y) # express in 1d array
+
+        classes = np.unique(y) # list of classes
+
+        # divide entire indices into each class
+        # e.g. if y = [0,0,1,2,2] -> by_class = [[0,1],[2],[3,4]]
+        by_class = [np.where(y==c)[0] for c in classes]
+
+        # shuffle each class's index list, if shuffle.
+        if self.shuffle:
+            if self.seed:
+                np.random.seed(self.seed)
+            for l in by_class:
+                np.random.shuffle(l)
+
+        # split each class's index list into k-chunks
+        by_class_splitted = [list(split_array(l,self.n_splits)) for l in by_class]
+        # merge all classes in same chunk
+        chunks = [np.concatenate([by_class_splitted[c][s] for c in range(len(classes))]) for s in range(self.n_splits)]
+
+        for test_idx in chunks:
+            train_idx = np.setdiff1d(np.arange(len(X)), test_idx)
+            yield train_idx, test_idx

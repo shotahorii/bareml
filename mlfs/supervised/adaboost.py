@@ -41,7 +41,7 @@ References:
 import math
 import numpy as np
 
-from mlfs.utils.transformers import prob2binary, binary2sign, sign2binary, BinaryOnehotEncoder
+from mlfs.utils.transformers import prob2binary, binary2sign, sign2binary, OnehotEncoder
 from mlfs.supervised.base_classes import Classifier, Regressor
 from mlfs.supervised.decision_trees import WeightedDecisionStumpClassifier, WeightedDecisionStumpRegressor
 from mlfs.utils.metrics import absolute_relative_errors, absolute_errors
@@ -129,7 +129,7 @@ class AdaBoostM1(Classifier):
         self.estimator_params = estimator_params
         self.estimators = []
         self.betas = []
-        self.onehot = BinaryOnehotEncoder()
+        self.onehot = OnehotEncoder()
 
     def fit(self, X, y):
 
@@ -215,7 +215,7 @@ class AdaBoostSamme(Classifier):
         self.estimator_params = estimator_params
         self.estimators = []
         self.alphas = []
-        self.onehot = BinaryOnehotEncoder()
+        self.onehot = OnehotEncoder()
 
     def fit(self, X, y):
 

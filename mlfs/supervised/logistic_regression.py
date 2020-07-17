@@ -20,7 +20,7 @@ import math
 import numpy as np
 
 from mlfs.utils.activation_functions import Sigmoid, Softmax
-from mlfs.utils.transformers import add_bias, polynomial_features, StandardScaler, prob2binary
+from mlfs.utils.transformers import add_intercept, polynomial_features, StandardScaler, prob2binary
 from mlfs.utils.solvers import CrossEntropyGD, CrossEntropyMultiGD
 from mlfs.supervised.base_classes import Classifier
 

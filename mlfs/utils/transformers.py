@@ -158,14 +158,11 @@ class OnehotEncoder(Encoder):
         y: np.array (n,)
             n: number of samples 
         """
+
+        if self.code is None:
+            self.code = np.arange(Y.shape[1])
+
         return np.array([self.code[i] for i in np.argmax(Y, axis=1)])
-
-
-class BinaryOnehotEncoder(OnehotEncoder):
-    """ Encode [0,1,0,...] -> [[0,1],[1,0],[0,1],...] """
-
-    def __init__(self):
-        super().__init__(code=np.array([1,0]))
 
 
 ########## Other functions ##########

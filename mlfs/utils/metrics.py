@@ -10,7 +10,7 @@ References:
 import math
 import numpy as np
 
-from mlfs.utils.transformers import BinaryOnehotEncoder
+from mlfs.utils.transformers import OnehotEncoder
 
 
 #############################
@@ -387,7 +387,7 @@ def accuracy(y, y_pred, normalise=True, w=None):
 
 def confusion_matrix(y, y_pred):
 
-    onehot = BinaryOnehotEncoder()
+    onehot = OnehotEncoder()
 
     if y.ndim == 1: # binary classification
         y = onehot.encode(y)
@@ -404,8 +404,8 @@ def precision_recall_f1(y, y_pred, average='macro'):
     cm = confusion_matrix(y, y_pred)
 
     if y.ndim == 1: # binary classification
-        pr = (cm.diagonal()/cm.sum(axis=0))[0]
-        rc = (cm.diagonal()/cm.sum(axis=1))[0]
+        pr = (cm.diagonal()/cm.sum(axis=0))[1]
+        rc = (cm.diagonal()/cm.sum(axis=1))[1]
         f1 = 2*pr*rc / (pr+rc)
     elif average == 'macro': # multiclass - macro average
         pr_per_class = cm.diagonal()/cm.sum(axis=0)

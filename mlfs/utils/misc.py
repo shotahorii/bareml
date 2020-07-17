@@ -42,7 +42,7 @@ def flatten(l):
 
 def split_array(a, n):
     """
-    Split an array into n chunks.
+    Split an array into n chunks. 
     https://stackoverflow.com/questions/2130016/splitting-a-list-into-n-parts-of-approximately-equal-length
 
     Parameters
@@ -66,46 +66,3 @@ def supremum_eigen(X):
     X: np.ndarray (d,d)
     """
     return np.max(np.sum(np.abs(X), axis=0))
-
-
-def prob2binary(y):
-    """
-    Convert probability to binary data. 
-    For example, [0.6, 0.2, 0.8] -> [1, 0, 1]
-    Also, [[0.2, 0.5, 0.3], [0.1, 0.2, 0.7]] -> [[0, 1, 0], [0, 0, 1]]
-
-    Parameters
-    ----------
-    y: np.ndarray (n,d)
-    """
-    if y.ndim == 1:
-        return np.round(y).astype(int)
-    else:
-        # avoid [[0.333, 0.333, 0.333], [0.2, 0.4, 0.4]] -> [[1, 1, 1], [0, 1, 1]]
-        # instead [[0.333, 0.333, 0.333], [0.2, 0.4, 0.4]] -> [[1, 0, 0], [0, 1, 0]]
-        y_bin = np.zeros_like(y)
-        y_bin[np.arange(len(y)), y.argmax(axis=1)] = 1 
-        return y_bin
-        
-        # random pick
-        #while True:
-        #    y_plus_r = y + 1e-15 * np.random.rand(y.shape[0],y.shape[1])
-        #    binary = (y_plus_r == y_plus_r.max(axis=1)[:,None]).astype(int)
-        #    if binary.sum() == len(y):
-        #        return binary
-        
-
-def binary2onehot(y):
-    """
-    Convert binary to one-hot expression. 
-    e.g. np.array([1,0,0,1]) -> np.array([[0,1], [1,0], [1,0], [0,1]])
-
-    Parameters
-    ----------
-    y: np.array (n,) int {0,1}
-
-    Returns
-    -------
-    np.array (n,2)
-    """
-    return np.array([y, (y!=1).astype(int)]).T
