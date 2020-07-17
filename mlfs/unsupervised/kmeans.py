@@ -147,7 +147,7 @@ class KMeans:
         
         return assigned_centroid, dist_to_assigned_centroid
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """
         Compute K (=self.k) centroids from the given iput data X
 
@@ -158,6 +158,10 @@ class KMeans:
             Num of rows (X.shape[0]) is the num of samples.
             Num of columns (X.shape[1]) is the num of variables
             for clustering.
+        
+        y: Ignored
+            Always ignored. Exist only for consistency with 
+            supervised estimators' fit method. 
         
         Returns
         -------

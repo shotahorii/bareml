@@ -2,6 +2,8 @@
 Validation
 
 References:
+
+ToDo: GroupKFold
 """
 
 # Author: Shota Horii <sh.sinker@gmail.com>
@@ -39,11 +41,29 @@ def train_test_split(X, y, test_ratio=0.5, shuffle=True, seed=None):
     return X_train, X_test, y_train, y_test
 
 
-def bootstrap_sampling(X, y, sampling_ratio=1.0):
-    """ bootstrap sampling """
-    n_samples = int(round(len(X) * sampling_ratio))
-    sample_idx = random.choices( np.arange(len(X)), k=n_samples)
-    return X[sample_idx], y[sample_idx]
+def cross_val_predict(estimator, X, y=None, cv=5, stratified=False, shuffle=False, seed=None):
+
+    kf = StratifiedKFold(cv, shuffle, seed) if stratified else KFold(cv, shuffle, seed)
+
+    test_indices = []
+    test_preds = []
+
+    for train_idx, test_idx in kf.split(X, y):
+
+        X_train = X[train_idx]
+        y_train = None if y is None else y[train_idx]
+
+        test_pred = estimator.fit(X_train, y_train).predict(X[test_idx])
+
+        test_indices.append(test_idx)
+        test_preds.append(test_pred)
+
+    test_indices = np.concatenate(test_indices)
+    test_preds = np.concatenate(test_preds)
+
+    return test_preds[test_indices.argsort()]
+    
+
 
 
 class KFold:
@@ -121,3 +141,36 @@ class StratifiedKFold:
         for test_idx in chunks:
             train_idx = np.setdiff1d(np.arange(len(X)), test_idx)
             yield train_idx, test_idx
+
+
+class GroupKFold:
+    """
+    K-fold iterator variant with non-overlapping groups.
+    The same group will not appear in two different folds 
+    (the number of distinct groups has to be at least equal to the number of folds).
+
+    Parameters
+    ----------
+    n_splits: int >= 2
+        Number of folds
+    """
+    def __init__(self, n_splits=5):
+        self.n_splits = n_splits
+    
+    def split(self, X, y, groups):
+        """
+        Parameters
+        ----------
+        X: np.ndarray (n, d)
+        y: np.ndarray (n, c)
+        groups np.ndarray (n,)
+
+        Yields
+        ------
+        train_idx: np.ndarray (a,)
+        test_idx: np.ndarray (n-a,)
+        """
+        pass
+
+
+    
