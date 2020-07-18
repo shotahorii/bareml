@@ -278,7 +278,10 @@ class AdaBoostSamme(Classifier):
         
         y_pred = prob2binary(y_pred)
 
-        return self.onehot.decode(y_pred)
+        if y_preds[0].ndim == 1:
+            return self.onehot.decode(y_pred)
+        else:
+            return y_pred
 
 
 class AdaBoostRT(Regressor):
@@ -360,7 +363,7 @@ class AdaBoostR2(Regressor):
             self.loss = self._linear_loss
         elif loss=='square':
             self.loss = self._square_loss
-        elif loss='exponential':
+        elif loss=='exponential':
             self.loss = self._exponential_loss
         else:
             raise ValueError('loss needs to be "linear", "square" or "exponential".')
