@@ -83,6 +83,7 @@ class LinearRegression(Regressor):
         -------
         self: LinearRegression
         """
+        X, y = self._validate_Xy(X, y)
 
         X = polynomial_features(X, self.polynomial_degree)
 
@@ -136,6 +137,7 @@ class LinearRegression(Regressor):
             predicted target variables
             n: number of samples
         """
+        X = self._validate_X(X)
 
         X = polynomial_features(X, self.polynomial_degree)
 

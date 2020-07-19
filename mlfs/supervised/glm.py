@@ -19,7 +19,7 @@ from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Ga
 from mlfs.supervised.base_classes import Classifier, Regressor
 
 
-class GLM:
+class _GLM:
     """ Generalised Linear Model """
     
     def __init__(self, prob):
@@ -49,7 +49,7 @@ class GLM:
         return self.prob.link(self.params.x @ X.T)
 
 
-class LogisticRegression(GLM, Classifier):
+class LogisticRegression(_GLM, Classifier):
     """ 
     Logistic Regression 
     where the target variable is {0,1}
@@ -58,14 +58,19 @@ class LogisticRegression(GLM, Classifier):
         super().__init__(Bernoulli())
 
     def fit(self, X, y):
+        X, y = self._validate_Xy(X,y)
         return super().fit(X, y)
 
     def predict(self, X):
-        y_pred = super().predict(X)
-        return prob2binary(y_pred)
+        X = self._validate_X(X)
+        return prob2binary(super().predict(X))
+
+    def predict_proba(self, X):
+        X = self._validate_X(X)
+        return super().predict(X)
 
 
-class LogisticRegressionBinom(GLM, Classifier):
+class LogisticRegressionBinom(_GLM, Classifier):
     """ 
     Logistic Regression 
     where the target variable is described as a pair of values (n, k)
@@ -74,32 +79,41 @@ class LogisticRegressionBinom(GLM, Classifier):
         super().__init__(Binomial())
 
     def fit(self, X, y):
+        X, y = self._validate_Xy(X,y)
         return super().fit(X, y)
 
     def predict(self, X):
-        y_pred = super().predict(X)
-        return prob2binary(y_pred)
+        X = self._validate_X(X)
+        return prob2binary(super().predict(X))
+
+    def predict_proba(self, X):
+        X = self._validate_X(X)
+        return super().predict(X)
 
 
-class PoissonRegression(GLM, Regressor):
+class PoissonRegression(_GLM, Regressor):
     """ Poisson Regression """
     def __init__(self):
         super().__init__(Poisson())
 
     def fit(self, X, y):
+        X, y = self._validate_Xy(X,y)
         return super().fit(X, y)
 
     def predict(self, X):
+        X = self._validate_X(X)
         return super().predict(X)
 
 
-class LinearRegression(GLM, Regressor):
+class LinearRegression(_GLM, Regressor):
     """ Linear Regression """
     def __init__(self):
         super().__init__(Gaussian())
 
     def fit(self, X, y):
+        X, y = self._validate_Xy(X,y)
         return super().fit(X, y)
 
     def predict(self, X):
+        X = self._validate_X(X)
         return super().predict(X)

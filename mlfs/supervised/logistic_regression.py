@@ -71,6 +71,7 @@ class LogisticRegression(Classifier):
         -------
         self: LogisticRegression
         """
+        X, y = self._validate_Xy(X, y)
 
         X = polynomial_features(X, self.polynomial_degree)
         X[:,1:] = self.scaler.fit(X[:,1:]).transform(X[:,1:])
@@ -80,7 +81,7 @@ class LogisticRegression(Classifier):
 
         return self
 
-    def predict(self, X):
+    def predict_proba(self, X):
         """ 
         Predict.
         
@@ -94,9 +95,12 @@ class LogisticRegression(Classifier):
         y_pred: np.ndarray (1d array)
             target variable. 
         """
+        X = self._validate_X(X)
+
         X = polynomial_features(X, self.polynomial_degree)
         X[:,1:] = self.scaler.transform(X[:,1:])
 
-        y_pred = self.activation(np.dot(X,self.w))
+        return self.activation(np.dot(X,self.w))
 
-        return prob2binary(y_pred)
+    def predict(self, X):
+        return prob2binary(self.predict_proba(X))

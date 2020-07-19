@@ -40,6 +40,8 @@ class KernelRegression(Regressor):
             raise ValueError('Invalid Kernel.')
 
     def fit(self, X, y):
+        X, y = self._validate_Xy(X, y)
+
         X = self.scaler.fit(X).transform(X)
         self.X = X
 
@@ -55,6 +57,8 @@ class KernelRegression(Regressor):
         return self
 
     def predict(self, X):
+        X = self._validate_X(X)
+
         X = self.scaler.transform(X)
         
         N = self.X.shape[0]

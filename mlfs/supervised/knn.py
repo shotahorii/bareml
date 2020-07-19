@@ -11,13 +11,15 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 54-69.
 # Author: Shota Horii <sh.sinker@gmail.com>
 
 import numpy as np
+from abc import ABC, abstractmethod
 
 from mlfs.utils.distances import euclidean_distance
-from mlfs.supervised.base_classes import Classifier
+from mlfs.supervised.base_classes import Classifier, Regressor
+from mlfs.utils.transformers import prob2binary
 
-class KNN(Classifier):
+class _KNN(ABC):
     """ 
-    K Nearest Neighbors classifier
+    K Nearest Neighbors
 
     Parameters
     ----------
@@ -57,6 +59,10 @@ class KNN(Classifier):
 
         return self 
 
+    @abstractmethod
+    def _predict(self, k_nearest_y):
+        pass
+
     def predict(self, X):
         """ 
         Parameters
@@ -70,18 +76,73 @@ class KNN(Classifier):
             one-hot encoded target variable
         """
 
-        y_pred = np.zeros([X.shape[0],self.y.shape[1]],dtype=int)
+        if self.y.ndim == 1: # regression or binary classification
+            y_preds = np.zeros([X.shape[0])
+        else: # multi class classification
+            y_preds = np.zeros([X.shape[0],self.y.shape[1]])
 
         for i, x_pred in enumerate(X):
             # find k nearest trained data
             k_nearest_idx = np.argsort([euclidean_distance(x_pred, x) for x in self.X])[:self.k]
             # get target variables of those k data
             k_nearest_y = self.y[k_nearest_idx]
-            # count number of each class in the nearlest k data
-            num_each_class = k_nearest_y.sum(axis=0)
             # update y_pred
-            # note that this implementation doesn't have function to
-            # select randomly when there're multiple classes are majority
-            y_pred[i, np.argmax(num_each_class)] = 1
+            y_preds[i] = self._predict(k_nearest_y)
             
-        return y_pred
+        return y_preds
+        
+
+class KNNClassifier(_KNN, Classifier):
+    """ 
+    K Nearest Neighbors classifier
+
+    Parameters
+    ----------
+    k: int
+        The number of nearest data points that we use to 
+        determine the class of the sample to predict.
+    """
+
+    def __init__(self, k=1):
+        super().__init__(k)
+
+    def fit(self, X, y):
+        X, y = self._validate_Xy(X, y)
+        return super().fit(X, y)
+
+    def _predict(self, k_nearest_y):
+        return k_nearest_y.sum(axis=0) / len(k_nearest_y)
+
+    def predict_proba(self, X):
+        X = self._validate_X(X)
+        return super().predict(X)
+
+    def predict(self, X):
+        X = self._validate_X(X)
+        return prob2binary(super().predict(X))
+
+
+class KNNRegressor(_KNN, Regressor):
+    """ 
+    K Nearest Neighbors regressor
+
+    Parameters
+    ----------
+    k: int
+        The number of nearest data points that we use to 
+        determine the class of the sample to predict.
+    """
+
+    def __init__(self, k=1):
+        super().__init__(k)
+
+    def fit(self, X, y):
+        X, y = self._validate_Xy(X, y)
+        return super().fit(X, y)
+
+    def _predict(self, k_nearest_y):
+        return np.mean(k_nearest_y)
+
+    def predict(self, X):
+        X = self._validate_X(X)
+        return super().predict(X)

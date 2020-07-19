@@ -20,7 +20,7 @@ from mlfs.utils.transformers import prob2binary
 from mlfs.supervised.base_classes import Regressor, Classifier
 
 
-class DecisionTree(ABC):
+class _DecisionTree(ABC):
     """
     Super class of DecisionTreeClassifier and DecisionTreeRegressor.
 
@@ -276,11 +276,25 @@ class DecisionTree(ABC):
             self.right.fit(X[right_idx], y[right_idx])
             
         return self
- 
+
+    def _leaf_predict(self, X):
+        num_x = len(X) # number of samples to predict
+
+        if self.predictor.ndim == 0: # binary classification or regression
+            pred = np.zeros(num_x) + self.predictor
+        
+        else: # multi classification
+            num_y = self.predictor.shape[0] # number of classes
+            pred = np.zeros((num_x, num_y)) + self.predictor
+            pred = prob2binary(pred)
+        
+        return pred 
 
     def predict(self, X):
         """
-        Predict based on the trained tree. 
+        Predicts based on the trained tree. 
+        Returns estimated value for regression problems, 
+        estimated probability for classification problems.
         
         Parameters
         -------
@@ -299,18 +313,7 @@ class DecisionTree(ABC):
         """
         
         if self.left is None or self.right is None: # this is a leaf node
-            num_x = len(X) # number of samples to predict
-
-            if self.predictor.ndim == 0: # binary classification or regression
-                pred = np.zeros(num_x) + self.predictor
-                if isinstance(self, Classifier):
-                    pred = prob2binary(pred)
-            
-            else: # multi classification
-                num_y = self.predictor.shape[0] # number of classes
-                pred = np.zeros((num_x, num_y)) + self.predictor
-                pred = prob2binary(pred)
-
+            pred = self._leaf_predict(X)
         
         else: # this isn't a leaf node   
 
@@ -338,7 +341,7 @@ class DecisionTree(ABC):
         return pred
 
 
-class WeightedDecisionTree(DecisionTree):
+class _WeightedDecisionTree(_DecisionTree):
 
     def __init__(self, impurity_func=None, max_depth=None, min_impurity_decrease=None, N=None, depth=0):
         super().__init__(
@@ -547,7 +550,7 @@ class WeightedDecisionTree(DecisionTree):
         return best_split_feature_idx, best_split_threshold, max_decrease
         
 
-class RandomTree(DecisionTree):
+class _RandomTree(_DecisionTree):
     """ 
     Base class for RandomTreeClassifier and RandomTreeRegressor. 
     Just overriding _search_scope method from DecisionTree.
@@ -590,7 +593,7 @@ class RandomTree(DecisionTree):
         return indices
 
 
-class DecisionTreeClassifier(DecisionTree, Classifier):
+class DecisionTreeClassifier(_DecisionTree, Classifier):
     """
     Decision tree for classification. 
 
@@ -646,10 +649,13 @@ class DecisionTreeClassifier(DecisionTree, Classifier):
         return super().fit(X, y)
 
     def predict(self, X):
+        return prob2binary(super().predict(X))
+
+    def predict_proba(self, X):
         return super().predict(X)
 
 
-class DecisionTreeRegressor(DecisionTree, Regressor):
+class DecisionTreeRegressor(_DecisionTree, Regressor):
     """
     Decision tree for regression. 
 
@@ -707,7 +713,7 @@ class DecisionTreeRegressor(DecisionTree, Regressor):
         return super().predict(X)
 
 
-class RandomTreeClassifier(RandomTree, Classifier):
+class RandomTreeClassifier(_RandomTree, Classifier):
     """
     Base class for Random forest classifier.
 
@@ -773,10 +779,13 @@ class RandomTreeClassifier(RandomTree, Classifier):
         return super().fit(X, y)
 
     def predict(self, X):
+        return prob2binary(super().predict(X))
+
+    def predict_proba(self, X):
         return super().predict(X)
 
 
-class RandomTreeRegressor(RandomTree, Regressor):
+class RandomTreeRegressor(_RandomTree, Regressor):
     """
     Base class for Random forest regressor.
 
@@ -844,7 +853,7 @@ class RandomTreeRegressor(RandomTree, Regressor):
         return super().predict(X)
 
 
-class WeightedDecisionTreeClassifier(WeightedDecisionTree, Classifier):
+class WeightedDecisionTreeClassifier(_WeightedDecisionTree, Classifier):
     """
     Weighted decision tree for classification. 
 
@@ -900,10 +909,13 @@ class WeightedDecisionTreeClassifier(WeightedDecisionTree, Classifier):
         return super().fit(X, y, w)
 
     def predict(self, X):
+        return prob2binary(super().predict(X))
+
+    def predict_proba(self, X):
         return super().predict(X)
 
 
-class WeightedDecisionTreeRegressor(WeightedDecisionTree, Regressor):
+class WeightedDecisionTreeRegressor(_WeightedDecisionTree, Regressor):
     """
     Weighted decision tree for regression. 
 
@@ -961,7 +973,7 @@ class WeightedDecisionTreeRegressor(WeightedDecisionTree, Regressor):
         return super().predict(X)
 
 
-class WeightedDecisionStumpClassifier(WeightedDecisionTree, Classifier):
+class WeightedDecisionStumpClassifier(_WeightedDecisionTree, Classifier):
     """
     Weak Learner for AdaBoost Classifiers.
     """
@@ -989,10 +1001,13 @@ class WeightedDecisionStumpClassifier(WeightedDecisionTree, Classifier):
         return super().fit(X, y, w)
 
     def predict(self, X):
+        return prob2binary(super().predict(X))
+
+    def predict_proba(self, X):
         return super().predict(X)
 
 
-class WeightedDecisionStumpRegressor(WeightedDecisionTree, Regressor):
+class WeightedDecisionStumpRegressor(_WeightedDecisionTree, Regressor):
     """
     Weak Learner for AdaBoost Regressors.
     """
