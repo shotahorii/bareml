@@ -13,8 +13,8 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 54-69.
 import numpy as np
 from abc import ABC, abstractmethod
 
+from mlfs.base_classes import Classifier, Regressor
 from mlfs.utils.distances import euclidean_distance
-from mlfs.supervised.base_classes import Classifier, Regressor
 from mlfs.utils.transformers import prob2binary
 
 class _KNN(ABC):

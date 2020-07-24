@@ -13,9 +13,10 @@ smoothing
 import math
 import numpy as np
 
+from mlfs.base_classes import Classifier
 from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
-from mlfs.supervised.base_classes import Classifier
 from mlfs.utils.transformers import prob2binary, OnehotEncoder
+
 
 class NaiveBayes(Classifier):
 

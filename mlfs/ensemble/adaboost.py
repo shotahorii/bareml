@@ -41,8 +41,8 @@ References:
 import math
 import numpy as np
 
+from mlfs.base_classes import Classifier, Regressor
 from mlfs.utils.transformers import prob2binary, binary2sign, sign2binary, OnehotEncoder
-from mlfs.supervised.base_classes import Classifier, Regressor
 from mlfs.supervised.decision_trees import WeightedDecisionStumpClassifier, WeightedDecisionStumpRegressor
 from mlfs.utils.metrics import absolute_relative_errors, absolute_errors
 

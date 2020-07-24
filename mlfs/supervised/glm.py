@@ -13,10 +13,10 @@ import math
 import numpy as np
 import scipy.optimize
 
+from mlfs.base_classes import BinaryClassifier, Regressor
 from mlfs.utils.transformers import prob2binary
 from mlfs.utils.model_tuning import initialise_random
 from mlfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
-from mlfs.supervised.base_classes import Classifier, Regressor
 
 
 class _GLM:
@@ -49,7 +49,7 @@ class _GLM:
         return self.prob.link(self.params.x @ X.T)
 
 
-class LogisticRegression(_GLM, Classifier):
+class LogisticRegression(_GLM, BinaryClassifier):
     """ 
     Logistic Regression 
     where the target variable is {0,1}
@@ -70,7 +70,7 @@ class LogisticRegression(_GLM, Classifier):
         return super().predict(X)
 
 
-class LogisticRegressionBinom(_GLM, Classifier):
+class LogisticRegressionBinom(_GLM, BinaryClassifier):
     """ 
     Logistic Regression 
     where the target variable is described as a pair of values (n, k)

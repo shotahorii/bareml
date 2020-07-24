@@ -19,10 +19,10 @@ ToDo:
 import math
 import numpy as np
 
+from mlfs.base_classes import Classifier
 from mlfs.utils.activation_functions import Sigmoid, Softmax
 from mlfs.utils.transformers import add_intercept, polynomial_features, StandardScaler, prob2binary
 from mlfs.utils.solvers import CrossEntropyGD, CrossEntropyMultiGD
-from mlfs.supervised.base_classes import Classifier
 
 class LogisticRegression(Classifier):
     """ 
@@ -38,7 +38,6 @@ class LogisticRegression(Classifier):
         self.tol = tol
         self.learning_rate = learning_rate
         self.w = None
-        self.train_error = None
 
         self.activation = Softmax() if multiclass else Sigmoid()
         self.solver = CrossEntropyMultiGD if multiclass else CrossEntropyGD

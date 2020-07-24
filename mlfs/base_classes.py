@@ -28,11 +28,15 @@ class Estimator(ABC):
 
     @abstractmethod
     def _validate_y(self, y):
-        """ Validates y. """
+        """ 
+        Validates input y for training. 
+        """
         pass
 
     def _validate_X(self, X):
-        """ Validates X. """
+        """ 
+        Validates input X for training. 
+        """
         X = np.array(X)
 
         if X.dtype not in ['int64','float64']:
@@ -47,7 +51,11 @@ class Estimator(ABC):
         return X
 
     def _validate_Xy(self, X, y):
-        """ Validates X and y. """
+        """
+        Validates input X and y for training. 
+        Every fit() function must call this method 
+        at the first line to validate input X and y.
+        """
         X = self._validate_X(X)
         y = self._validate_y(y)
 

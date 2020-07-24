@@ -11,7 +11,8 @@ C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 192-196.
 
 import numpy as np
 
-from mlfs.supervised.base_classes import Classifier
+from mlfs.base_classes import Classifier
+
 
 class Perceptron(Classifier):
     """

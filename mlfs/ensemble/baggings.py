@@ -10,9 +10,9 @@ import math
 import random
 import numpy as np
 
+from mlfs.base_classes import Classifier, Regressor
 from mlfs.utils.transformers import prob2binary
 from mlfs.utils.sampling import bootstrap_sampling
-from mlfs.supervised.base_classes import Classifier, Regressor
 from mlfs.supervised.decision_trees import RandomTreeClassifier, RandomTreeRegressor
 
 class Bagging:

@@ -10,7 +10,7 @@ import math
 import numpy as np
 from abc import ABC, abstractmethod
 
-from mlfs.supervised.base_classes import Classifier, Regressor
+from mlfs.base_classes import Classifier, Regressor
 from mlfs.utils.validators import cross_val_predict
 
 class Stacking(ABC):

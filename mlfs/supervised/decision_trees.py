@@ -15,9 +15,9 @@ import math
 import random
 import numpy as np
 
+from mlfs.base_classes import Regressor, Classifier
 from mlfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation, classification_error
 from mlfs.utils.transformers import prob2binary
-from mlfs.supervised.base_classes import Regressor, Classifier
 
 
 class _DecisionTree(ABC):
