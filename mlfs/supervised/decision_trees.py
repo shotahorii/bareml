@@ -72,17 +72,18 @@ class _DecisionTree(ABC):
         # a parameter for leaf nodes
         self.predictor = None
 
-        if not isinstance(self, Classifier) and not isinstance(self, Regressor):
-            raise ValueError('This class needs to be instantiated with inheriting Classifier or Regressor class.')
-
+    def get_leaf_count(self):
+        if self.left is None and self.right is None: # leaf node
+            return 1
+        else: 
+            return self.left.get_leaf_count() + self.right.get_leaf_count()
         
     @abstractmethod
     def _create_node(self):
         """
         Create a node with +1 depth.
         """
-        raise ValueError('Not implemented.')
-
+        pass
 
     def _compute_impurity_decrease(self, y_left, y_right):
         """
@@ -114,7 +115,6 @@ class _DecisionTree(ABC):
         
         return decrease
         
-    
     def _find_best_split_threshold(self, x_feature, y):
         """
         Finds the best split threshold value of the given feature
@@ -156,7 +156,6 @@ class _DecisionTree(ABC):
         
         return max_decrease, best_threshold
 
-        
     def _find_best_split(self, X, y):
         """
         Finds the best split across all the input features
@@ -206,20 +205,17 @@ class _DecisionTree(ABC):
         
         return best_split_feature_idx, best_split_threshold, max_decrease
 
-
     def _search_scope(self, X):
         """ Returns indices of features to serch best split."""
         n_features = X.shape[1]
         return range(n_features)
 
-            
     def _stop_criteria(self):
         """ Criteria to stop tree growth. """
         reached_max_depth = (self.max_depth is not None and self.depth >= self.max_depth)
         too_small_impurity_decrease = (self.min_impurity_decrease is not None and self.impurity_decrease < self.min_impurity_decrease)
         
         return reached_max_depth or too_small_impurity_decrease
-
 
     def fit(self, X, y):
         """

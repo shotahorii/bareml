@@ -41,23 +41,21 @@ References:
 import math
 import numpy as np
 
-from mlfs.base_classes import Classifier, Regressor
+from mlfs.base_classes import Classifier, Regressor, BinaryClassifier, Ensemble
 from mlfs.utils.transformers import prob2binary, binary2sign, sign2binary, OnehotEncoder
 from mlfs.supervised.decision_trees import WeightedDecisionStumpClassifier, WeightedDecisionStumpRegressor
 from mlfs.utils.metrics import absolute_relative_errors, absolute_errors
 
-class AdaBoost(Classifier):
+class AdaBoost(Ensemble, BinaryClassifier):
     """
     AdaBoost Classifier (Binary classification only)
     There're many different variations exist. 
     This implementation is based on the refference [3].
     """
 
-    def __init__(self, max_iterations=10, estimator=WeightedDecisionStumpClassifier, estimator_params={}):
-        self.max_iterations = max_iterations
-        self.estimator = estimator
-        self.estimator_params = estimator_params
-        self.estimators = []
+    def __init__(self, max_iter=10, estimator=WeightedDecisionStumpClassifier()):
+        super().__init__(base_estimator=estimator)
+        self.max_iter = max_iter
         self.alphas = []
 
     def fit(self, X, y):
@@ -65,8 +63,8 @@ class AdaBoost(Classifier):
         # init weights
         w = np.full(len(y), 1/len(y))
 
-        for _ in range(self.max_iterations):
-            clf = self.estimator(**self.estimator_params)
+        for _ in range(self.max_iter):
+            clf = self._make_estimator()
             y_pred = clf.fit(X, y, w).predict(X)
             
             # assign 1 to the samples which are wrongly predicted, 
@@ -94,8 +92,7 @@ class AdaBoost(Classifier):
             w = w * np.exp(alpha * binary2sign(y_error))
             w = w/np.sum(w) # normalisation
 
-            # store m-th model & alpha
-            self.estimators.append(clf)
+            # store m-th alpha
             self.alphas.append(alpha)
 
         return self
@@ -117,17 +114,15 @@ class AdaBoost(Classifier):
         return y_pred
 
 
-class AdaBoostM1(Classifier):
+class AdaBoostM1(Ensemble, Classifier):
     """
     AdaBoost.M1 Classifier
     Implementation based on the refference [2].
     """
 
-    def __init__(self, max_iterations=10, estimator=WeightedDecisionStumpClassifier, estimator_params={}):
-        self.max_iterations = max_iterations
-        self.estimator = estimator
-        self.estimator_params = estimator_params
-        self.estimators = []
+    def __init__(self, max_iter=10, estimator=WeightedDecisionStumpClassifier()):
+        super().__init__(base_estimator=estimator)
+        self.max_iter = max_iter
         self.betas = []
         self.onehot = OnehotEncoder()
 
@@ -142,8 +137,8 @@ class AdaBoostM1(Classifier):
         else:
             y_onehot = y
 
-        for _ in range(self.max_iterations):
-            clf = self.estimator(**self.estimator_params)
+        for _ in range(self.max_iter):
+            clf = self._make_estimator()
             y_pred = clf.fit(X, y, w).predict(X) # fit with original y NOT y_onehot
 
             # treat binary classification as same data format as multi-class
@@ -178,8 +173,7 @@ class AdaBoostM1(Classifier):
             w = w * np.power(beta, y_correct)
             w = w/np.sum(w) # normalisation
 
-            # store m-th model & beta
-            self.estimators.append(clf)
+            # store m-th beta
             self.betas.append(beta)
 
         return self
@@ -203,17 +197,15 @@ class AdaBoostM1(Classifier):
         return self.onehot.decode(y_pred)
 
     
-class AdaBoostSamme(Classifier):
+class AdaBoostSamme(Ensemble, Classifier):
     """
     AdaBoost SAMME Classifier
     Implementation based on the refference [5].
     """
 
-    def __init__(self, max_iterations=10, estimator=WeightedDecisionStumpClassifier, estimator_params={}):
-        self.max_iterations = max_iterations
-        self.estimator = estimator
-        self.estimator_params = estimator_params
-        self.estimators = []
+    def __init__(self, max_iter=10, estimator=WeightedDecisionStumpClassifier()):
+        super().__init__(base_estimator=estimator)
+        self.max_iter = max_iter
         self.alphas = []
         self.onehot = OnehotEncoder()
 
@@ -230,8 +222,8 @@ class AdaBoostSamme(Classifier):
 
         k = y_onehot.shape[1]
 
-        for _ in range(self.max_iterations):
-            clf = self.estimator(**self.estimator_params)
+        for _ in range(self.max_iter):
+            clf = self._make_estimator()
             y_pred = clf.fit(X, y, w).predict(X) # fit with original y NOT y_onehot
 
             # treat binary classification as same data format as multi-class
@@ -256,8 +248,7 @@ class AdaBoostSamme(Classifier):
             w = w * np.exp(alpha * y_error)
             w = w/np.sum(w) # normalisation
 
-            # store m-th model & beta
-            self.estimators.append(clf)
+            # store m-th alpha
             self.alphas.append(alpha)
 
         return self
@@ -284,18 +275,16 @@ class AdaBoostSamme(Classifier):
             return y_pred
 
 
-class AdaBoostRT(Regressor):
+class AdaBoostRT(Ensemble, Regressor):
     """
     AdaBoost.RT Regressor 
     Implementation based on the refference [7].
     """
 
-    def __init__(self, threshold=0.05, max_iterations=10, estimator=WeightedDecisionStumpRegressor, estimator_params={}):
+    def __init__(self, threshold=0.05, max_iter=10, estimator=WeightedDecisionStumpRegressor()):
+        super().__init__(base_estimator=estimator)
         self.threshold = threshold
-        self.max_iterations = max_iterations
-        self.estimator = estimator
-        self.estimator_params = estimator_params
-        self.estimators = []
+        self.max_iter = max_iter
         self.betas = []
 
     def fit(self, X, y):
@@ -303,8 +292,8 @@ class AdaBoostRT(Regressor):
         # init weights
         w = np.full(len(y), 1/len(y))
 
-        for _ in range(self.max_iterations):
-            reg = self.estimator(**self.estimator_params)
+        for _ in range(self.max_iter):
+            reg = self._make_estimator()
             y_pred = reg.fit(X, y, w).predict(X)
 
             # compute absolute relative error for each sample
@@ -329,15 +318,14 @@ class AdaBoostRT(Regressor):
             w = w * np.power(beta, y_correct)
             w = w/np.sum(w) # normalisation
 
-            # store m-th model & beta
-            self.estimators.append(reg)
+            # store m-th beta
             self.betas.append(beta)
 
         return self
 
     def predict(self, X):
 
-        # y_preds.shape is (max_iterations, len(X))
+        # y_preds.shape is (max_iter, len(X))
         y_preds = np.array([reg.predict(X) for reg in self.estimators])
         
         # weighted majority vote
@@ -346,17 +334,15 @@ class AdaBoostRT(Regressor):
         return y_pred
 
 
-class AdaBoostR2(Regressor):
+class AdaBoostR2(Ensemble, Regressor):
     """
     AdaBoost.R2 Regressor 
     Implementation based on the refference [8].
     """
 
-    def __init__(loss='linear', max_iterations=10, estimator=WeightedDecisionStumpRegressor, estimator_params={}):
-        self.max_iterations = max_iterations
-        self.estimator = estimator
-        self.estimator_params = estimator_params
-        self.estimators = []
+    def __init__(loss='linear', max_iter=10, estimator=WeightedDecisionStumpRegressor()):
+        super().__init__(base_estimator=estimator)
+        self.max_iter = max_iter
         self.betas = []
 
         if loss=='linear':
@@ -391,7 +377,7 @@ class AdaBoostR2(Regressor):
         # init weights
         w = np.ones(N)
 
-        for _ in range(self.max_iterations):
+        for _ in range(self.max_iter):
             
             # probability that training sample i is in the training set
             p = w / np.sum(w)
@@ -404,7 +390,7 @@ class AdaBoostR2(Regressor):
             y_train = y[train_idx]
 
             # train the weak leaner with the formed training set
-            reg = self.estimator(**self.estimator_params)
+            reg = self._make_estimator()
             y_pred = reg.fit(X_train, y_train).predict(X)
 
             # calculate a loss for each training sample
@@ -427,8 +413,7 @@ class AdaBoostR2(Regressor):
             # update the weights
             w = w * np.power(beta, 1 - y_error)
 
-            # store m-th model & beta
-            self.estimators.append(reg)
+            # store m-th beta
             self.betas.append(beta)
 
         return self

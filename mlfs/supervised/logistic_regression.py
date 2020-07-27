@@ -21,7 +21,7 @@ import numpy as np
 
 from mlfs.base_classes import Classifier
 from mlfs.utils.activation_functions import Sigmoid, Softmax
-from mlfs.utils.transformers import add_intercept, polynomial_features, StandardScaler, prob2binary
+from mlfs.utils.transformers import add_intercept, prob2binary
 from mlfs.utils.solvers import CrossEntropyGD, CrossEntropyMultiGD
 
 class LogisticRegression(Classifier):
@@ -29,20 +29,18 @@ class LogisticRegression(Classifier):
     Ligistic Regression classifier
     """
 
-    def __init__(self, multiclass=False, alpha_l2=0, polynomial_degree=1, 
-        max_iterations=1000, tol=1e-4, learning_rate=None):
+    def __init__(self, multiclass=False, fit_intercept=True,
+        alpha_l2=0, max_iter=1000, tol=1e-4, lr=None):
         
+        self.fit_intercept = fit_intercept
         self.alpha_l2 = alpha_l2
-        self.polynomial_degree = polynomial_degree
-        self.max_iterations = max_iterations
+        self.max_iter = max_iter
         self.tol = tol
-        self.learning_rate = learning_rate
+        self.lr = lr
         self.w = None
 
         self.activation = Softmax() if multiclass else Sigmoid()
         self.solver = CrossEntropyMultiGD if multiclass else CrossEntropyGD
-
-        self.scaler = StandardScaler()
 
     def fit(self, X, y):
         """ 
@@ -60,10 +58,10 @@ class LogisticRegression(Classifier):
             y is a 1d-array with value of 0 or 1. 
             num of elements (y_train.shape[0]) is the num of samples 
 
-        n_iterations: int
+        max_iter: int
             number of iterations that we update w with gradient descent
 
-        learning_rate: float
+        lr: float
             learning rate multiplied to gradient in each updation
 
         Returns
@@ -72,10 +70,10 @@ class LogisticRegression(Classifier):
         """
         X, y = self._validate_Xy(X, y)
 
-        X = polynomial_features(X, self.polynomial_degree)
-        X[:,1:] = self.scaler.fit(X[:,1:]).transform(X[:,1:])
+        if self.fit_intercept:
+            X = add_intercept(X)
 
-        gd = self.solver(self.alpha_l2, self.max_iterations, self.tol, self.learning_rate)
+        gd = self.solver(self.alpha_l2, self.max_iter, self.tol, self.lr)
         self.w = gd.solve(X,y)
 
         return self
@@ -96,8 +94,8 @@ class LogisticRegression(Classifier):
         """
         X = self._validate_X(X)
 
-        X = polynomial_features(X, self.polynomial_degree)
-        X[:,1:] = self.scaler.transform(X[:,1:])
+        if self.fit_intercept:
+            X = add_intercept(X)
 
         return self.activation(np.dot(X,self.w))
 

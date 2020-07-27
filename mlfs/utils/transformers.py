@@ -249,7 +249,6 @@ def prob2binary(y):
 def add_intercept(X):
     """
     Add intercept (a column filled with 1. ) to the feature matrix.
-
     Parameters
     ----------
     X: np.array (n, d) float in (-inf, inf)

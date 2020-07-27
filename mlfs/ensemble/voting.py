@@ -10,9 +10,9 @@ import math
 import numpy as np
 from abc import ABC, abstractmethod
 
-from mlfs.base_classes import Classifier, Regressor
+from mlfs.base_classes import Classifier, Regressor, Ensemble
 
-class Voting:
+class Voting(Ensemble):
 
     def __init__(self, estimators, voting='hard', weights=None):
-        pass
+        super().__init__(estimators=estimators)

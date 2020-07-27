@@ -16,7 +16,7 @@ import math
 import numpy as np
 
 from mlfs.base_classes import Regressor
-from mlfs.utils.transformers import polynomial_features, StandardScaler
+from mlfs.utils.transformers import polynomial_features, StandardScaler, add_intercept
 from mlfs.utils.solvers import PInv, LassoISTA, LeastSquareGD
 
 
@@ -51,21 +51,17 @@ class LinearRegression(Regressor):
         Learning rate parameter for Gradient Descent algorithm.
     """
     
-    def __init__(self, solver='pinv', alpha_l1=0, alpha_l2=0, polynomial_degree=1, 
-        max_iterations=1000, tol=1e-4, learning_rate=None):
+    def __init__(self, fit_intercept=True, solver='pinv', alpha_l1=0, alpha_l2=0,  
+        max_iter=1000, tol=1e-4, lr=None):
         
+        self.fit_intercept = fit_intercept
         self.solver = solver
         self.alpha_l1 = alpha_l1
         self.alpha_l2 = alpha_l2
-        self.polynomial_degree = polynomial_degree
-        self.max_iterations = max_iterations
+        self.max_iter = max_iter
         self.tol = tol
-        self.learning_rate = learning_rate
+        self.lr = lr
         self.w = None
-
-        # GD and LassoISTA solver need feature scaling 
-        self.scaler = StandardScaler() if solver in ['gradient_descent', 'lasso'] else None
-
 
     def fit(self, X, y):
         """
@@ -86,11 +82,8 @@ class LinearRegression(Regressor):
         """
         X, y = self._validate_Xy(X, y)
 
-        X = polynomial_features(X, self.polynomial_degree)
-
-        if self.scaler:
-            # exclude bias (all 1) from scaling 
-            X[:,1:] = self.scaler.fit(X[:,1:]).transform(X[:,1:])
+        if self.fit_intercept:
+            X = add_intercept(X)
 
         if self.solver == 'pinv':
             pinv = PInv(alpha=self.alpha_l2)
@@ -98,7 +91,7 @@ class LinearRegression(Regressor):
 
         elif self.solver == 'lasso':
             if self.alpha_l2==0: # Lasso regression
-                lasso = LassoISTA(self.alpha_l1, self.max_iterations, self.tol)
+                lasso = LassoISTA(self.alpha_l1, self.max_iter, self.tol)
                 self.w = lasso.solve(X, y)
             else: # Elastic Net
                 # we solve elastic net as lasso. (Murphy 2012)
@@ -110,11 +103,11 @@ class LinearRegression(Regressor):
                 X_new = c * np.concatenate([X, X_concat], axis=0)
                 y_new = np.concatenate([y, y_concat], axis=0)
 
-                elastic = LassoISTA(c * self.alpha_l1, self.max_iterations, self.tol)
+                elastic = LassoISTA(c * self.alpha_l1, self.max_iter, self.tol)
                 self.w = c * elastic.solve(X_new, y_new)
 
         elif self.solver == 'gradient_descent':
-            gd = LeastSquareGD(self.alpha_l2, self.max_iterations, self.tol, self.learning_rate)
+            gd = LeastSquareGD(self.alpha_l2, self.max_iter, self.tol, self.lr)
             self.w = gd.solve(X,y)
 
         else:
@@ -140,11 +133,8 @@ class LinearRegression(Regressor):
         """
         X = self._validate_X(X)
 
-        X = polynomial_features(X, self.polynomial_degree)
-
-        if self.scaler:
-            # exclude bias (all 1) from scaling 
-            X[:,1:] = self.scaler.transform(X[:,1:])
+        if self.fit_intercept:
+            X = add_intercept(X)
 
         return np.dot(self.w, X.T)
 
@@ -177,18 +167,19 @@ class RidgeRegression(LinearRegression):
     """
     def __init__(self, 
                 alpha, 
+                fit_intercept=True,
                 solver='pinv', 
-                polynomial_degree=1, 
-                max_iterations=1000, 
+                max_iter=1000, 
                 tol=1e-4,
-                learning_rate=None):
+                lr=None):
 
-        super().__init__(solver=solver, 
+        super().__init__(
+                fit_intercept=fit_intercept,
+                solver=solver, 
                 alpha_l2=alpha, 
-                polynomial_degree=polynomial_degree, 
-                max_iterations=max_iterations, 
+                max_iter=max_iter, 
                 tol=tol,
-                learning_rate=learning_rate)
+                lr=lr)
 
 
 class LassoRegression(LinearRegression):
@@ -213,14 +204,15 @@ class LassoRegression(LinearRegression):
     """
     def __init__(self, 
                 alpha, 
-                polynomial_degree=1, 
-                max_iterations=1000, 
+                fit_intercept=True, 
+                max_iter=1000, 
                 tol=1e-4):
 
-        super().__init__(solver='lasso', 
-                alpha_l1=alpha, 
-                polynomial_degree=polynomial_degree, 
-                max_iterations=max_iterations, 
+        super().__init__(
+                fit_intercept=fit_intercept,
+                solver='lasso', 
+                alpha_l1=alpha,  
+                max_iter=max_iter, 
                 tol=tol)
 
 
@@ -252,16 +244,17 @@ class ElasticNetRegression(LinearRegression):
     def __init__(self, 
                 alpha,
                 l1_ratio,
-                polynomial_degree=1, 
-                max_iterations=1000, 
+                fit_intercept=True, 
+                max_iter=1000, 
                 tol=1e-4):
 
         alpha_l1 = alpha * l1_ratio
         alpha_l2 = alpha * (1 - l1_ratio)
         
-        super().__init__(solver='lasso', 
+        super().__init__(
+                fit_intercept=True,
+                solver='lasso', 
                 alpha_l1=alpha_l1, 
                 alpha_l2=alpha_l2, 
-                polynomial_degree=polynomial_degree, 
-                max_iterations=max_iterations, 
+                max_iter=max_iter, 
                 tol=tol)

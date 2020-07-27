@@ -64,8 +64,6 @@ def cross_val_predict(estimator, X, y=None, cv=5, stratified=False, shuffle=Fals
     return test_preds[test_indices.argsort()]
     
 
-
-
 class KFold:
     """
     KFold cross validation.

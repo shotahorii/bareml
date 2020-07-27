@@ -10,29 +10,25 @@ import math
 import random
 import numpy as np
 
-from mlfs.base_classes import Classifier, Regressor
+from mlfs.base_classes import Classifier, Regressor, Ensemble
 from mlfs.utils.transformers import prob2binary
 from mlfs.utils.sampling import bootstrap_sampling
 from mlfs.supervised.decision_trees import RandomTreeClassifier, RandomTreeRegressor
 
-class Bagging:
+class Bagging(Ensemble):
     
-    def __init__(self, estimator, estimator_params={}, n_estimators=50, sampling_ratio=1.0):
-        self.estimator = estimator
-        self.estimator_params = estimator_params
+    def __init__(self, estimator, n_estimators=50, sampling_ratio=1.0):
+        super().__init__(base_estimator=estimator)
         self.n_estimators = n_estimators
         self.sampling_ratio = sampling_ratio
-        self.estimators = []
 
     def fit(self, X, y):
 
         for _ in range(self.n_estimators):
 
             X_bootstrap, y_bootstrap = bootstrap_sampling(X, y, self.sampling_ratio)
-
-            estimator = self.estimator(**self.estimator_params)
+            estimator = self._make_estimator()
             estimator.fit(X_bootstrap, y_bootstrap)
-            self.estimators.append(estimator)
         
         return self
 
@@ -58,16 +54,15 @@ class RandomForestClassifier(Bagging, Classifier):
                 n_estimators=50, 
                 sampling_ratio=1.0):
 
-        estimator_params = {
-            'criterion': criterion,
-            'max_features': max_features,
-            'max_depth': max_depth,
-            'min_impurity_decrease': min_impurity_decrease
-        }        
+        base_estimator = RandomTreeClassifier(
+                    criterion=criterion,
+                    max_features=max_features,
+                    max_depth=max_depth,
+                    min_impurity_decrease=min_impurity_decrease
+                    )      
 
         super().__init__(
-            estimator=RandomTreeClassifier,
-            estimator_params=estimator_params,
+            estimator=base_estimator,
             n_estimators=n_estimators,
             sampling_ratio=sampling_ratio
         )
@@ -77,6 +72,7 @@ class RandomForestClassifier(Bagging, Classifier):
 
     def predict(self, X):
         return super().predict(X)
+
 
 class RandomForestRegressor(Bagging, Regressor):
 
@@ -88,16 +84,15 @@ class RandomForestRegressor(Bagging, Regressor):
                 n_estimators=50, 
                 sampling_ratio=1.0):
 
-        estimator_params = {
-            'criterion': criterion,
-            'max_features': max_features,
-            'max_depth': max_depth,
-            'min_impurity_decrease': min_impurity_decrease
-        }        
+        base_estimator = RandomTreeRegressor(
+                    criterion=criterion,
+                    max_features=max_features,
+                    max_depth=max_depth,
+                    min_impurity_decrease=min_impurity_decrease
+                    )        
 
         super().__init__(
-            estimator=RandomTreeRegressor,
-            estimator_params=estimator_params,
+            estimator=base_estimator,
             n_estimators=n_estimators,
             sampling_ratio=sampling_ratio
         )

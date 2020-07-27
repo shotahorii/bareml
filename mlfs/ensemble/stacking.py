@@ -10,10 +10,10 @@ import math
 import numpy as np
 from abc import ABC, abstractmethod
 
-from mlfs.base_classes import Classifier, Regressor
+from mlfs.base_classes import Classifier, Regressor, Ensemble
 from mlfs.utils.validators import cross_val_predict
 
-class Stacking(ABC):
+class Stacking(Ensemble):
     """
     
     Parameters
@@ -24,7 +24,7 @@ class Stacking(ABC):
     """
     
     def __init__(self, estimators, final_estimator, cv=5):
-        self.estimators = estimators 
+        super().__init__(estimators=estimators)
         self.final_estimator = final_estimator
         self.cv = cv
 

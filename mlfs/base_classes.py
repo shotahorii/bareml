@@ -5,6 +5,8 @@ base classes
 # Author: Shota Horii <sh.sinker@gmail.com>
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
+import numpy as np
 
 from mlfs.utils.metrics import accuracy, precision_recall_f1, mae, rmse, r_squqred
 
@@ -26,12 +28,13 @@ class Estimator(ABC):
         """ Returns evaluation metrics. """
         pass
 
-    @abstractmethod
     def _validate_y(self, y):
         """ 
         Validates input y for training. 
+        This function can be left without overriden if
+        the estimator is unsupervised. 
         """
-        pass
+        return y
 
     def _validate_X(self, X):
         """ 
@@ -39,7 +42,7 @@ class Estimator(ABC):
         """
         X = np.array(X)
 
-        if X.dtype not in ['int64','float64']:
+        if X.dtype not in ['int64','float64','uint8']:
             raise ValueError('Data type of X needs to be int or float.')
         elif X.ndim != 1 and X.ndim != 2:
             raise ValueError('X needs to be a 1d array or 2d array.')
@@ -47,6 +50,11 @@ class Estimator(ABC):
             raise ValueError('There is at least 1 null element in X.')
         elif np.isinf(X).any():
             raise ValueError('There is at least 1 inf/-inf element in X.')
+
+        if X.ndim == 1:
+            # convert to column vector 
+            # e.g. [1,2,3] -> [[1],[2],[3]]
+            X = X[:,None] 
 
         return X
 
@@ -59,7 +67,7 @@ class Estimator(ABC):
         X = self._validate_X(X)
         y = self._validate_y(y)
 
-        if len(X) != len(y):
+        if y is not None and len(X) != len(y):
             raise ValueError('Length of X and y need to be same.')
 
         return X, y
@@ -80,7 +88,7 @@ class Regressor(Estimator):
     def _validate_y(self, y):
         y = np.array(y)
 
-        if y.dtype not in ['int64','float64']:
+        if y.dtype not in ['int64','float64','uint8']:
             raise ValueError('Data type of y needs to be int or float.')
         elif y.ndim != 1:
             raise ValueError('y needs to be a 1d array.')
@@ -114,7 +122,7 @@ class Classifier(Estimator):
     def _validate_y(self, y):
         y = np.array(y)
 
-        if y.dtype not in ['int64','float64']:
+        if y.dtype not in ['int64','float64','uint8']:
             raise ValueError('Data type of y needs to be int or float.')
         elif y.ndim != 1 and y.ndim != 2:
             raise ValueError('y needs to be a 1d array or 2d array.')
@@ -131,7 +139,7 @@ class BinaryClassifier(Classifier):
     def _validate_y(self, y):
         y = np.array(y)
 
-        if y.dtype not in ['int64','float64']:
+        if y.dtype not in ['int64','float64','uint8']:
             raise ValueError('Data type of y needs to be int or float.')
         elif y.ndim != 1:
             raise ValueError('y needs to be a 1d array.')
@@ -141,4 +149,17 @@ class BinaryClassifier(Classifier):
         return y
 
 
+class Ensemble(ABC):
 
+    @abstractmethod
+    def __init__(self, estimators=[], base_estimator=None):
+        self.estimators = estimators
+        self.base_estimator = base_estimator
+
+    def _make_estimator(self, append=True):
+        estimator = deepcopy(self.base_estimator)
+        
+        if append:
+            self.estimators.append(estimator)
+        
+        return estimator
