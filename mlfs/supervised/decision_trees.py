@@ -2,6 +2,8 @@
 Decision Trees
 
 References:
+Shi, H. (2007). Best-first Decision Tree Learning. 
+    http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.149.2862&rep=rep1&type=pdf
 C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 663-666.
 T. Hastie, R. Tibshirani and J. Friedman (2009). The Elements of Statistical Leraning. Springer. 305-317.
 K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 546-554.
@@ -19,128 +21,152 @@ from mlfs.base_classes import Regressor, Classifier
 from mlfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation, classification_error
 from mlfs.utils.transformers import prob2binary
 
+class TreeNode:
 
-class _DecisionTree(ABC):
-    """
-    Super class of DecisionTreeClassifier and DecisionTreeRegressor.
-
-    Parameters
-    ----------
-    impurity_func: function
-        function used to measure the impurity
-        choices are: entropy, gini_impurity, variance, mean_deviation
-
-    max_depth: int
-        maximum depth that the tree can grow
-    
-    min_impurity_decrease: float
-        if the impurity decrease is smaller than this, 
-        tree doesn't split.
-
-    N: int
-        the total number of data used for training the tree
-
-    depth: int
-        current depth of the tree
-    """
-    
-    def __init__(
-        self, 
-        impurity_func=None,
-        max_depth=None, 
-        min_impurity_decrease=None, 
-        N=None,
-        depth=0):
+    def __init__(self, X, y, w=None, depth=0, split_feature_idx=None, split_threshold=None, 
+                impurity_decrease=None, left=None, right=None, value=None):
         
-        # parameters to define the behaviour of the entire tree (common across all nodes in the tree)
-        self.max_depth = max_depth
-        self.min_impurity_decrease = min_impurity_decrease
-        self.N = N
-        self.impurity_func = impurity_func
-        
-        # parameters for each node
+        # training data
+        self.X = X
+        self.y = y
+        self.w = w
+
+        # for all
         self.depth = depth
-        self.impurity = None
+
+        # for non-leaf node
+        self.split_feature_idx = split_feature_idx
+        self.split_threshold = split_threshold
+        self.impurity_decrease = impurity_decrease
+        self.left = left
+        self.right = right
+        # for leaf node
+        self.value = value
+
+    def to_leaf(self):
         self.left = None
         self.right = None
-        
-        # parameters about node split
-        self.impurity_decrease = None
-        self.split_feature_idx = None
-        self.split_threshold = None
-        
-        # a parameter for leaf nodes
-        self.predictor = None
+        self.value = np.mean(self.y, axis=0)        
 
-    def get_leaf_count(self):
-        if self.left is None and self.right is None: # leaf node
-            return 1
-        else: 
-            return self.left.get_leaf_count() + self.right.get_leaf_count()
-        
-    @abstractmethod
-    def _create_node(self):
-        """
-        Create a node with +1 depth.
-        """
-        pass
 
-    def _compute_impurity_decrease(self, y_left, y_right):
+class Cart:
+
+    def __init__(self, 
+                impurity_func=None,
+                growth='best', # {'best','depth'}
+                max_depth=None, 
+                max_leaf_nodes=None, # only works for best-first tree
+                min_samples_leaf=1,
+                min_impurity_decrease=0,
+                max_features=None # for random tree
+                ):
+        
+        self.impurity_func = impurity_func
+        self.growth = growth
+        self.max_depth = max_depth
+        self.max_leaf_nodes = max_leaf_nodes
+        self.min_samples_leaf = min_samples_leaf
+        self.min_impurity_decrease = min_impurity_decrease
+        self.max_features = max_features
+        self.n_samples = None 
+        self.tree = None
+
+    def _build_best_first_tree(self, X, y, w):
+        self.n_samples = len(y)
+        n_leaves = 0
+
+        # initialise root node
+        root = self._grow_node(TreeNode(X, y, w))
+        nodes = [root]
+
+        while len(nodes) > 0:
+            node = nodes.pop(0)
+
+            if node.impurity_decrease <= self.min_impurity_decrease or (self.max_leaf_nodes is not None and n_leaves + len(nodes) + 1 >= self.max_leaf_nodes):
+                node.to_leaf()
+                for n in nodes: n.to_leaf() # make all nodes into leaf
+            elif node.depth == self.max_depth or len(node.left.y) < self.min_samples_leaf or len(node.right.y) < self.min_samples_leaf:
+                node.to_leaf() # make this node into leaf
+                n_leaves += 1
+            else:
+                nodes.append(self._grow_node(node.left))
+                nodes.append(self._grow_node(node.right))
+                # sort nodes by impurity decrease (descending order)
+                nodes = sorted(nodes, key=lambda n: n.impurity_decrease, reverse=True)
+
+        return root
+
+    def _build_depth_first_tree(self, X, y, w):
+
+        def build_helper(node):
+            if node.impurity_decrease <= self.min_impurity_decrease or node.depth == self.max_depth or len(node.left.y) < self.min_samples_leaf or len(node.right.y) < self.min_samples_leaf:
+                node.to_leaf()
+            else:
+                build_helper(self._grow_node(node.left))
+                build_helper(self._grow_node(node.right))
+
+        # init
+        self.n_samples = len(y)
+        root = self._grow_node(TreeNode(X, y, w))
+        build_helper(root)
+        
+        return root
+
+    def _grow_node(self, node):
+        node.split_feature_idx, node.split_threshold, impurity_after_split = self._find_best_split(node.X, node.y, node.w)
+        node.impurity_decrease = (1.0*len(node.y)/self.n_samples) * max(self.impurity_func(node.y, node.w) - impurity_after_split, 0)
+
+        left_idx = node.X[:,node.split_feature_idx] < node.split_threshold
+        right_idx = np.array([not i for i in left_idx])
+
+        node.left = TreeNode(node.X[left_idx], node.y[left_idx], node.w[left_idx], depth=node.depth+1)
+        node.right = TreeNode(node.X[right_idx], node.y[right_idx], node.w[right_idx], depth=node.depth+1)
+        return node
+
+    def _compute_impurity(self, y_left, y_right, w_left, w_right):
         """
-        Computes impurity decrease for given split.
+        Computes total impurity after the given split.
         
         Parameters
         -------
         y_left : np.ndarray (nl, c)
             list of y values which go to the left node by the split
-            
         y_right : np.ndarray (nr, c)
              list of y values which go to the right node by the split
 
         Returns
         -------
-        decrease : float
-            value of the impurity decrease
+        impurity_after_split : float
+            value of the impurity after the split
         """
-
-        left_ratio = 1.0*len(y_left)/(len(y_left) + len(y_right))
-        right_ratio = 1.0*len(y_right)/(len(y_left) + len(y_right))
+        left_ratio = 1.0*np.sum(w_left)/(np.sum(w_left) + np.sum(w_right))
+        right_ratio = 1.0*np.sum(w_right)/(np.sum(w_left) + np.sum(w_right))
 
         if left_ratio == 0 or right_ratio == 0:
-            decrease = 0
+            impurity_after_split = np.inf
         else:
-            left_impurity = self.impurity_func(y_left)
-            right_impurity = self.impurity_func(y_right)
-            decrease = self.impurity - (left_impurity * left_ratio + right_impurity * right_ratio)
+            left_impurity = self.impurity_func(y_left, w_left)
+            right_impurity = self.impurity_func(y_right, w_right)
+            impurity_after_split = left_impurity * left_ratio + right_impurity * right_ratio
         
-        return decrease
+        return impurity_after_split
         
-    def _find_best_split_threshold(self, x_feature, y):
+    def _find_best_split_threshold(self, x_feature, y, w):
         """
-        Finds the best split threshold value of the given feature
+        Finds the best split threshold value for the given feature
         
         Parameters
-        -------
+        ----------
         x_feature : np.ndarray (n, )
-            A predictor variable (feature) to be checked
-            n: the number of data samples
-            
         y : np.ndarray (n, c) 
-            Target variable of classification or Regression problems.
-            c = 1 if regresssion or binary classification. 
-            else, c = num of classes for multi classification (one-hot encoded).
 
         Returns
         -------
-        max_decrease: float
-            maximum decrease of impurity obtained by the split using 
-            this feature and the best threshold
-
         best_threshold: float
-            the best threshold to split the data 
+        impurity_after_split: float
         """
         
-        max_decrease = 0
+        min_impurity = np.inf
         best_threshold = np.inf
         
         possible_thresholds = set(x_feature)
@@ -148,182 +174,106 @@ class _DecisionTree(ABC):
         for threshold in possible_thresholds:
             left_idx = x_feature < threshold
             right_idx = np.array([not i for i in left_idx])
-            decrease = self._compute_impurity_decrease(y[left_idx], y[right_idx])
+            impurity_after_split = self._compute_impurity(y[left_idx], y[right_idx], w[left_idx], w[right_idx])
             
-            if decrease > max_decrease:
-                max_decrease = decrease
+            if impurity_after_split < min_impurity:
+                min_impurity = impurity_after_split
                 best_threshold = threshold
         
-        return max_decrease, best_threshold
+        return best_threshold, impurity_after_split
 
-    def _find_best_split(self, X, y):
+    def _find_best_split(self, X, y, w):
         """
         Finds the best split across all the input features
         
         Parameters
         -------
-        X : np.ndarray (n, d)
-            Predictor variables (features) to be checked
-            n: num of data samples
-            d: num of features
-            
+        X : np.ndarray (n, d)       
         y : np.ndarray (n, c) 
-            Target variable of classification or Regression problems.
-            c = 1 if regresssion or binary classification. 
-            else, c = num of classes for multi classification (one-hot encoded).
 
         Returns
         -------
-        best_split_feature_idx:
-            index of the best feature to split the data
-        
+        best_split_feature_idx: int
         best_split_threshold: float
-            the best threshold to split the data
-
         max_decrease: float
-            maximum decrease of impurity obtained by the split using 
-            this feature and the best threshold
         """
         
         # init 
-        max_decrease = 0
+        min_impurity = np.inf
         best_split_feature_idx = 0
         best_split_threshold = np.inf # all goes to the left
         
-        if X.ndim == 1: # there's only one feature in the data
-            decrease, threshold = self._find_best_split_threshold(X, y)
-            if decrease > max_decrease:
+        for feature_idx in self._search_scope(X):
+            x_feature = X[:,feature_idx]
+            threshold, impurity_after_split = self._find_best_split_threshold(x_feature, y, w)
+            if impurity_after_split < min_impurity:
+                best_split_feature_idx = feature_idx
                 best_split_threshold = threshold
-
-        else: # more than 2 features in the data
-            for feature_idx in self._search_scope(X):
-                x_feature = X[:,feature_idx]
-                decrease, threshold = self._find_best_split_threshold(x_feature, y)
-                if decrease > max_decrease:
-                    best_split_feature_idx = feature_idx
-                    best_split_threshold = threshold
+                min_impurity = impurity_after_split
         
-        return best_split_feature_idx, best_split_threshold, max_decrease
+        return best_split_feature_idx, best_split_threshold, min_impurity
 
     def _search_scope(self, X):
         """ Returns indices of features to serch best split."""
         n_features = X.shape[1]
-        return range(n_features)
 
-    def _stop_criteria(self):
-        """ Criteria to stop tree growth. """
-        reached_max_depth = (self.max_depth is not None and self.depth >= self.max_depth)
-        too_small_impurity_decrease = (self.min_impurity_decrease is not None and self.impurity_decrease < self.min_impurity_decrease)
+        # normal tree
+        if self.max_features is None:
+            return range(n_features)
+
+        # random tree
+        if self.max_features == 'sqrt':
+            n_pick = round(math.sqrt(n_features))
+        elif self.max_features == 'log2':
+            n_pick = max(1, round(math.log2(n_features)))
+        elif isinstance(self.max_features, int):
+            n_pick = min(n_features, max(1, self.max_features))
+        else:
+            raise ValueError('Invalid input for max_features.')
         
-        return reached_max_depth or too_small_impurity_decrease
+        indices = random.sample(range(n_features), n_pick)
+        return indices
 
-    def fit(self, X, y):
+    def fit(self, X, y, w=None):
         """
         Build the decision tree fitting the training data.
         
         Parameters
         -------
         X : np.ndarray (n, d)
-            Predictor variables (features) to be checked
-            n: num of data samples
-            d: num of features
-            
         y : np.ndarray (n, c) 
-            Target variable of classification or Regression problems.
-            c = 1 if regresssion or binary classification. 
-            else, c = num of classes for multi classification (one-hot encoded).
-
-        Returns
-        -------
-        self
         """
-        
-        # if this is a root node, store the size of entire training data set
-        if self.depth == 0:
-            self.N = len(y)
-        
-        # calculate this node's impurity 
-        self.impurity = self.impurity_func(y)
-        
-        # find the best split
-        best_split_feature_idx, best_split_threshold, max_decrease = self._find_best_split(X, y)
-        
-        # split the data by using the best split information
-        if X.ndim == 1:
-            left_idx = X < best_split_threshold
+
+        # if weights are not given, consider weights are all 1.
+        w = np.ones(len(y)) if w is None else w
+
+        if self.growth == 'best':
+            self.tree = self._build_best_first_tree(X, y, w)
+        elif self.growth == 'depth':
+            self.tree = self._build_depth_first_tree(X, y, w)
         else:
-            left_idx = X[:,best_split_feature_idx] < best_split_threshold
-        right_idx = np.array([not i for i in left_idx])
-        
-        # store the split information
-        self.split_feature_idx = best_split_feature_idx
-        self.split_threshold = best_split_threshold
-        self.impurity_decrease = max_decrease * (1.0*len(y)/self.N)
-        
-        # update 
-        if self._stop_criteria() or left_idx.sum()==0 or right_idx.sum()==0:
-            self.predictor = np.mean(y, axis=0)
-        else:
-            # fit left
-            self.left = self._create_node()
-            self.left.fit(X[left_idx], y[left_idx])
-            # fit right
-            self.right = self._create_node()
-            self.right.fit(X[right_idx], y[right_idx])
+            raise ValueError('Growth needs to be "best" or "depth".')
             
         return self
 
-    def _leaf_predict(self, X):
+    def _retrieve_tree(self, X, node):
+
         num_x = len(X) # number of samples to predict
 
-        if self.predictor.ndim == 0: # binary classification or regression
-            pred = np.zeros(num_x) + self.predictor
-        
-        else: # multi classification
-            num_y = self.predictor.shape[0] # number of classes
-            pred = np.zeros((num_x, num_y)) + self.predictor
-            pred = prob2binary(pred)
-        
-        return pred 
-
-    def predict(self, X):
-        """
-        Predicts based on the trained tree. 
-        Returns estimated value for regression problems, 
-        estimated probability for classification problems.
-        
-        Parameters
-        -------
-        X : np.ndarray (n, d)
-            Predictor variables (features) to be checked
-            n: num of data samples
-            d: num of features
+        if node.value is not None: # leaf
+            if node.value.ndim == 0: # binary classification or regression
+                pred = np.zeros(num_x) + node.value
             
-        Returns
-        -------
-        pred: np.ndarray (n, c)
-            Predicted target variable of classification or Regression problems.
-            c = 1 if regresssion or binary classification. 
-            else, c = num of classes for multi classification (one-hot encoded).
+            else: # multi classification
+                num_y = node.value.shape[0] # number of classes
+                pred = np.zeros((num_x, num_y)) + node.value
 
-        """
-        
-        if self.left is None or self.right is None: # this is a leaf node
-            pred = self._leaf_predict(X)
-        
-        else: # this isn't a leaf node   
-
-            if X.ndim == 1:
-                left_idx = X < self.split_threshold
-            else:
-                left_idx = X[:,self.split_feature_idx] < self.split_threshold
-
+        else: # non-leaf node
+            left_idx = X[:,node.split_feature_idx] < node.split_threshold
             right_idx = np.array([not i for i in left_idx])
 
-            left_pred = self.left.predict(X[left_idx])
-            right_pred = self.right.predict(X[right_idx])
-
-            num_x = len(X) # number of samples to predict
+            left_pred = self._retrieve_tree(X[left_idx], node.left)
+            right_pred = self._retrieve_tree(X[right_idx], node.right)
 
             if left_pred.ndim == 1:
                 pred = np.zeros(num_x)
@@ -336,699 +286,76 @@ class _DecisionTree(ABC):
             
         return pred
 
+    def predict(self, X):
+        return self._retrieve_tree(X, self.tree)
 
-class _WeightedDecisionTree(_DecisionTree):
 
-    def __init__(self, impurity_func=None, max_depth=None, min_impurity_decrease=None, N=None, depth=0):
-        super().__init__(
-            impurity_func=impurity_func, 
-            max_depth=max_depth,
-            min_impurity_decrease=min_impurity_decrease, 
-            N=N, 
-            depth=depth
-            )
+class DecisionTreeClassifier(Cart, Classifier):
 
-    def fit(self, X, y, w=None):
-        """
-        Build the decision tree fitting the training data.
+    def __init__(self, 
+                criterion='gini',
+                growth='best', # {'best','depth'}
+                max_depth=None, 
+                max_leaf_nodes=None, # only works for best-first tree
+                min_samples_leaf=1,
+                min_impurity_decrease=0):
         
-        Parameters
-        -------
-        X : np.ndarray (n, d)
-            Predictor variables (features) to be checked
-            n: num of data samples
-            d: num of features
-            
-        y : np.ndarray (n, c) 
-            Target variable of classification or Regression problems.
-            c = 1 if regresssion or binary classification. 
-            else, c = num of classes for multi classification (one-hot encoded).
-
-        w : np.ndarray (n, )
-            Weights for samples
-
-        Returns
-        -------
-        self
-        """
-
-        # if weights are not given, consider weights are all 1.
-        w = np.ones(len(y)) if w is None else w
-        
-        # if this is a root node, store the size of entire training data set
-        if self.depth == 0:
-            self.N = np.sum(w)
-        
-        # calculate this node's impurity 
-        self.impurity = self.impurity_func(y, w)
-        
-        # find the best split
-        best_split_feature_idx, best_split_threshold, max_decrease = self._find_best_split(X, y, w)
-        
-        # split the data by using the best split information
-        if X.ndim == 1:
-            left_idx = X < best_split_threshold
-        else:
-            left_idx = X[:,best_split_feature_idx] < best_split_threshold
-        right_idx = np.array([not i for i in left_idx])
-        
-        # store the split information
-        self.split_feature_idx = best_split_feature_idx
-        self.split_threshold = best_split_threshold
-        self.impurity_decrease = max_decrease * (1.0*np.sum(w)/self.N)
-        
-        # update 
-        if self._stop_criteria() or left_idx.sum()==0 or right_idx.sum()==0:
-            self.predictor = np.average(y, axis=0, weights=w)
-        else:
-            # fit left
-            self.left = self._create_node()
-            self.left.fit(X[left_idx], y[left_idx], w[left_idx])
-            # fit right
-            self.right = self._create_node()
-            self.right.fit(X[right_idx], y[right_idx], w[right_idx])
-            
-        return self
-
-    def _compute_impurity_decrease(self, y_left, y_right, w_left, w_right):
-        """
-        Computes impurity decrease for given split.
-        
-        Parameters
-        -------
-        y_left : np.ndarray (nl, c)
-            list of y values which go to the left node by the split
-            nl: num of samples go to left, c: num classes
-            
-        y_right : np.ndarray (nr, c)
-             list of y values which go to the right node by the split
-             nr: num of samples go to right, c: num classes
-
-        w_left : np.ndarray (nl,)
-            list of weights associated with y_left
-            
-        w_right : np.ndarray (nr,)
-             list of weights associated with y_right
-
-        Returns
-        -------
-        decrease : float
-            value of the impurity decrease
-        """
-
-        left_ratio = 1.0*np.sum(w_left)/(np.sum(w_left) + np.sum(w_right))
-        right_ratio = 1.0*np.sum(w_right)/(np.sum(w_left) + np.sum(w_right))
-
-        if left_ratio == 0 or right_ratio == 0:
-            decrease = 0
-        else:
-            left_impurity = self.impurity_func(y_left, w_left)
-            right_impurity = self.impurity_func(y_right, w_right)
-            decrease = self.impurity - (left_impurity * left_ratio + right_impurity * right_ratio)
-        
-        return decrease
-
-    def _find_best_split_threshold(self, x_feature, y, w):
-        """
-        Finds the best split threshold value of the given feature
-        
-        Parameters
-        -------
-        x_feature : np.ndarray (n, )
-            A predictor variable (feature) to be checked
-            n: the number of data samples
-            
-        y : np.ndarray (n, c) 
-            Target variable of classification or Regression problems.
-            c = 1 if regresssion or binary classification. 
-            else, c = num of classes for multi classification (one-hot encoded).
-
-        w : np.ndarray (n, )
-            Weights for samples
-
-        Returns
-        -------
-        max_decrease: float
-            maximum decrease of impurity obtained by the split using 
-            this feature and the best threshold
-
-        best_threshold: float
-            the best threshold to split the data 
-        """
-        
-        max_decrease = 0
-        best_threshold = np.inf
-        
-        possible_thresholds = set(x_feature)
-        
-        for threshold in possible_thresholds:
-            left_idx = x_feature < threshold
-            right_idx = np.array([not i for i in left_idx])
-            decrease = self._compute_impurity_decrease(y[left_idx], y[right_idx], w[left_idx], w[right_idx])
-            
-            if decrease > max_decrease:
-                max_decrease = decrease
-                best_threshold = threshold
-        
-        return max_decrease, best_threshold
-
-        
-    def _find_best_split(self, X, y, w):
-        """
-        Finds the best split across all the input features
-        
-        Parameters
-        -------
-        X : np.ndarray (n, d)
-            Predictor variables (features) to be checked
-            n: num of data samples
-            d: num of features
-            
-        y : np.ndarray (n, c) 
-            Target variable of classification or Regression problems.
-            c = 1 if regresssion or binary classification. 
-            else, c = num of classes for multi classification (one-hot encoded).
-
-        w : np.ndarray (n, )
-            Weights for samples
-
-        Returns
-        -------
-        best_split_feature_idx:
-            index of the best feature to split the data
-        
-        best_split_threshold: float
-            the best threshold to split the data
-
-        max_decrease: float
-            maximum decrease of impurity obtained by the split using 
-            this feature and the best threshold
-        """
-        
-        # init 
-        max_decrease = 0
-        best_split_feature_idx = 0
-        best_split_threshold = np.inf # all goes to the left
-        
-        if X.ndim == 1: # there's only one feature in the data
-            decrease, threshold = self._find_best_split_threshold(X, y, w)
-            if decrease > max_decrease:
-                best_split_threshold = threshold
-
-        else: # more than 2 features in the data
-            for feature_idx in self._search_scope(X):
-                x_feature = X[:,feature_idx]
-                decrease, threshold = self._find_best_split_threshold(x_feature, y, w)
-                if decrease > max_decrease:
-                    best_split_feature_idx = feature_idx
-                    best_split_threshold = threshold
-        
-        return best_split_feature_idx, best_split_threshold, max_decrease
-        
-
-class _RandomTree(_DecisionTree):
-    """ 
-    Base class for RandomTreeClassifier and RandomTreeRegressor. 
-    Just overriding _search_scope method from DecisionTree.
-    """
-
-    def __init__(
-        self, 
-        impurity_func,
-        max_features='sqrt',
-        max_depth=None, 
-        min_impurity_decrease=None,
-        N=None,
-        depth=0
-        ):
-
-        self.max_features = max_features
-        
-        super().__init__(
-            impurity_func=impurity_func,
-            max_depth=max_depth,
-            min_impurity_decrease=min_impurity_decrease,
-            N=N,
-            depth=depth
-        )
-
-    def _search_scope(self, X):
-        """ Returns indices of features to serch best split."""
-        n_features = X.shape[1]
-
-        if self.max_features == 'sqrt':
-            n_pick = round(math.sqrt(n_features))
-        elif self.max_features == 'log2':
-            n_pick = max(1, round(math.log2(n_features)))
-        elif isinstance(self.max_features, int):
-            n_pick = min(n_features, max(1, self.max_features))
-        else:
-            n_pick = n_features
-        
-        indices = random.sample(range(n_features), n_pick)
-        return indices
-
-
-class DecisionTreeClassifier(_DecisionTree, Classifier):
-    """
-    Decision tree for classification. 
-
-    Parameters
-    ----------
-    criterion: string
-        criterion to be used for measuring the impurity.
-        either "gini" or "entropy"
-
-    max_depth: int
-        maximum depth that the tree can grow
-    
-    min_impurity_decrease: float
-        if the impurity decrease is smaller than this, 
-        tree doesn't split.
-    """
-
-    def __init__(
-        self, 
-        criterion='gini',
-        max_depth=None, 
-        min_impurity_decrease=None,
-        N=None,
-        depth=0
-        ):
-
-        self.criterion = criterion
-
         if criterion == 'gini':
             impurity_func = gini_impurity
         elif criterion == 'entropy':
             impurity_func = entropy
         else:
-            raise ValueError('metric parameter needs to be either "gini" or "entropy".')
-        
-        super().__init__(
-            impurity_func=impurity_func,
-            max_depth=max_depth,
-            min_impurity_decrease=min_impurity_decrease,
-            N=N,
-            depth=depth
-        )
-    
-    def _create_node(self):
-        return DecisionTreeClassifier(
-                criterion=self.criterion, 
-                max_depth=self.max_depth, 
-                min_impurity_decrease=self.min_impurity_decrease,
-                N=self.N,
-                depth=self.depth+1)
+            raise ValueError('Criterion needs to be either "gini" or "entropy".')
 
-    def fit(self, X, y):
-        return super().fit(X, y)
+        super().__init__(impurity_func=impurity_func, 
+                         growth=growth, 
+                         max_depth=max_depth, 
+                         max_leaf_nodes=max_leaf_nodes,
+                         min_samples_leaf = min_samples_leaf,
+                         min_impurity_decrease=min_impurity_decrease)
 
-    def predict(self, X):
-        return prob2binary(super().predict(X))
+    def fit(self, X, y, w=None):
+        X, y, w = self._validate_Xyw(X, y, w)
+        return super().fit(X, y, w)
 
     def predict_proba(self, X):
+        X = self._validate_X(X)
         return super().predict(X)
 
+    def predict(self, X):
+        return prob2binary(self.predict_proba(X))
 
-class DecisionTreeRegressor(_DecisionTree, Regressor):
-    """
-    Decision tree for regression. 
 
-    Parameters
-    ----------
-    criterion: string
-        criterion to be used for measuring the impurity.
-        either "mse" or "mae"
+class DecisionTreeRegressor(Cart, Regressor):
 
-    max_depth: int
-        maximum depth that the tree can grow
-    
-    min_impurity_decrease: float
-        if the impurity decrease is smaller than this, 
-        tree doesn't split.
-    """
-
-    def __init__(
-        self, 
-        criterion='mse',
-        max_depth=None, 
-        min_impurity_decrease=None,
-        N=None,
-        depth=0):
-
-        self.criterion = criterion
-
+    def __init__(self, 
+                criterion='mse',
+                growth='best', # {'best','depth'}
+                max_depth=None, 
+                max_leaf_nodes=None, # only works for best-first tree
+                min_samples_leaf=1,
+                min_impurity_decrease=0):
+        
         if criterion == 'mse':
             impurity_func = variance
         elif criterion == 'mae':
             impurity_func = mean_deviation
         else:
-            raise ValueError('metric parameter needs to be either "mse" or "mae".')
-        
-        super().__init__(
-            impurity_func=impurity_func,
-            max_depth=max_depth,
-            min_impurity_decrease=min_impurity_decrease,
-            N=N,
-            depth=depth
-        )
-    
-    def _create_node(self):
-        return DecisionTreeRegressor(
-                criterion=self.criterion, 
-                max_depth=self.max_depth, 
-                min_impurity_decrease=self.min_impurity_decrease,
-                N=self.N,
-                depth=self.depth+1)
+            raise ValueError('Criterion needs to be either "mse" or "mae".')
 
-    def fit(self, X, y):
-        return super().fit(X, y)
-
-    def predict(self, X):
-        return super().predict(X)
-
-
-class RandomTreeClassifier(_RandomTree, Classifier):
-    """
-    Base class for Random forest classifier.
-
-    Parameters
-    ----------
-    max_features: string or int
-        The number of features to consider when looking for the best split.
-        if "sqrt": sqrt(n_features)
-        if "log2": log2(n_features)
-        if any int: min(n_features, max_features)
-        else: n_features
-
-    criterion: string
-        criterion to be used for measuring the impurity.
-        either "gini" or "entropy"
-
-    max_depth: int
-        maximum depth that the tree can grow
-    
-    min_impurity_decrease: float
-        if the impurity decrease is smaller than this, 
-        tree doesn't split.
-    """
-
-    def __init__(
-        self, 
-        criterion='gini',
-        max_features='sqrt',
-        max_depth=None, 
-        min_impurity_decrease=None,
-        N=None,
-        depth=0
-        ):
-
-        self.criterion = criterion
-
-        if criterion == 'gini':
-            impurity_func = gini_impurity
-        elif criterion == 'entropy':
-            impurity_func = entropy
-        else:
-            raise ValueError('metric parameter needs to be either "gini" or "entropy".')
-        
-        super().__init__(
-            impurity_func=impurity_func,
-            max_features=max_features,
-            max_depth=max_depth,
-            min_impurity_decrease=min_impurity_decrease,
-            N=N,
-            depth=depth
-        )
-    
-    def _create_node(self):
-        return RandomTreeClassifier(
-                criterion=self.criterion, 
-                max_features = self.max_features,
-                max_depth=self.max_depth, 
-                min_impurity_decrease=self.min_impurity_decrease,
-                N=self.N,
-                depth=self.depth+1)
-
-    def fit(self, X, y):
-        return super().fit(X, y)
-
-    def predict(self, X):
-        return prob2binary(super().predict(X))
-
-    def predict_proba(self, X):
-        return super().predict(X)
-
-
-class RandomTreeRegressor(_RandomTree, Regressor):
-    """
-    Base class for Random forest regressor.
-
-    Parameters
-    ----------
-    max_features: string or int
-        The number of features to consider when looking for the best split.
-        if "sqrt": sqrt(n_features)
-        if "log2": log2(n_features)
-        if any int: min(n_features, max_features)
-        else: n_features
-
-    criterion: string
-        criterion to be used for measuring the impurity.
-        either "mse" or "mae"
-
-    max_depth: int
-        maximum depth that the tree can grow
-    
-    min_impurity_decrease: float
-        if the impurity decrease is smaller than this, 
-        tree doesn't split.
-    """
-
-    def __init__(
-        self, 
-        criterion='mse',
-        max_features='sqrt',
-        max_depth=None, 
-        min_impurity_decrease=None,
-        N=None,
-        depth=0):
-
-        self.criterion = criterion
-
-        if criterion == 'mse':
-            impurity_func = variance
-        elif criterion == 'mae':
-            impurity_func = mean_deviation
-        else:
-            raise ValueError('metric parameter needs to be either "mse" or "mae".')
-        
-        super().__init__(
-            impurity_func=impurity_func,
-            max_features = max_features,
-            max_depth=max_depth,
-            min_impurity_decrease=min_impurity_decrease,
-            N=N,
-            depth=depth
-        )
-
-    def _create_node(self):
-        return RandomTreeRegressor(
-                criterion=self.criterion, 
-                max_features = self.max_features,
-                max_depth=self.max_depth, 
-                min_impurity_decrease=self.min_impurity_decrease,
-                N=self.N,
-                depth=self.depth+1)
-    
-    def fit(self, X, y):
-        return super().fit(X, y)
-
-    def predict(self, X):
-        return super().predict(X)
-
-
-class WeightedDecisionTreeClassifier(_WeightedDecisionTree, Classifier):
-    """
-    Weighted decision tree for classification. 
-
-    Parameters
-    ----------
-    criterion: string
-        criterion to be used for measuring the impurity.
-        either "gini" or "entropy"
-
-    max_depth: int
-        maximum depth that the tree can grow
-    
-    min_impurity_decrease: float
-        if the impurity decrease is smaller than this, 
-        tree doesn't split.
-    """
-
-    def __init__(
-        self, 
-        criterion='gini',
-        max_depth=None, 
-        min_impurity_decrease=None,
-        N=None,
-        depth=0
-        ):
-
-        self.criterion = criterion
-
-        if criterion == 'gini':
-            impurity_func = gini_impurity
-        elif criterion == 'entropy':
-            impurity_func = entropy
-        else:
-            raise ValueError('metric parameter needs to be either "gini" or "entropy".')
-        
-        super().__init__(
-            impurity_func=impurity_func,
-            max_depth=max_depth,
-            min_impurity_decrease=min_impurity_decrease,
-            N=N,
-            depth=depth
-        )
-    
-    def _create_node(self):
-        return WeightedDecisionTreeClassifier(
-                criterion=self.criterion, 
-                max_depth=self.max_depth, 
-                min_impurity_decrease=self.min_impurity_decrease,
-                N=self.N,
-                depth=self.depth+1)
+        super().__init__(impurity_func=impurity_func, 
+                         growth=growth, 
+                         max_depth=max_depth, 
+                         max_leaf_nodes=max_leaf_nodes,
+                         min_samples_leaf = min_samples_leaf,
+                         min_impurity_decrease=min_impurity_decrease)
 
     def fit(self, X, y, w=None):
+        X, y, w = self._validate_Xyw(X, y, w)
         return super().fit(X, y, w)
 
     def predict(self, X):
-        return prob2binary(super().predict(X))
-
-    def predict_proba(self, X):
+        X = self._validate_X(X)
         return super().predict(X)
 
 
-class WeightedDecisionTreeRegressor(_WeightedDecisionTree, Regressor):
-    """
-    Weighted decision tree for regression. 
-
-    Parameters
-    ----------
-    criterion: string
-        criterion to be used for measuring the impurity.
-        either "mse" or "mae"
-
-    max_depth: int
-        maximum depth that the tree can grow
-    
-    min_impurity_decrease: float
-        if the impurity decrease is smaller than this, 
-        tree doesn't split.
-    """
-
-    def __init__(
-        self, 
-        criterion='mse',
-        max_depth=None, 
-        min_impurity_decrease=None,
-        N=None,
-        depth=0):
-
-        self.criterion = criterion
-
-        if criterion == 'mse':
-            impurity_func = variance
-        elif criterion == 'mae':
-            impurity_func = mean_deviation
-        else:
-            raise ValueError('metric parameter needs to be either "mse" or "mae".')
-        
-        super().__init__(
-            impurity_func=impurity_func,
-            max_depth=max_depth,
-            min_impurity_decrease=min_impurity_decrease,
-            N=N,
-            depth=depth
-        )
-    
-    def _create_node(self):
-        return WeightedDecisionTreeRegressor(
-                criterion=self.criterion, 
-                max_depth=self.max_depth, 
-                min_impurity_decrease=self.min_impurity_decrease,
-                N=self.N,
-                depth=self.depth+1)
-
-    def fit(self, X, y, w=None):
-        return super().fit(X, y, w)
-
-    def predict(self, X):
-        return super().predict(X)
-
-
-class WeightedDecisionStumpClassifier(_WeightedDecisionTree, Classifier):
-    """
-    Weak Learner for AdaBoost Classifiers.
-    """
-
-    def __init__(
-        self, 
-        N=None,
-        depth=0
-        ):
-        
-        super().__init__(
-            impurity_func=classification_error,
-            max_depth=1,
-            min_impurity_decrease=None,
-            N=N,
-            depth=depth
-        )
-    
-    def _create_node(self):
-        return WeightedDecisionStumpClassifier(
-                N=self.N,
-                depth=self.depth+1)
-
-    def fit(self, X, y, w=None):
-        return super().fit(X, y, w)
-
-    def predict(self, X):
-        return prob2binary(super().predict(X))
-
-    def predict_proba(self, X):
-        return super().predict(X)
-
-
-class WeightedDecisionStumpRegressor(_WeightedDecisionTree, Regressor):
-    """
-    Weak Learner for AdaBoost Regressors.
-    """
-
-    def __init__(
-        self, 
-        N=None,
-        depth=0
-        ):
-        
-        super().__init__(
-            impurity_func=mean_deviation,
-            max_depth=1,
-            min_impurity_decrease=None,
-            N=N,
-            depth=depth
-        )
-    
-    def _create_node(self):
-        return WeightedDecisionStumpRegressor(
-                N=self.N,
-                depth=self.depth+1)
-
-    def fit(self, X, y, w=None):
-        return super().fit(X, y, w)
-
-    def predict(self, X):
-        return super().predict(X)

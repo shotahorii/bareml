@@ -43,7 +43,7 @@ import numpy as np
 
 from mlfs.base_classes import Classifier, Regressor, BinaryClassifier, Ensemble
 from mlfs.utils.transformers import prob2binary, binary2sign, sign2binary, OnehotEncoder
-from mlfs.supervised.decision_trees import WeightedDecisionStumpClassifier, WeightedDecisionStumpRegressor
+from mlfs.supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
 from mlfs.utils.metrics import absolute_relative_errors, absolute_errors
 
 class AdaBoost(Ensemble, BinaryClassifier):
@@ -53,7 +53,7 @@ class AdaBoost(Ensemble, BinaryClassifier):
     This implementation is based on the refference [3].
     """
 
-    def __init__(self, max_iter=10, estimator=WeightedDecisionStumpClassifier()):
+    def __init__(self, max_iter=10, estimator=DecisionTreeClassifier(max_depth=1)):
         super().__init__(base_estimator=estimator)
         self.max_iter = max_iter
         self.alphas = []
@@ -120,7 +120,7 @@ class AdaBoostM1(Ensemble, Classifier):
     Implementation based on the refference [2].
     """
 
-    def __init__(self, max_iter=10, estimator=WeightedDecisionStumpClassifier()):
+    def __init__(self, max_iter=10, estimator=DecisionTreeClassifier(max_depth=1)):
         super().__init__(base_estimator=estimator)
         self.max_iter = max_iter
         self.betas = []
@@ -203,7 +203,7 @@ class AdaBoostSamme(Ensemble, Classifier):
     Implementation based on the refference [5].
     """
 
-    def __init__(self, max_iter=10, estimator=WeightedDecisionStumpClassifier()):
+    def __init__(self, max_iter=10, estimator=DecisionTreeClassifier(max_depth=1)):
         super().__init__(base_estimator=estimator)
         self.max_iter = max_iter
         self.alphas = []
@@ -281,7 +281,7 @@ class AdaBoostRT(Ensemble, Regressor):
     Implementation based on the refference [7].
     """
 
-    def __init__(self, threshold=0.05, max_iter=10, estimator=WeightedDecisionStumpRegressor()):
+    def __init__(self, threshold=0.05, max_iter=10, estimator=DecisionTreeRegressor(max_depth=1)):
         super().__init__(base_estimator=estimator)
         self.threshold = threshold
         self.max_iter = max_iter
@@ -340,7 +340,7 @@ class AdaBoostR2(Ensemble, Regressor):
     Implementation based on the refference [8].
     """
 
-    def __init__(loss='linear', max_iter=10, estimator=WeightedDecisionStumpRegressor()):
+    def __init__(loss='linear', max_iter=10, estimator=DecisionTreeRegressor(max_depth=1)):
         super().__init__(base_estimator=estimator)
         self.max_iter = max_iter
         self.betas = []

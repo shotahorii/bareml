@@ -54,9 +54,32 @@ class Estimator(ABC):
         if X.ndim == 1:
             # convert to column vector 
             # e.g. [1,2,3] -> [[1],[2],[3]]
-            X = X[:,None] 
+            X = np.expand_dims(X, axis=1)
+            #X = X[:,None] 
 
         return X
+
+    def _validate_w(self, w):
+        """ 
+        Validates input w for training. 
+        """
+        if w is None:
+            return w
+            
+        w = np.array(w)
+
+        if w.dtype not in ['int64','float64','uint8']:
+            raise ValueError('Data type of w needs to be int or float.')
+        elif w.ndim != 1:
+            raise ValueError('w needs to be a 1d array.')
+        elif np.isnan(w).any():
+            raise ValueError('There is at least 1 null element in w.')
+        elif np.isinf(w).any():
+            raise ValueError('There is at least 1 inf/-inf element in w.')
+        elif (w < 0).any():
+            raise ValueError('w cannot be minus.')
+
+        return w
 
     def _validate_Xy(self, X, y):
         """
@@ -71,6 +94,24 @@ class Estimator(ABC):
             raise ValueError('Length of X and y need to be same.')
 
         return X, y
+
+    def _validate_Xyw(self, X, y, w):
+        """
+        Validates input X and y for training. 
+        Every fit() function must call this method 
+        at the first line to validate input X and y.
+        """
+        X = self._validate_X(X)
+        y = self._validate_y(y)
+        w = self._validate_w(w)
+
+        if y is not None and len(X) != len(y):
+            raise ValueError('Length of X and y need to be same.')
+
+        if w is not None and len(X) != len(w):
+            raise ValueError('Length of X and w need to be same.')
+
+        return X, y, w
 
 
 class Regressor(Estimator):

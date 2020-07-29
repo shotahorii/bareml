@@ -13,7 +13,7 @@ import numpy as np
 from mlfs.base_classes import Classifier, Regressor, Ensemble
 from mlfs.utils.transformers import prob2binary
 from mlfs.utils.sampling import bootstrap_sampling
-from mlfs.supervised.decision_trees import RandomTreeClassifier, RandomTreeRegressor
+from mlfs.supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
 
 class Bagging(Ensemble):
     

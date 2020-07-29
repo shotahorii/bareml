@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from mlfs.base_classes import Regressor, Ensemble
-from mlfs.supervised.decision_trees import WeightedDecisionStumpRegressor
+from mlfs.supervised.decision_trees import DecisionTreeRegressor
 from mlfs.utils.loss_functions import SquareError
 
 class GradientBoosting(Ensemble):
@@ -52,6 +52,6 @@ class GradientBoosting(Ensemble):
 
 class L2Boosting(GradientBoosting, Regressor):
     
-    def __init__(self, estimator=WeightedDecisionStumpRegressor(), max_iter=10, lr=0.1):
+    def __init__(self, estimator=DecisionTreeRegressor(max_depth=1), max_iter=10, lr=0.1):
         super().__init__(estimator=estimator, loss=SquareError(), max_iter=max_iter, lr=lr)
 
