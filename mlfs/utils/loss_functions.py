@@ -18,6 +18,9 @@ class SquareError:
     def gradient(self, y, y_pred):
         return y_pred - y
 
+    def hessian(self, y, y_pred):
+        return np.ones(len(y))
+
 class CrossEntropy:
 
     def __call__(self, y, y_pred):

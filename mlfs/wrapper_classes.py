@@ -78,9 +78,6 @@ class Polynomial(Preprocessed):
         return self._preprocess_X_fit(X) # same as fit
 
 
-
-
-
 """
 class Scaled(Estimator):
 

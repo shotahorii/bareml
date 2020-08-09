@@ -23,6 +23,12 @@ class Solver(ABC):
     def solve(self):
         pass
 
+class IterativeOptimiser(ABC):
+
+    @abstractmethod
+    def step(self):
+        pass
+
 
 class PInv(Solver):
     """

@@ -17,14 +17,13 @@ import math
 import random
 import numpy as np
 
-from mlfs.base_classes import Regressor, Classifier
+from mlfs.base_classes import Regressor, Classifier, Estimator
 from mlfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation, classification_error
 from mlfs.utils.transformers import prob2binary
 
 class TreeNode:
 
-    def __init__(self, X, y, w=None, depth=0, split_feature_idx=None, split_threshold=None, 
-                impurity_decrease=None, left=None, right=None, value=None):
+    def __init__(self, X, y, w=None, depth=0):
         
         # training data
         self.X = X
@@ -33,15 +32,16 @@ class TreeNode:
 
         # for all
         self.depth = depth
+        self.impurity = None
 
         # for non-leaf node
-        self.split_feature_idx = split_feature_idx
-        self.split_threshold = split_threshold
-        self.impurity_decrease = impurity_decrease
-        self.left = left
-        self.right = right
+        self.split_feature_idx = None
+        self.split_threshold = None
+        self.impurity_decrease = None
+        self.left = None
+        self.right = None
         # for leaf node
-        self.value = value
+        self.value = None
 
     def to_leaf(self):
         self.left = None
@@ -76,7 +76,7 @@ class Cart:
         n_leaves = 0
 
         # initialise root node
-        root = self._grow_node(TreeNode(X, y, w))
+        root = self._init_node(TreeNode(X, y, w))
         nodes = [root]
 
         while len(nodes) > 0:
@@ -89,8 +89,8 @@ class Cart:
                 node.to_leaf() # make this node into leaf
                 n_leaves += 1
             else:
-                nodes.append(self._grow_node(node.left))
-                nodes.append(self._grow_node(node.right))
+                nodes.append(self._init_node(node.left))
+                nodes.append(self._init_node(node.right))
                 # sort nodes by impurity decrease (descending order)
                 nodes = sorted(nodes, key=lambda n: n.impurity_decrease, reverse=True)
 
@@ -102,28 +102,35 @@ class Cart:
             if node.impurity_decrease <= self.min_impurity_decrease or node.depth == self.max_depth or len(node.left.y) < self.min_samples_leaf or len(node.right.y) < self.min_samples_leaf:
                 node.to_leaf()
             else:
-                build_helper(self._grow_node(node.left))
-                build_helper(self._grow_node(node.right))
+                build_helper(self._init_node(node.left))
+                build_helper(self._init_node(node.right))
 
         # init
         self.n_samples = len(y)
-        root = self._grow_node(TreeNode(X, y, w))
+        root = self._init_node(self._make_node(X, y, w, 0))
         build_helper(root)
         
         return root
 
-    def _grow_node(self, node):
-        node.split_feature_idx, node.split_threshold, impurity_after_split = self._find_best_split(node.X, node.y, node.w)
-        node.impurity_decrease = (1.0*len(node.y)/self.n_samples) * max(self.impurity_func(node.y, node.w) - impurity_after_split, 0)
+    def _make_node(self, X, y, w, depth):
+        return TreeNode(X, y, w, depth)
+
+    def _init_node(self, node):
+        node.impurity = self._compute_impurity(node)
+
+        node.split_feature_idx, node.split_threshold, node.impurity_decrease = self._find_best_split(node)
 
         left_idx = node.X[:,node.split_feature_idx] < node.split_threshold
         right_idx = np.array([not i for i in left_idx])
 
-        node.left = TreeNode(node.X[left_idx], node.y[left_idx], node.w[left_idx], depth=node.depth+1)
-        node.right = TreeNode(node.X[right_idx], node.y[right_idx], node.w[right_idx], depth=node.depth+1)
+        node.left = self._make_node(node.X[left_idx], node.y[left_idx], node.w[left_idx], depth=node.depth+1)
+        node.right = self._make_node(node.X[right_idx], node.y[right_idx], node.w[right_idx], depth=node.depth+1)
         return node
 
-    def _compute_impurity(self, y_left, y_right, w_left, w_right):
+    def _compute_impurity(self, node):
+        return self.impurity_func(node.y, node.w)
+
+    def _compute_impurity_decrease(self, node, left_idx, right_idx):
         """
         Computes total impurity after the given split.
         
@@ -139,50 +146,22 @@ class Cart:
         impurity_after_split : float
             value of the impurity after the split
         """
+        y_left, y_right = node.y[left_idx], node.y[right_idx]
+        w_left, w_right = node.w[left_idx], node.w[right_idx]
+
         left_ratio = 1.0*np.sum(w_left)/(np.sum(w_left) + np.sum(w_right))
         right_ratio = 1.0*np.sum(w_right)/(np.sum(w_left) + np.sum(w_right))
 
         if left_ratio == 0 or right_ratio == 0:
-            impurity_after_split = np.inf
+            impurity_decrease = 0
         else:
             left_impurity = self.impurity_func(y_left, w_left)
             right_impurity = self.impurity_func(y_right, w_right)
-            impurity_after_split = left_impurity * left_ratio + right_impurity * right_ratio
+            impurity_decrease = node.impurity - (left_impurity * left_ratio + right_impurity * right_ratio)
         
-        return impurity_after_split
-        
-    def _find_best_split_threshold(self, x_feature, y, w):
-        """
-        Finds the best split threshold value for the given feature
-        
-        Parameters
-        ----------
-        x_feature : np.ndarray (n, )
-        y : np.ndarray (n, c) 
+        return (1.0*len(node.y)/self.n_samples) * impurity_decrease
 
-        Returns
-        -------
-        best_threshold: float
-        impurity_after_split: float
-        """
-        
-        min_impurity = np.inf
-        best_threshold = np.inf
-        
-        possible_thresholds = set(x_feature)
-        
-        for threshold in possible_thresholds:
-            left_idx = x_feature < threshold
-            right_idx = np.array([not i for i in left_idx])
-            impurity_after_split = self._compute_impurity(y[left_idx], y[right_idx], w[left_idx], w[right_idx])
-            
-            if impurity_after_split < min_impurity:
-                min_impurity = impurity_after_split
-                best_threshold = threshold
-        
-        return best_threshold, impurity_after_split
-
-    def _find_best_split(self, X, y, w):
+    def _find_best_split(self, node):
         """
         Finds the best split across all the input features
         
@@ -197,21 +176,27 @@ class Cart:
         best_split_threshold: float
         max_decrease: float
         """
-        
+
         # init 
-        min_impurity = np.inf
+        max_impurity_decrease = 0
         best_split_feature_idx = 0
         best_split_threshold = np.inf # all goes to the left
         
-        for feature_idx in self._search_scope(X):
-            x_feature = X[:,feature_idx]
-            threshold, impurity_after_split = self._find_best_split_threshold(x_feature, y, w)
-            if impurity_after_split < min_impurity:
-                best_split_feature_idx = feature_idx
-                best_split_threshold = threshold
-                min_impurity = impurity_after_split
+        for feature_idx in self._search_scope(node.X):
+            x_feature = node.X[:,feature_idx]
+            possible_thresholds = set(x_feature)
+
+            for threshold in possible_thresholds:
+                left_idx = x_feature < threshold
+                right_idx = np.array([not i for i in left_idx])
+                impurity_decrease = self._compute_impurity_decrease(node, left_idx, right_idx)
+
+                if impurity_decrease > max_impurity_decrease:
+                    best_split_feature_idx = feature_idx
+                    best_split_threshold = threshold
+                    max_impurity_decrease = impurity_decrease
         
-        return best_split_feature_idx, best_split_threshold, min_impurity
+        return best_split_feature_idx, best_split_threshold, max_impurity_decrease
 
     def _search_scope(self, X):
         """ Returns indices of features to serch best split."""
@@ -359,3 +344,69 @@ class DecisionTreeRegressor(Cart, Regressor):
         return super().predict(X)
 
 
+class GBTreeNode(TreeNode):
+
+    def __init__(self, reg_lambda, X, y, w=None, depth=0):
+        super().__init__(X, y, w)
+        self.reg_lambda = reg_lambda
+
+    def to_leaf(self):
+        self.left = None
+        self.right = None
+        g = np.sum(self.y[:,0])
+        h = np.sum(self.y[:,1])
+        self.value = -1.0 * g / (h + self.reg_lambda)
+
+
+def negative_gain(y, reg_lambda):
+    g = np.sum(y[:,0])
+    h = np.sum(y[:,1])
+    return -1.0 * (g**2)/(h + reg_lambda) 
+
+
+class GBTree(Cart):
+
+    def __init__(self, 
+                max_depth=5, 
+                max_leaf_nodes=None,
+                min_samples_leaf=1,
+                reg_lambda=1,
+                gamma=0):
+
+        super().__init__(impurity_func=negative_gain,
+                         growth='best', 
+                         max_depth=max_depth, 
+                         max_leaf_nodes=max_leaf_nodes,
+                         min_samples_leaf = min_samples_leaf,
+                         min_impurity_decrease=gamma)
+
+        self.reg_lambda = reg_lambda
+
+    def _make_node(self, X, y, w, depth):
+        return GBTreeNode(self.reg_lambda, X, y, w, depth)
+
+    def _compute_impurity(self, node):
+        return self.impurity_func(node.y, self.reg_lambda)
+
+    def _compute_impurity_decrease(self, node, left_idx, right_idx):
+        """
+        Computes total impurity after the given split.
+        
+        Parameters
+        -------
+        y_left : np.ndarray (nl, c)
+            list of y values which go to the left node by the split
+        y_right : np.ndarray (nr, c)
+             list of y values which go to the right node by the split
+
+        Returns
+        -------
+        impurity_after_split : float
+            value of the impurity after the split
+        """
+        y_left, y_right = node.y[left_idx], node.y[right_idx]
+
+        left_impurity = self.impurity_func(y_left, self.reg_lambda)
+        right_impurity = self.impurity_func(y_right, self.reg_lambda)
+
+        return 0.5 * (node.impurity - left_impurity - right_impurity)
