@@ -4,14 +4,14 @@ base classes
 
 # Author: Shota Horii <sh.sinker@gmail.com>
 
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 import numpy as np
 
 from mlfs.utils.metrics import accuracy, precision_recall_f1, mae, rmse, r_squqred
 
 
-class Estimator(ABC):
+class Estimator(metaclass=ABCMeta):
 
     @abstractmethod
     def fit(self, X, y):
@@ -20,7 +20,7 @@ class Estimator(ABC):
     
     @abstractmethod
     def predict(self, X):
-        """ Returns predicted value for each sample. """
+        """ Returns predicted value for input samples. """
         pass
 
     @abstractmethod
@@ -29,17 +29,11 @@ class Estimator(ABC):
         pass
 
     def _validate_y(self, y):
-        """ 
-        Validates input y for training. 
-        This function can be left without overriden if
-        the estimator is unsupervised. 
-        """
+        """ Validates input y for training. """
         return y
 
     def _validate_X(self, X):
-        """ 
-        Validates input X for training. 
-        """
+        """ Validates input X for training. """
         X = np.array(X)
 
         if X.dtype not in ['int64','float64','uint8']:
@@ -60,9 +54,7 @@ class Estimator(ABC):
         return X
 
     def _validate_w(self, w):
-        """ 
-        Validates input w for training. 
-        """
+        """ Validates input weight for training. """
         if w is None:
             return w
             
@@ -149,7 +141,7 @@ class Classifier(Estimator):
         This can be left without overridden, if the classifier isn't 
         eligible to provide probability estimates. 
         """
-        raise ValueError('This classifier is not eligible to provide probability.')
+        raise NotImplementedError('This classifier is not eligible to provide probability.')
 
     def score(self, X, y):
         """ Returns various evaluation metrics. """
@@ -190,7 +182,7 @@ class BinaryClassifier(Classifier):
         return y
 
 
-class Ensemble(ABC):
+class Ensemble(metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, estimators=[], base_estimator=None):

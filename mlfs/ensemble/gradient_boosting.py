@@ -13,6 +13,8 @@ Abstract classes for
 - ForwardStagewiseAdditiveModeling
 """
 
+# Author: Shota Horii <sh.sinker@gmail.com>
+
 from abc import ABC, abstractmethod
 import numpy as np
 

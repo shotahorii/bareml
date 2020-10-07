@@ -168,7 +168,7 @@ class OnehotEncoder(Encoder):
 ########## Other functions ##########
 
 
-def real2binary(y, threshold=0.5):
+def real2binary(y, threshold=0.5, inclusive=True):
     """
     Convert real values (-inf,inf) -> binary values {0,1}
 
@@ -179,11 +179,17 @@ def real2binary(y, threshold=0.5):
     threshold: float (-inf, inf)
         value greater than this is converted into 1, otherwise 0
 
+    inclusive: bool
+        if True, equal to threshold -> 1, else -> 0
+
     Returns 
     -------
-    np.array (n,c) int {-1,1}
+    np.array (n,c) int {0,1}
     """
-    return (y > threshold).astype(int)
+    if inclusive:
+        return (y >= threshold).astype(int)
+    else:
+        return (y > threshold).astype(int)
 
 
 def binary2sign(y):
@@ -221,6 +227,31 @@ def sign2binary(y, zero_as_plus=False):
     else:
         return (y > 0).astype(int)
 
+def real2sign(y, zero_as_plus=True):
+    """
+    Convert real values (-inf,inf) -> signs {-1,1}
+
+    Parameters
+    ----------
+    y: np.array (n,c) float/int (-inf,inf)
+
+    zero_as_plus: bool
+        if True, convert 0 -> 1, else 0 -> -1
+
+    Returns
+    -------
+    np.array (n,c) int {-1,1}
+    """
+    if y.ndim == 0: # case when y is a np scalar
+        if zero_as_plus:
+            return 1 if y==0 else np.sign(y).astype(int) 
+        else:
+            return -1 if y==0 else np.sign(y).astype(int)
+
+    if zero_as_plus:
+        return np.where(y==0, 1, np.sign(y).astype(int))
+    else:
+        return np.where(y==0, -1, np.sign(y).astype(int)) 
 
 def prob2binary(y):
     """
@@ -236,7 +267,7 @@ def prob2binary(y):
     -------
     np.ndarray (n,c) int {0,1}
     """
-    if y.ndim == 1:
+    if y.ndim <= 1:
         return np.round(y).astype(int)
     else:
         # avoid [[0.333, 0.333, 0.333], [0.2, 0.4, 0.4]] -> [[1, 1, 1], [0, 1, 1]]
