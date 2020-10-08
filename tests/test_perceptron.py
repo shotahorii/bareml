@@ -9,7 +9,7 @@ sys.path.append('../')
 from mlfs.supervised.perceptron import Perceptron
 from mlfs.utils.validators import KFold
 
-class AccuracyTest(unittest.TestCase):
+class PerceptronTest(unittest.TestCase):
 
     def test_sklearn_comparison(self):
         data = load_breast_cancer()

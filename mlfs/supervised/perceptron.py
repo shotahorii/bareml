@@ -5,6 +5,7 @@ described in Bishop(2006).
 
 Author: Shota Horii <sh.sinker@gmail.com>
 Status: Test Passed
+
 References:
 C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 192-196.
 """
