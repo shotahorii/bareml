@@ -6,8 +6,8 @@ from sklearn.linear_model import Perceptron as SklPerceptron
 import sys
 sys.path.append('../')
 
-from mlfs.supervised.perceptron import Perceptron
-from mlfs.utils.validators import KFold
+from machinelfs.supervised.perceptron import Perceptron
+from machinelfs.utils.validators import KFold
 
 class PerceptronTest(unittest.TestCase):
 
@@ -28,10 +28,10 @@ class PerceptronTest(unittest.TestCase):
             y_train, y_test = y[train_idx], y[test_idx]
 
             clf_skl.fit(X_train, y_train)
-            clf_mlfs.fit(X_train, y_train)
+            clf_machinelfs.fit(X_train, y_train)
 
             skl_scores.append(clf_skl.score(X_test, y_test))
-            mlfs_scores.append(clf_mlfs.score(X_test, y_test)['accuracy'])
+            mlfs_scores.append(clf_machinelfs.score(X_test, y_test)['accuracy'])
 
         skl_score = np.array(skl_scores).mean()
         mlfs_score = np.array(mlfs_scores).mean()
