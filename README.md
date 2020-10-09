@@ -4,8 +4,6 @@
 
 The implementations are not (and not intended to be) optimised w.r.t. efficiency nor performance. Instead, they are aimed at being as straightforward/transparent as possible. 
 
-TESET
-
 ## Installation 
 ```
 $ pip install machinelfs
