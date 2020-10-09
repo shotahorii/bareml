@@ -1,14 +1,15 @@
 """
 Naive Bayes Classifier
 
+Author: Shota Horii <sh.sinker@gmail.com>
+Status: 
+
 References:
 
 ToDo: 
-bernoulli & multinomial NB
-smoothing
+- bernoulli & multinomial NB
+- smoothing
 """
-
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 import numpy as np
@@ -27,9 +28,12 @@ class NaiveBayes(Classifier):
         self.onehot = OnehotEncoder()
     
     def fit(self, X, y):
+
+        # validate the input data
+        X, y = self._validate_Xy(X, y)
         
         # if binary classification, change the format of y
-        # to make it same as multi class classification
+        # e.g. [0,1,1,0] -> [[1,0],[0,1],[0,1],[1,0]]
         if y.ndim == 1:
             y = self.onehot.encode(y)
 
@@ -64,6 +68,9 @@ class NaiveBayes(Classifier):
         return self
 
     def predict(self, X):
+        # validate the input data
+        X = self._validate_X(X)
+
         n_samples, n_features = X.shape
         n_classes = len(self.priors)
         
@@ -81,10 +88,11 @@ class NaiveBayes(Classifier):
 
         posteriors = posteriors.T
 
-        # probability to 1/0
+        # probability to {0,1}
         y_pred = prob2binary(posteriors)
 
         if y_pred.shape[1]==2: # binary classification
+            # e.g. [[1,0],[0,1],[0,1],[1,0]] -> [0,1,1,0]
             return self.onehot.decode(y_pred)
         else:
             return y_pred
