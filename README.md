@@ -1,3 +1,8 @@
+[![PyPI version](https://badge.fury.io/py/machinelfs.svg)](https://badge.fury.io/py/machinelfs)
+[![Build Status](https://travis-ci.org/shotahorii/ml-from-scratch.svg?branch=master)](https://travis-ci.org/shotahorii/ml-from-scratch)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/machinelfs)
+
+
 # Machine Learning From Scratch
 
 **machinelfs** is a Python module containing various machine learning algorithms implemented from scratch using NumPy.
