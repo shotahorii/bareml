@@ -11,8 +11,8 @@ ToDo: GroupKFold
 import math
 import numpy as np
 
-from machinelfs.utils.misc import split_array
-from machinelfs.utils.transformers import OnehotEncoder
+from bareml.utils.misc import split_array
+from bareml.utils.transformers import OnehotEncoder
 
 
 def shuffle_data(X, y, seed=None):

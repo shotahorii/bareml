@@ -17,9 +17,9 @@ import math
 import random
 import numpy as np
 
-from machinelfs.base_classes import Regressor, Classifier, Estimator
-from machinelfs.utils.metrics import entropy, gini_impurity, variance, mean_deviation, classification_error
-from machinelfs.utils.transformers import prob2binary
+from bareml.base_classes import Regressor, Classifier, Estimator
+from bareml.utils.metrics import entropy, gini_impurity, variance, mean_deviation, classification_error
+from bareml.utils.transformers import prob2binary
 
 class TreeNode:
 

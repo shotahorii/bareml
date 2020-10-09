@@ -10,10 +10,10 @@ import math
 import random
 import numpy as np
 
-from machinelfs.base_classes import Classifier, Regressor, Ensemble
-from machinelfs.utils.transformers import prob2binary
-from machinelfs.utils.sampling import bootstrap_sampling
-from machinelfs.supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
+from bareml.base_classes import Classifier, Regressor, Ensemble
+from bareml.utils.transformers import prob2binary
+from bareml.utils.sampling import bootstrap_sampling
+from bareml.supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
 
 class Bagging(Ensemble):
     

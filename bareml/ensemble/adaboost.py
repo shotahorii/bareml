@@ -41,10 +41,10 @@ References:
 import math
 import numpy as np
 
-from machinelfs.base_classes import Classifier, Regressor, BinaryClassifier, Ensemble
-from machinelfs.utils.transformers import prob2binary, binary2sign, sign2binary, OnehotEncoder
-from machinelfs.supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
-from machinelfs.utils.metrics import absolute_relative_errors, absolute_errors
+from bareml.base_classes import Classifier, Regressor, BinaryClassifier, Ensemble
+from bareml.utils.transformers import prob2binary, binary2sign, sign2binary, OnehotEncoder
+from bareml.supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
+from bareml.utils.metrics import absolute_relative_errors, absolute_errors
 
 class AdaBoost(Ensemble, BinaryClassifier):
     """

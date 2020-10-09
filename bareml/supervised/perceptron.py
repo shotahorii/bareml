@@ -12,8 +12,8 @@ C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 192-196.
 
 import numpy as np
 
-from machinelfs.base_classes import BinaryClassifier
-from machinelfs.utils.transformers import binary2sign, real2sign, real2binary
+from bareml.base_classes import BinaryClassifier
+from bareml.utils.transformers import binary2sign, real2sign, real2binary
 
 
 class Perceptron(BinaryClassifier):

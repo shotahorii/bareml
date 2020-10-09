@@ -18,9 +18,9 @@ Abstract classes for
 from abc import ABC, abstractmethod
 import numpy as np
 
-from machinelfs.base_classes import Regressor, Ensemble
-from machinelfs.supervised.decision_trees import DecisionTreeRegressor
-from machinelfs.utils.loss_functions import SquareError
+from bareml.base_classes import Regressor, Ensemble
+from bareml.supervised.decision_trees import DecisionTreeRegressor
+from bareml.utils.loss_functions import SquareError
 
 class GradientBoosting(Ensemble):
     

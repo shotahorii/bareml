@@ -10,7 +10,7 @@ References:
 import math
 import numpy as np
 
-from machinelfs.utils.misc import supremum_eigen
+from bareml.utils.misc import supremum_eigen
 
 #########################
 # Weight Initialisation #

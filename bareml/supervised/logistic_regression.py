@@ -19,10 +19,10 @@ ToDo:
 import math
 import numpy as np
 
-from machinelfs.base_classes import Classifier
-from machinelfs.utils.activation_functions import Sigmoid, Softmax
-from machinelfs.utils.transformers import add_intercept, prob2binary
-from machinelfs.utils.solvers import CrossEntropyGD, CrossEntropyMultiGD
+from bareml.base_classes import Classifier
+from bareml.utils.activation_functions import Sigmoid, Softmax
+from bareml.utils.transformers import add_intercept, prob2binary
+from bareml.utils.solvers import CrossEntropyGD, CrossEntropyMultiGD
 
 class LogisticRegression(Classifier):
     """ 

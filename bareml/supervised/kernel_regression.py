@@ -9,10 +9,10 @@ References:
 import math
 import numpy as np
 
-from machinelfs.base_classes import Regressor
-from machinelfs.utils.transformers import StandardScaler
-from machinelfs.utils.solvers import LeastSquareGD
-from machinelfs.utils.kernels import LinearKernel, PolynomialKernel, RBFKernel, SigmoidKernel
+from bareml.base_classes import Regressor
+from bareml.utils.transformers import StandardScaler
+from bareml.utils.solvers import LeastSquareGD
+from bareml.utils.kernels import LinearKernel, PolynomialKernel, RBFKernel, SigmoidKernel
 
 
 class KernelRegression(Regressor):

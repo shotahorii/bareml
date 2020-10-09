@@ -15,9 +15,9 @@ K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 458
 import math
 import numpy as np
 
-from machinelfs.base_classes import Regressor
-from machinelfs.utils.transformers import polynomial_features, StandardScaler, add_intercept
-from machinelfs.utils.solvers import PInv, LassoISTA, LeastSquareGD
+from bareml.base_classes import Regressor
+from bareml.utils.transformers import polynomial_features, StandardScaler, add_intercept
+from bareml.utils.solvers import PInv, LassoISTA, LeastSquareGD
 
 
 class LinearRegression(Regressor):

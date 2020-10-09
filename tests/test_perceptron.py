@@ -6,8 +6,8 @@ import sys
 sys.path.append('./')
 sys.path.append('../')
 
-from machinelfs.supervised.perceptron import Perceptron
-from machinelfs.utils.validators import KFold
+from bareml.supervised.perceptron import Perceptron
+from bareml.utils.validators import KFold
 
 def test_perceptron():
     data = load_breast_cancer()
@@ -15,10 +15,10 @@ def test_perceptron():
     y = data.target
 
     clf_skl = SklPerceptron()
-    clf_machinelfs = Perceptron(n_epoch=50, seed=1)
+    clf_bareml = Perceptron(n_epoch=50, seed=1)
 
     skl_scores = []
-    machinelfs_scores = []
+    bareml_scores = []
 
     kf = KFold()
     for train_idx, test_idx in kf.split(X,y):
@@ -26,13 +26,13 @@ def test_perceptron():
         y_train, y_test = y[train_idx], y[test_idx]
 
         clf_skl.fit(X_train, y_train)
-        clf_machinelfs.fit(X_train, y_train)
+        clf_bareml.fit(X_train, y_train)
 
         skl_scores.append(clf_skl.score(X_test, y_test))
-        machinelfs_scores.append(clf_machinelfs.score(X_test, y_test)['accuracy'])
+        bareml_scores.append(clf_bareml.score(X_test, y_test)['accuracy'])
 
     skl_score = np.array(skl_scores).mean()
-    machinelfs_score = np.array(machinelfs_scores).mean()
+    bareml_score = np.array(bareml_scores).mean()
 
     # accuracy difference from sklearn's Perceptron is less than 5%
-    assert skl_score - machinelfs_score < 0.05
+    assert skl_score - bareml_score < 0.05

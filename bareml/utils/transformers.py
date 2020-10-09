@@ -12,7 +12,7 @@ from itertools import combinations_with_replacement
 
 import numpy as np
 
-from machinelfs.utils.misc import flatten
+from bareml.utils.misc import flatten
 
 
 ########## Scalers and Encoders ##########

@@ -14,9 +14,9 @@ ToDo:
 import math
 import numpy as np
 
-from machinelfs.base_classes import Classifier
-from machinelfs.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
-from machinelfs.utils.transformers import prob2binary, OnehotEncoder
+from bareml.base_classes import Classifier
+from bareml.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
+from bareml.utils.transformers import prob2binary, OnehotEncoder
 
 
 class NaiveBayes(Classifier):

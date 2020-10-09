@@ -10,7 +10,7 @@ References:
 import math
 import numpy as np
 
-from machinelfs.utils.transformers import OnehotEncoder
+from bareml.utils.transformers import OnehotEncoder
 
 
 #############################

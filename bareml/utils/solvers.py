@@ -12,10 +12,10 @@ from abc import ABC, abstractmethod
 import math
 import numpy as np
 
-from machinelfs.utils.misc import supremum_eigen
-from machinelfs.utils.model_tuning import initialise_random, initialise_zero, auto_learning_rate
-from machinelfs.utils.loss_functions import SquareError, L2Regularization, CrossEntropy
-from machinelfs.utils.activation_functions import Sigmoid, Softmax, Identity
+from bareml.utils.misc import supremum_eigen
+from bareml.utils.model_tuning import initialise_random, initialise_zero, auto_learning_rate
+from bareml.utils.loss_functions import SquareError, L2Regularization, CrossEntropy
+from bareml.utils.activation_functions import Sigmoid, Softmax, Identity
 
 class Solver(ABC):
 

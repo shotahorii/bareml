@@ -8,7 +8,7 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 import numpy as np
 
-from machinelfs.utils.metrics import accuracy, precision_recall_f1, mae, rmse, r_squqred
+from bareml.utils.metrics import accuracy, precision_recall_f1, mae, rmse, r_squqred
 
 
 class Estimator(metaclass=ABCMeta):

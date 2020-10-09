@@ -9,7 +9,7 @@ References:
 import math
 import numpy as np
 
-from machinelfs.utils.distances import l2_norm
+from bareml.utils.distances import l2_norm
 
 class LinearKernel:
 
