@@ -10,8 +10,8 @@ import math
 import random
 import numpy as np
 
-from bareml.base_classes import Classifier, Regressor, Ensemble
-from bareml.utils.transformers import prob2binary
+from bareml import Classifier, Regressor, Ensemble
+from bareml.utils.manipulators import prob2binary
 from bareml.utils.sampling import bootstrap_sampling
 from bareml.supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
 

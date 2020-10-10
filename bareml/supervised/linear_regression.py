@@ -15,8 +15,8 @@ K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 458
 import math
 import numpy as np
 
-from bareml.base_classes import Regressor
-from bareml.utils.transformers import polynomial_features, StandardScaler, add_intercept
+from bareml import Regressor
+from bareml.utils.manipulators import polynomial_features, StandardScaler, add_intercept
 from bareml.utils.solvers import PInv, LassoISTA, LeastSquareGD
 
 

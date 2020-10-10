@@ -7,7 +7,7 @@ import sys
 sys.path.append('./')
 sys.path.append('../')
 
-from bareml.supervised.knn import KNNClassifier, KNNRegressor
+from bareml.supervised import KNNClassifier, KNNRegressor
 from bareml.utils.validators import train_test_split
 
 def test_regressor():

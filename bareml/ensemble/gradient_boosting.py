@@ -18,7 +18,7 @@ Abstract classes for
 from abc import ABC, abstractmethod
 import numpy as np
 
-from bareml.base_classes import Regressor, Ensemble
+from bareml import Regressor, Ensemble
 from bareml.supervised.decision_trees import DecisionTreeRegressor
 from bareml.utils.loss_functions import SquareError
 

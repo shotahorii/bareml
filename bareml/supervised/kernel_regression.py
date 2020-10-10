@@ -9,8 +9,8 @@ References:
 import math
 import numpy as np
 
-from bareml.base_classes import Regressor
-from bareml.utils.transformers import StandardScaler
+from bareml import Regressor
+from bareml.utils.manipulators import StandardScaler
 from bareml.utils.solvers import LeastSquareGD
 from bareml.utils.kernels import LinearKernel, PolynomialKernel, RBFKernel, SigmoidKernel
 

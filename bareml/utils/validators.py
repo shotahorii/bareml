@@ -12,7 +12,7 @@ import math
 import numpy as np
 
 from bareml.utils.misc import split_array
-from bareml.utils.transformers import OnehotEncoder
+from bareml.utils.manipulators import OnehotEncoder
 
 
 def shuffle_data(X, y, seed=None):

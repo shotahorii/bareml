@@ -10,8 +10,8 @@ e.g. clf = Polynomial(2, Scaled(StandardScaler(), LogisticRegression()))
 
 from abc import ABC, abstractmethod
 
-from bareml.base_classes import Estimator
-from bareml.utils.transformers import polynomial_features
+from bareml import Estimator
+from bareml.utils.manipulators import polynomial_features
 
 
 class Preprocessed(Estimator, ABC):

@@ -14,7 +14,7 @@ import math
 import numpy as np
 from abc import ABC, abstractmethod
 
-from bareml.base_classes import Classifier, Regressor, Ensemble
+from bareml import Classifier, Regressor, Ensemble
 from bareml.utils.loss_functions import SquareError
 from bareml.supervised.decision_trees import GBTree
 

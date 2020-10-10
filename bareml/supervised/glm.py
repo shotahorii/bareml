@@ -13,8 +13,8 @@ import math
 import numpy as np
 import scipy.optimize
 
-from bareml.base_classes import BinaryClassifier, Regressor
-from bareml.utils.transformers import prob2binary
+from bareml import BinaryClassifier, Regressor
+from bareml.utils.manipulators import prob2binary
 from bareml.utils.model_tuning import initialise_random
 from bareml.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
 

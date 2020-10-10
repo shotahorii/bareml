@@ -41,8 +41,8 @@ References:
 import math
 import numpy as np
 
-from bareml.base_classes import Classifier, Regressor, BinaryClassifier, Ensemble
-from bareml.utils.transformers import prob2binary, binary2sign, sign2binary, OnehotEncoder
+from bareml import Classifier, Regressor, BinaryClassifier, Ensemble
+from bareml.utils.manipulators import prob2binary, binary2sign, sign2binary, OnehotEncoder
 from bareml.supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
 from bareml.utils.metrics import absolute_relative_errors, absolute_errors
 

@@ -1,6 +1,9 @@
 """
 K Means Clustering with K-means++ initialisation
 
+Author: Shota Horii <sh.sinker@gmail.com>
+Test: tests/test_kmeans.py
+
 References:
 D. Arthur and S. Vassilvitskii (2007). k‐means++: the advantages of careful seeding. 
 Proceedings of the Eighteenth Annual ACM‐SIAM Symposium on Discrete Algorithms. 1027–1035.
@@ -11,7 +14,6 @@ K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 354
 Y. Hirai (2012). はじめてのパターン認識. 森北出版. 155-156.
 """
 
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 import numpy as np
@@ -24,11 +26,11 @@ class KMeans:
 
     Parameters
     ----------
-    k: int
+    k: int >= 2
         The number of clusters
 
-    init: string
-        The initialisation method ('kmeans++' or 'random')
+    init: string {'kmeans++', 'random'}
+        The initialisation method
 
     max_iterations: int
         The maximum number of iterations of centroid optimisation
@@ -62,18 +64,16 @@ class KMeans:
 
         Parameters
         ----------
-        X: np.ndarray
-            Data points to perform clustering.
-            Num of rows (X.shape[0]) is the num of samples. 
-            Num of columns (X.shape[1]) is the num of variables
-            for clustering.
+        X: np.ndarray (n,d) of real (-inf, inf)
+            n: number of samples
+            d: number of features
         
         Returns
         -------
-        init_centroids: np.ndarray
+        init_centroids: np.ndarray (k,d) of real (-inf, inf)
             Initial positions of centroids.
-            Num of rows (X.shape[0]) is the number of centroids (=self.k).
-            Num of columns (X.shape[1]) is the num of variables.
+            k: number of centroids (=self.k)
+            d: number of features
         """
         if self.init == 'random':
             centroid_idx = np.random.choice(len(X), self.k, replace=False)
@@ -102,32 +102,24 @@ class KMeans:
 
         Parameters
         ----------
-        X: np.ndarray
-            Data points to perform clustering.
-            Num of rows (X.shape[0]) is the num of samples.
-            Num of columns (X.shape[1]) is the num of variables
-            for clustering.
+        X: np.ndarray (n,d) of real (-inf, inf)
+            n: number of samples
+            d: number of features
 
-        centroids: np.ndarray
+        centroids: np.ndarray (k,d) of real (-inf, inf)
             Positions of centroids.
-            Num of rows (X.shape[0]) is the number of centroids (=self.k).
-            Num of columns (X.shape[1]) is the num of variables.
+            k: number of centroids (=self.k)
+            d: number of features
         
         Returns
         -------
-        assigned_centroid: np.ndarray (1d array)
-            List of assigned centroids to each data point in X.
-            Num of elements (assigned_centroid.shape[0]) 
-            is the num of samples.
-            Value in the array indicates the index of centroid 
-            which is assigned to the data point.
+        assigned_centroid: np.ndarray (n,) of int {0 <= x < len(self.centroids)}
+            Indices of centroids assigned to each data point in X.
+            n: number of samples
 
-        dist_to_assigned_centroid: np.ndarray (1d array)
-            List of distances between each data point in X and 
-            its closest centroid (assigned centroid).
-            Num of elements (dist_to_assigned_centroid.shape[0]) 
-            is the num of samples.
-            Value in the array indicates the distance. 
+        dist_to_assigned_centroid: np.ndarray (n, ) of real [0, inf)
+            Distances between each data point in X and its assigned centroid
+            n: number of samples
         """
         assigned_centroid = np.zeros(len(X))
         dist_to_assigned_centroid = np.zeros(len(X))
@@ -153,11 +145,9 @@ class KMeans:
 
         Parameters
         ----------
-        X: np.ndarray
-            Data points to perform clustering.
-            Num of rows (X.shape[0]) is the num of samples.
-            Num of columns (X.shape[1]) is the num of variables
-            for clustering.
+        X: np.ndarray (n,d) of real (-inf, inf)
+            n: number of samples
+            d: number of features
         
         y: Ignored
             Always ignored. Exist only for consistency with 
@@ -207,19 +197,15 @@ class KMeans:
 
         Parameters
         ----------
-        X: np.ndarray
-            Data points to compute closest centroid (= assign a cluster)
-            Num of rows (X.shape[0]) is the num of samples.
-            Num of columns (X.shape[1]) is the num of variables.
+        X: np.ndarray (n,d) of real (-inf, inf)
+            n: number of samples
+            d: number of features
         
         Returns
         -------
-        assigned_centroid: np.ndarray (1d array)
-            List of assigned centroids to each data point in X.
-            Num of elements (assigned_centroid.shape[0]) 
-            is the num of samples.
-            Value in the array indicates the index of centroid 
-            which is assigned to the data point.
+        assigned_centroid: np.ndarray (n,) of int {0 <= x < len(self.centroids)}
+            Indices of centroids assigned to each data point in X.
+            n: number of samples
         """
         assigned_centroid, dist_to_assigned_centroid = self._assign_closest_centroid(X, self.centroids)
         return assigned_centroid

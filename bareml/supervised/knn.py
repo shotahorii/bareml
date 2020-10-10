@@ -2,7 +2,7 @@
 K Nearest Neighbors
 
 Author: Shota Horii <sh.sinker@gmail.com>
-Status: Test Passed
+Test: tests/test_knn.py
 
 References:
 C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 124-127.
@@ -13,9 +13,9 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 54-69.
 
 import numpy as np
 
-from bareml.base_classes import Classifier, Regressor
+from bareml import Classifier, Regressor
 from bareml.utils.distances import euclidean_distance
-from bareml.utils.transformers import prob2binary
+from bareml.utils.manipulators import prob2binary
 
 class KNNClassifier(Classifier):
     """ 

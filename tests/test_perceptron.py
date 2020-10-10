@@ -6,7 +6,7 @@ import sys
 sys.path.append('./')
 sys.path.append('../')
 
-from bareml.supervised.perceptron import Perceptron
+from bareml.supervised import Perceptron
 from bareml.utils.validators import KFold
 
 def test_perceptron():

@@ -2,7 +2,7 @@
 Naive Bayes Classifier
 
 Author: Shota Horii <sh.sinker@gmail.com>
-Status: 
+Test: 
 
 References:
 
@@ -14,9 +14,9 @@ ToDo:
 import math
 import numpy as np
 
-from bareml.base_classes import Classifier
+from bareml import Classifier
 from bareml.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
-from bareml.utils.transformers import prob2binary, OnehotEncoder
+from bareml.utils.manipulators import prob2binary, OnehotEncoder
 
 
 class NaiveBayes(Classifier):
