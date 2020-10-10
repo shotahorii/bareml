@@ -9,6 +9,7 @@ from copy import deepcopy
 import numpy as np
 
 from bareml.utils.metrics import accuracy, precision_recall_f1, mae, rmse, r_squqred
+from bareml.utils.manipulators import OnehotEncoder
 
 
 class Estimator(metaclass=ABCMeta):
@@ -175,6 +176,22 @@ class Regressor(Estimator):
 
 class Classifier(Estimator):
 
+    def encoded_labels(self):
+        if 'encoder' not in self.__dict__.keys():
+            return None
+        return self.encoder.code
+
+    def predict(self, X):
+        """ Returns predicted value for input samples. """
+        X = self._validate_X(X)
+        y_pred = self._predict(X)
+
+        # if one-hot encoding performed in fit()
+        if self.encoded_labels() is not None:
+            return self.encoder.decode(y_pred)
+        
+        return y_pred
+            
     def predict_proba(self, X):
         """
         Returns estimated probability for each class for each sample. 
@@ -200,14 +217,23 @@ class Classifier(Estimator):
     def _validate_y(self, y):
         y = np.array(y)
 
-        if y.dtype not in ['int64','float64','uint8']:
-            raise ValueError('Data type of y needs to be int or float.')
-        elif y.ndim != 1 and y.ndim != 2:
+        # reset encoder
+        self.encoder = OnehotEncoder()   
+
+        if y.ndim == 1:
+            # 1d: the input y is binary or muliclass not one-hot encoded.
+            # set a onehot encoder here.
+            y = self.encoder.encode(y)
+        elif y.ndim == 2:
+            # 2d: the input y is already one-hot encoded.
+            if y.dtype not in ['int64','float64','uint8']:
+                raise ValueError('Data type of y needs to be int or float.')
+            elif not np.isin(y, [0,1]).all():
+                raise ValueError('Element in y needs to be 0 or 1.')
+            elif not (y.sum(axis=1)==1).all():
+                raise ValueError('Each sample needs to be asigned to exactly 1 class.')
+        else:
             raise ValueError('y needs to be a 1d array or 2d array.')
-        elif not np.isin(y, [0,1]).all():
-            raise ValueError('Element in y needs to be 0 or 1.')
-        elif y.ndim == 2 and not (y.sum(axis=1)==1).all():
-            raise ValueError('Each sample needs to be asigned to exactly 1 class.')
         
         return y
 

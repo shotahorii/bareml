@@ -16,7 +16,7 @@ import numpy as np
 
 from bareml import Classifier
 from bareml.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
-from bareml.utils.manipulators import prob2binary, OnehotEncoder, real2binary
+from bareml.utils.manipulators import prob2binary, real2binary
 
 
 class NaiveBayes(Classifier):
@@ -25,14 +25,8 @@ class NaiveBayes(Classifier):
         self.prob = prob
         self.priors = None
         self.params = None
-        self.onehot = OnehotEncoder()
     
     def _fit(self, X, y):
-        
-        # if binary classification, change the format of y
-        # e.g. [0,1,1,0] -> [[1,0],[0,1],[0,1],[1,0]]
-        if y.ndim == 1:
-            y = self.onehot.encode(y)
 
         n_classes = y.shape[1]
         n_features = X.shape[1]
@@ -85,12 +79,7 @@ class NaiveBayes(Classifier):
 
         # probability to {0,1}
         y_pred = prob2binary(posteriors)
-
-        if y_pred.shape[1]==2: # binary classification
-            # e.g. [[1,0],[0,1],[0,1],[1,0]] -> [0,1,1,0]
-            return self.onehot.decode(y_pred)
-        else:
-            return y_pred
+        return y_pred
                 
 
 class GaussianNB(NaiveBayes):

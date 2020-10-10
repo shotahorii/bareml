@@ -97,7 +97,11 @@ class OnehotEncoder(Encoder):
     """
 
     def __init__(self, code=None):
-        self.code = self._codable(code)
+        self._code = self._codable(code)
+
+    @property
+    def code(self):
+        return self._code
 
     def _codable(self, code):
         """ validate if the given code is valid. """
@@ -115,7 +119,7 @@ class OnehotEncoder(Encoder):
     def _encodable(self, y):
         """ validate if the given y is encodable. """
 
-        if not set(y).issubset(self.code):
+        if not set(y).issubset(self._code):
             raise ValueError('input array includes value(s) not in the code.')
 
         return y
@@ -136,12 +140,12 @@ class OnehotEncoder(Encoder):
             c: number of classes
         """
 
-        if self.code is None:
-            self.code = self._codable(np.unique(y))
+        if self._code is None:
+            self._code = self._codable(np.unique(y))
         else:
             y = self._encodable(y)
 
-        return np.array([(y==v).astype(int) for v in self.code]).T 
+        return np.array([(y==v).astype(int) for v in self._code]).T 
 
     def decode(self, Y):
         """ 
@@ -159,10 +163,13 @@ class OnehotEncoder(Encoder):
             n: number of samples 
         """
 
-        if self.code is None:
-            self.code = np.arange(Y.shape[1])
+        if self._code is None:
+            self._code = np.arange(Y.shape[1])
 
-        return np.array([self.code[i] for i in np.argmax(Y, axis=1)])
+        return np.array([self._code[i] for i in np.argmax(Y, axis=1)])
+
+    def clear(self):
+        self._code = None
 
 
 ########## Other functions ##########
