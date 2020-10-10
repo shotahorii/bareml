@@ -2,7 +2,8 @@
 [![PyPI version](https://badge.fury.io/py/bareml.svg)](https://badge.fury.io/py/bareml)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/bareml)
 
-# Machine Learning From Scratch
+
+![Logo](/logo.png)
 
 **bareml** is a Python module containing various machine learning algorithms implemented from scratch using NumPy.
 
