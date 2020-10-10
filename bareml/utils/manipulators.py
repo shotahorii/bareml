@@ -1,10 +1,10 @@
 """
-Transformer classes and functions
+Data manipulator classes and functions
+
+Author: Shota Horii <sh.sinker@gmail.com>
 
 References:
 """
-
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 from abc import ABC, abstractmethod

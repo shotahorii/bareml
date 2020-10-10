@@ -1,6 +1,8 @@
 """
 Logistic Regression
 
+Author: Shota Horii <sh.sinker@gmail.com>
+
 References:
 C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 205-220.
 K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 247-263.
@@ -14,7 +16,6 @@ ToDo:
 - Regularization
 """
 
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 import numpy as np
@@ -42,7 +43,7 @@ class LogisticRegression(Classifier):
         self.activation = Softmax() if multiclass else Sigmoid()
         self.solver = CrossEntropyMultiGD if multiclass else CrossEntropyGD
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """ 
         Train the logistic regression model. Binary classification only. 
         
@@ -68,7 +69,6 @@ class LogisticRegression(Classifier):
         -------
         self: LogisticRegression
         """
-        X, y = self._validate_Xy(X, y)
 
         if self.fit_intercept:
             X = add_intercept(X)
@@ -78,7 +78,7 @@ class LogisticRegression(Classifier):
 
         return self
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """ 
         Predict.
         
@@ -92,12 +92,10 @@ class LogisticRegression(Classifier):
         y_pred: np.ndarray (1d array)
             target variable. 
         """
-        X = self._validate_X(X)
-
         if self.fit_intercept:
             X = add_intercept(X)
 
         return self.activation(np.dot(X,self.w))
 
-    def predict(self, X):
-        return prob2binary(self.predict_proba(X))
+    def _predict(self, X):
+        return prob2binary(self._predict_proba(X))

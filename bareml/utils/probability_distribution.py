@@ -116,6 +116,31 @@ class Bernoulli(DiscreteProbabilityDistribution):
         p = np.clip(p, 1e-15, 1 - 1e-15)
         return y * np.log(p) + (1-y) * np.log(1-p)
 
+    def mle(self, y, param='p'):
+        """
+        Estimates parameter from data by Maximum Likelihood Estimation.
+
+        Parameters
+        ----------
+        y: np.ndarray (n,) int {0,1}
+            data points which we assume realisations from a Bernoulli distribution
+        
+        param: always 'p'
+            parameter to estimate.
+            no need to specify as only 1 param in Bern. distribution. 
+            still taken as an input for consistency purpose.
+
+        Returns
+        -------
+        float
+            estimated value of the parameter p
+        """
+
+        if param=='p':
+            return y.mean()
+        else:
+            raise ValueError('param must be "p".')
+
 
 class Binomial(DiscreteProbabilityDistribution):
     """ Binomial distribution """

@@ -1,1 +1,1 @@
-from bareml.base import Estimator, Regressor, Classifier, BinaryClassifier, Ensemble
+from bareml.base import Estimator, Regressor, Classifier, BinaryClassifier, Clustering, Ensemble

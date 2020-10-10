@@ -39,7 +39,7 @@ class Perceptron(BinaryClassifier):
         self.shuffle = shuffle
         self.seed = seed
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """
         Parameters
         ----------
@@ -54,9 +54,6 @@ class Perceptron(BinaryClassifier):
         -------
         self: Perceptron
         """
-        # validate the input data
-        X, y = self._validate_Xy(X, y)
-
         # convert target variable from {0,1} -> {-1, 1}
         y = binary2sign(y)
 
@@ -85,7 +82,7 @@ class Perceptron(BinaryClassifier):
 
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """
         Parameters
         ----------
@@ -98,5 +95,4 @@ class Perceptron(BinaryClassifier):
         np.ndarray (n,) of int {0,1}
             n: number of samples
         """
-        X = self._validate_X(X)
         return real2binary(self.w @ X.T + self.b, threshold=0)

@@ -58,7 +58,7 @@ class AdaBoost(Ensemble, BinaryClassifier):
         self.max_iter = max_iter
         self.alphas = []
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
 
         # init weights
         w = np.full(len(y), 1/len(y))
@@ -97,7 +97,7 @@ class AdaBoost(Ensemble, BinaryClassifier):
 
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
 
         # y_preds.shape is (max_iterations, len(X))
         y_preds = np.array([clf.predict(X) for clf in self.estimators])
@@ -126,7 +126,7 @@ class AdaBoostM1(Ensemble, Classifier):
         self.betas = []
         self.onehot = OnehotEncoder()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
 
         # init weights
         w = np.full(len(y), 1/len(y))
@@ -178,7 +178,7 @@ class AdaBoostM1(Ensemble, Classifier):
 
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
 
         # y_preds.shape is (max_iterations, len(X), c) where c = number of classes
         y_preds = np.array([clf.predict(X) for clf in self.estimators])
@@ -209,7 +209,7 @@ class AdaBoostSamme(Ensemble, Classifier):
         self.alphas = []
         self.onehot = OnehotEncoder()
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
 
         # init weights
         w = np.full(len(y), 1/len(y))
@@ -253,7 +253,7 @@ class AdaBoostSamme(Ensemble, Classifier):
 
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
 
         # y_preds.shape is (max_iterations, len(X), c) where c = number of classes
         y_preds = np.array([clf.predict(X) for clf in self.estimators])
@@ -287,7 +287,7 @@ class AdaBoostRT(Ensemble, Regressor):
         self.max_iter = max_iter
         self.betas = []
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
 
         # init weights
         w = np.full(len(y), 1/len(y))
@@ -323,7 +323,7 @@ class AdaBoostRT(Ensemble, Regressor):
 
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
 
         # y_preds.shape is (max_iter, len(X))
         y_preds = np.array([reg.predict(X) for reg in self.estimators])
@@ -369,7 +369,7 @@ class AdaBoostR2(Ensemble, Regressor):
         D = np.max(abs_errs)
         return 1 - np.exp(-abs_errs/D)
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
 
         # number of samples in the training data
         N = len(y)
@@ -418,7 +418,7 @@ class AdaBoostR2(Ensemble, Regressor):
 
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
 
         # y_preds.shape is (max_iterations, len(X))
         y_preds = np.array([reg.predict(X) for reg in self.estimators])

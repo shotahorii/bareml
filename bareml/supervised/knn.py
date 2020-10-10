@@ -33,7 +33,7 @@ class KNNClassifier(Classifier):
         self.X = None
         self.y = None
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """ 
         Parameters
         ----------
@@ -50,7 +50,7 @@ class KNNClassifier(Classifier):
 
         return self 
 
-    def predict(self, X):
+    def _predict(self, X):
         """ 
         Parameters
         ----------
@@ -60,9 +60,9 @@ class KNNClassifier(Classifier):
         -------
         y_preds: np.ndarray (n, c) of int {0,1}
         """
-        return prob2binary(self.predict_proba(X))
+        return prob2binary(self._predict_proba(X))
 
-    def predict_proba(self, X):
+    def _predict_proba(self, X):
         """ 
         Parameters
         ----------
@@ -72,7 +72,6 @@ class KNNClassifier(Classifier):
         -------
         y_preds: np.ndarray (n, c) of real [0,1]
         """
-        X = self._validate_X(X)
 
         if self.y.ndim == 1: # binary classification
             y_preds = np.zeros(X.shape[0])
@@ -106,7 +105,7 @@ class KNNRegressor(Regressor):
         self.X = None
         self.y = None
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """ 
         Parameters
         ----------
@@ -122,7 +121,7 @@ class KNNRegressor(Regressor):
 
         return self 
 
-    def predict(self, X):
+    def _predict(self, X):
         """ 
         Parameters
         ----------
@@ -132,7 +131,6 @@ class KNNRegressor(Regressor):
         -------
         y_preds: np.ndarray (n,) of real (-inf, inf)
         """
-        X = self._validate_X(X)
 
         y_preds = np.zeros(X.shape[0])
 

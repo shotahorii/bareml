@@ -1,6 +1,8 @@
 """
 Linear Regression (Ridge, Lasso and ElasticNet)
 
+Author: Shota Horii <sh.sinker@gmail.com>
+
 References:
 <Lasso>
 https://qiita.com/fujiisoup/items/f2fe3b508763b0cc6832 (in JP)
@@ -10,7 +12,6 @@ K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 458
 
 """
 
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 import numpy as np
@@ -63,7 +64,7 @@ class LinearRegression(Regressor):
         self.lr = lr
         self.w = None
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         """
         Parameters
         ----------
@@ -80,7 +81,6 @@ class LinearRegression(Regressor):
         -------
         self: LinearRegression
         """
-        X, y = self._validate_Xy(X, y)
 
         if self.fit_intercept:
             X = add_intercept(X)
@@ -116,7 +116,7 @@ class LinearRegression(Regressor):
 
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """
         Parameters
         ----------
@@ -131,7 +131,6 @@ class LinearRegression(Regressor):
             predicted target variables
             n: number of samples
         """
-        X = self._validate_X(X)
 
         if self.fit_intercept:
             X = add_intercept(X)

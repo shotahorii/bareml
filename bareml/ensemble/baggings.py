@@ -1,10 +1,11 @@
 """
-Bagging
+Bagging and random forest
+
+Author: Shota Horii <sh.sinker@gmail.com>
 
 References:
 """
 
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 import random
@@ -22,7 +23,7 @@ class Bagging(Ensemble):
         self.n_estimators = n_estimators
         self.sampling_ratio = sampling_ratio
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
 
         for _ in range(self.n_estimators):
 
@@ -32,7 +33,7 @@ class Bagging(Ensemble):
         
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
 
         preds = [ estimator.predict(X) for estimator in self.estimators ]
         
@@ -67,12 +68,6 @@ class RandomForestClassifier(Bagging, Classifier):
             sampling_ratio=sampling_ratio
         )
 
-    def fit(self, X, y):
-        return super().fit(X, y)
-
-    def predict(self, X):
-        return super().predict(X)
-
 
 class RandomForestRegressor(Bagging, Regressor):
 
@@ -96,12 +91,4 @@ class RandomForestRegressor(Bagging, Regressor):
             n_estimators=n_estimators,
             sampling_ratio=sampling_ratio
         )
-    
-    def fit(self, X, y):
-        return super().fit(X, y)
-
-    def predict(self, X):
-        return super().predict(X)
-
-            
-
+        

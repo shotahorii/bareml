@@ -1,14 +1,14 @@
 """
 XGBoost
 
+Author: Shota Horii <sh.sinker@gmail.com>
+
 References:
 XGBoost: A Scalable Tree Boosting System (https://arxiv.org/pdf/1603.02754.pdf)
 https://xgboost.readthedocs.io/en/latest/tutorials/model.html
 https://homes.cs.washington.edu/~tqchen/pdf/BoostedTree.pdf
 
 """
-
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 import numpy as np
@@ -26,7 +26,7 @@ class XGBoost(Ensemble, Regressor):
         self.max_iter = max_iter
         self.lr=lr
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
 
         # init
         y_pred = np.zeros(len(y))
@@ -41,5 +41,5 @@ class XGBoost(Ensemble, Regressor):
             est = self._make_estimator()
             y_pred = y_pred + self.lr * est.fit(X, y_tmp).predict(X)
 
-    def predict(self, X):
+    def _predict(self, X):
         return sum([self.lr * est.predict(X) for est in self.estimators])

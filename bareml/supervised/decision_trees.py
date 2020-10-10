@@ -219,7 +219,7 @@ class Cart:
         indices = random.sample(range(n_features), n_pick)
         return indices
 
-    def fit(self, X, y, w=None):
+    def _fit(self, X, y, w=None):
         """
         Build the decision tree fitting the training data.
         
@@ -271,7 +271,7 @@ class Cart:
             
         return pred
 
-    def predict(self, X):
+    def _predict(self, X):
         return self._retrieve_tree(X, self.tree)
 
 
@@ -299,16 +299,11 @@ class DecisionTreeClassifier(Cart, Classifier):
                          min_samples_leaf = min_samples_leaf,
                          min_impurity_decrease=min_impurity_decrease)
 
-    def fit(self, X, y, w=None):
-        X, y, w = self._validate_Xyw(X, y, w)
-        return super().fit(X, y, w)
+    def _predict_proba(self, X):
+        return super()._predict(X)
 
-    def predict_proba(self, X):
-        X = self._validate_X(X)
-        return super().predict(X)
-
-    def predict(self, X):
-        return prob2binary(self.predict_proba(X))
+    def _predict(self, X):
+        return prob2binary(self._predict_proba(X))
 
 
 class DecisionTreeRegressor(Cart, Regressor):
@@ -335,14 +330,6 @@ class DecisionTreeRegressor(Cart, Regressor):
                          min_samples_leaf = min_samples_leaf,
                          min_impurity_decrease=min_impurity_decrease)
 
-    def fit(self, X, y, w=None):
-        X, y, w = self._validate_Xyw(X, y, w)
-        return super().fit(X, y, w)
-
-    def predict(self, X):
-        X = self._validate_X(X)
-        return super().predict(X)
-
 
 class GBTreeNode(TreeNode):
 
@@ -364,7 +351,7 @@ def negative_gain(y, reg_lambda):
     return -1.0 * (g**2)/(h + reg_lambda) 
 
 
-class GBTree(Cart):
+class GBTree(Cart, Regressor):
 
     def __init__(self, 
                 max_depth=5, 

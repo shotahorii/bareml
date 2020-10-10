@@ -2,12 +2,12 @@
 Naive Bayes Classifier
 
 Author: Shota Horii <sh.sinker@gmail.com>
-Test: 
+Test: tests/test_naive_bayes.py
 
 References:
 
 ToDo: 
-- bernoulli & multinomial NB
+- multinomial NB
 - smoothing
 """
 
@@ -16,7 +16,7 @@ import numpy as np
 
 from bareml import Classifier
 from bareml.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
-from bareml.utils.manipulators import prob2binary, OnehotEncoder
+from bareml.utils.manipulators import prob2binary, OnehotEncoder, real2binary
 
 
 class NaiveBayes(Classifier):
@@ -27,10 +27,7 @@ class NaiveBayes(Classifier):
         self.params = None
         self.onehot = OnehotEncoder()
     
-    def fit(self, X, y):
-
-        # validate the input data
-        X, y = self._validate_Xy(X, y)
+    def _fit(self, X, y):
         
         # if binary classification, change the format of y
         # e.g. [0,1,1,0] -> [[1,0],[0,1],[0,1],[1,0]]
@@ -67,9 +64,7 @@ class NaiveBayes(Classifier):
 
         return self
 
-    def predict(self, X):
-        # validate the input data
-        X = self._validate_X(X)
+    def _predict(self, X):
 
         n_samples, n_features = X.shape
         n_classes = len(self.priors)
@@ -102,5 +97,20 @@ class GaussianNB(NaiveBayes):
     def __init__(self):
         super().__init__(Gaussian())
 
+
 class BernoulliNB(NaiveBayes):
-    pass
+    def __init__(self, binarise=0.0):
+        self.binarise = binarise
+        super().__init__(Bernoulli())
+
+    def _fit(self, X, y):
+        # binarise the input features 
+        # e.g. [0, 1, 2, 0.5] -> [0, 1, 1, 1] when self.binarise = 0.0
+        X = real2binary(X, threshold=self.binarise, inclusive=False)
+        return super()._fit(X, y)
+
+    def _predict(self, X):
+        # binarise the input features 
+        # e.g. [0, 1, 2, 0.5] -> [0, 1, 1, 1] when self.binarise = 0.0
+        X = real2binary(X, threshold=self.binarise, inclusive=False)
+        return super()._predict(X)

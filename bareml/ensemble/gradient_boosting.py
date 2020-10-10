@@ -1,6 +1,8 @@
 """
 Gradient Boosting
 
+Author: Shota Horii <sh.sinker@gmail.com>
+
 References:
 [1] K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 545-.
 [2] P. Buhlmann and T.Hothorn (2007). 
@@ -12,8 +14,6 @@ Abstract classes for
 - AdaptiveBasisFunctionModel
 - ForwardStagewiseAdditiveModeling
 """
-
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 from abc import ABC, abstractmethod
 import numpy as np
@@ -34,7 +34,7 @@ class GradientBoosting(Ensemble):
     def _f0(self, X):
         return np.full(len(X), self.y_mean)
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
         
         # init
         self.y_mean = y.mean(axis=0)
@@ -48,7 +48,7 @@ class GradientBoosting(Ensemble):
             est = self._make_estimator()
             y_pred = y_pred + self.lr * est.fit(X, r).predict(X)
 
-    def predict(self, X):
+    def _predict(self, X):
         return self._f0(X) + sum([self.lr * est.predict(X) for est in self.estimators])
     
 

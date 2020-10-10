@@ -18,9 +18,10 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 155-156.
 import math
 import numpy as np
 
+from bareml import Clustering
 from bareml.utils.distances import euclidean_distance
 
-class KMeans:
+class KMeans(Clustering):
     """ 
     K Means Clustering
 
@@ -139,7 +140,7 @@ class KMeans:
         
         return assigned_centroid, dist_to_assigned_centroid
 
-    def fit(self, X, y=None):
+    def _fit(self, X):
         """
         Compute K (=self.k) centroids from the given iput data X
 
@@ -148,10 +149,6 @@ class KMeans:
         X: np.ndarray (n,d) of real (-inf, inf)
             n: number of samples
             d: number of features
-        
-        y: Ignored
-            Always ignored. Exist only for consistency with 
-            supervised estimators' fit method. 
         
         Returns
         -------
@@ -191,7 +188,7 @@ class KMeans:
 
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
         """
         Assign the closest centroid (cluster) to each data point in X
 

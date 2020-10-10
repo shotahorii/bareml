@@ -1,10 +1,11 @@
 """
 Kernel Regression
 
+Author: Shota Horii <sh.sinker@gmail.com>
+
 References:
 """
 
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 import numpy as np
@@ -40,8 +41,7 @@ class KernelRegression(Regressor):
         else:
             raise ValueError('Invalid Kernel.')
 
-    def fit(self, X, y):
-        X, y = self._validate_Xy(X, y)
+    def _fit(self, X, y):
 
         X = self.scaler.fit(X).transform(X)
         self.X = X
@@ -57,8 +57,7 @@ class KernelRegression(Regressor):
 
         return self
 
-    def predict(self, X):
-        X = self._validate_X(X)
+    def _predict(self, X):
 
         X = self.scaler.transform(X)
         

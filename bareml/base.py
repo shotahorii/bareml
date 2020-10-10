@@ -14,19 +14,59 @@ from bareml.utils.metrics import accuracy, precision_recall_f1, mae, rmse, r_squ
 class Estimator(metaclass=ABCMeta):
 
     @abstractmethod
-    def fit(self, X, y):
-        """ Train the model. """
+    def _fit(self, X, y, w):
+        """ 
+        Actual implementation of fit() function.
+        Arguments can be (X,), (X, y) or (X, y, w)
+        """
         pass
     
     @abstractmethod
-    def predict(self, X):
-        """ Returns predicted value for input samples. """
+    def _predict(self, X):
+        """ 
+        Actual implementation of predict() function.
+        Argument must be (X,)
+        """
         pass
 
     @abstractmethod
     def score(self, X, y):
         """ Returns evaluation metrics. """
         pass
+
+    def fit(self, *args, **kwargs): 
+        """ Train the model """
+
+        # check number of given arguments
+        n_args = len(args) + len(kwargs)
+        if n_args > 3:
+            raise TypeError('fit() takes up to 3 positional arguments but '+str(n_args)+' were given')
+        
+        # assign the given arguments to X, y, and/or w
+        inpt = {}
+        for i, e in enumerate(['X','y','w']):
+            if i < len(args):
+                inpt[e] = args[i]
+            elif e in kwargs.keys():
+                inpt[e] = kwargs[e]
+
+        # data validation
+        if len(inpt) == 1:
+            inpt['X'] = self._validate_X(inpt['X'])
+        elif len(inpt) == 2:
+            inpt['X'], inpt['y'] = self._validate_Xy(inpt['X'], inpt['y'])
+        elif len(inpt) == 3:
+            inpt['X'], inpt['y'], inpt['w'] = self._validate_Xyw(inpt['X'], inpt['y'], inpt['w'])
+        else:
+            raise TypeError('fit() taks X, y and/or w as its arguments but given input does not match')
+
+        # executed actual fit function
+        return self._fit(**inpt)
+
+    def predict(self, X):
+        """ Returns predicted value for input samples. """
+        X = self._validate_X(X)
+        return self._predict(X)
 
     def _validate_y(self, y):
         """ Validates input y for training. """
@@ -134,13 +174,18 @@ class Regressor(Estimator):
 
 
 class Classifier(Estimator):
-    
+
     def predict_proba(self, X):
         """
         Returns estimated probability for each class for each sample. 
         This can be left without overridden, if the classifier isn't 
         eligible to provide probability estimates. 
         """
+        X = self._validate_X(X)
+        return self._predict_proba(X)
+    
+    def _predict_proba(self, X):
+        """ Actual implementation of predict_proba """
         raise NotImplementedError('This classifier is not eligible to provide probability.')
 
     def score(self, X, y):
@@ -180,6 +225,14 @@ class BinaryClassifier(Classifier):
             raise ValueError('element in y needs to be 0 or 1.')
         
         return y
+
+
+class Clustering(Estimator):
+
+    """ TODO!!! """
+    def score(self, X, y):
+        """ Returns evaluation metrics. """
+        pass
 
 
 class Ensemble(metaclass=ABCMeta):

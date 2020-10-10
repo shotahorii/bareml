@@ -1,10 +1,10 @@
 """
 Stacking
 
+Author: Shota Horii <sh.sinker@gmail.com>
+
 References:
 """
-
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 import numpy as np
@@ -35,7 +35,7 @@ class Stacking(Ensemble):
         else:
             raise ValueError('This needs to be instanciate as Classifier or Regressor.')
 
-    def fit(self, X, y):
+    def _fit(self, X, y):
 
         X_final = None
 
@@ -69,7 +69,7 @@ class Stacking(Ensemble):
 
         return self
 
-    def predict(self, X):
+    def _predict(self, X):
 
         X_final = None
 
@@ -100,20 +100,8 @@ class StackingClassifier(Stacking, Classifier):
     def __init__(self, estimators, final_estimator, cv=5):
         super().__init__(estimators, final_estimator, cv=5)
 
-    def fit(self, X, y):
-        return super().fit(X, y)
-
-    def predict(self, X):
-        return super().predict(X)
-
     
 class StackingRegressor(Stacking, Regressor):
 
     def __init__(self, estimators, final_estimator, cv=5):
         super().__init__(estimators, final_estimator, cv=5)
-
-    def fit(self, X, y):
-        return super().fit(X, y)
-
-    def predict(self, X):
-        return super().predict(X)
