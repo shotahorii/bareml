@@ -1,5 +1,5 @@
 """
-Solvers
+Optimisers
 
 References:
 https://www.coursera.org/lecture/ml-regression/how-to-handle-the-intercept-3KZiN
@@ -17,7 +17,7 @@ from bareml.utils.model_tuning import initialise_random, initialise_zero, auto_l
 from bareml.utils.loss_functions import SquareError, L2Regularization, CrossEntropy
 from bareml.utils.activation_functions import Sigmoid, Softmax, Identity
 
-class Solver(ABC):
+class Optimiser(ABC):
 
     @abstractmethod
     def solve(self):
@@ -30,7 +30,7 @@ class IterativeOptimiser(ABC):
         pass
 
 
-class PInv(Solver):
+class PInv(Optimiser):
     """
     Analytical solution to the normal equation using Moore-Penrose pseudoinverse.
 
@@ -60,6 +60,10 @@ class PInv(Solver):
 
         has_intercept: bool
             if X contains intercept (1st column filled with all 1.)
+
+        Returns
+        -------
+        w: 
         """
         I = np.eye(X.shape[1])
         if has_intercept:
@@ -69,7 +73,7 @@ class PInv(Solver):
         return (np.linalg.pinv( X.T @ X + self.alpha * I ) @ X.T ) @ y
 
 
-class GradientDescent(Solver):
+class GradientDescent(Optimiser):
     """
     Gradient Descent
 
@@ -194,9 +198,9 @@ class CrossEntropyMultiGD(GradientDescent):
             learning_rate=learning_rate)
     
 
-class LassoISTA(Solver):
+class LassoISTA(Optimiser):
     """
-    Lasso solver with ISTA (Iterative Shrinkage Thresholding Algorithm). 
+    Lasso Optimiser with ISTA (Iterative Shrinkage Thresholding Algorithm). 
     Ref (in JP): https://qiita.com/fujiisoup/items/f2fe3b508763b0cc6832
 
     Parameters

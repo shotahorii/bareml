@@ -23,7 +23,7 @@ $ pip install bareml
 - [Gaussian Naive Bayes](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/supervised/naive_bayes.py)
 - [Generalised Linear Model](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/supervised/glm.py)
 - [K Nearest Neighbors](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/supervised/knn.py)
-- [Kernel Regression](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/supervised/kernel_regression.py)
+- [Kernel Ridge Regression](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/supervised/kernel_regression.py)
 - [Lasso Regression](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/supervised/linear_regression.py)
 - [Linear Regression](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/supervised/linear_regression.py)
 - [Logistic Regression](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/supervised/logistic_regression.py)

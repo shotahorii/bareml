@@ -23,11 +23,11 @@ import numpy as np
 from bareml import Classifier
 from bareml.utils.activation_functions import Sigmoid, Softmax
 from bareml.utils.manipulators import add_intercept, prob2binary
-from bareml.utils.solvers import CrossEntropyGD, CrossEntropyMultiGD
+from bareml.utils.optimise import CrossEntropyGD, CrossEntropyMultiGD
 
 class LogisticRegression(Classifier):
     """ 
-    Ligistic Regression classifier
+    Logistic Regression classifier
     """
 
     def __init__(self, multiclass=False, fit_intercept=True,

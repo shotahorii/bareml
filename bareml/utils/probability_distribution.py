@@ -109,8 +109,9 @@ class Bernoulli(DiscreteProbabilityDistribution):
 
         Returns
         -------
-        float
+        llh: np.array (n,)
             Log likelihood
+            n: number of data points
         """
         # Avoid log(0)
         p = np.clip(p, 1e-15, 1 - 1e-15)

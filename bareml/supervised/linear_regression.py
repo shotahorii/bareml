@@ -18,7 +18,7 @@ import numpy as np
 
 from bareml import Regressor
 from bareml.utils.manipulators import polynomial_features, StandardScaler, add_intercept
-from bareml.utils.solvers import PInv, LassoISTA, LeastSquareGD
+from bareml.utils.optimise import PInv, LassoISTA, LeastSquareGD
 
 
 class LinearRegression(Regressor):
