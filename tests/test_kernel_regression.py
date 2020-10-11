@@ -10,7 +10,7 @@ sys.path.append('../')
 from bareml.supervised import KernelRidgeRegression
 from bareml.utils.validators import train_test_split
 
-def xtest_linear_kernel():
+def test_linear_kernel():
     data = load_boston()
     X = data.data
     y = data.target
@@ -31,7 +31,7 @@ def xtest_linear_kernel():
     assert all([a == b for a, b in zip(preds_bareml, preds_skl)])
 
 
-def xtest_rbf_kernel():
+def test_rbf_kernel():
     data = load_boston()
     X = data.data
     y = data.target
@@ -52,7 +52,7 @@ def xtest_rbf_kernel():
     assert all([a == b for a, b in zip(preds_bareml, preds_skl)])
 
 
-def xtest_sigmoid_kernel():
+def test_sigmoid_kernel():
     data = load_boston()
     X = data.data
     y = data.target
