@@ -10,6 +10,20 @@ References:
 import math
 import numpy as np
 
+class SquareLoss:
+
+    def __call__(self, X, y, w):
+        return 0.5 * np.power(y - (X @ w), 2)
+
+    def gradient(self, X, y, w):
+        # X.T is a (d,n) array
+        # (X @ w - y) is a (n,) array
+        # X.T @ (X @ w - y) is a (d,) array
+        return X.T @ (X @ w - y)
+
+    def hessian(self, X, y, w):
+        return np.ones(len(y))
+
 class SquareError:
 
     def __call__(self, y, y_pred):
@@ -49,9 +63,9 @@ class CrossEntropy:
         # Avoid log(0)
         y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
 
-        if y.ndim == 1: # cross entropy for sigmoid (binary classification)
+        if y.ndim == 1: # cross entropy for sigmoid (binary)
             return - y * np.log(y_pred) - (1 - y) * np.log(1 - y_pred)
-        else: # cross entropy for softmax (multi classes classification)
+        else: # cross entropy for softmax (multi classes)
             return - np.sum(y * np.log(y_pred), axis=1)
     
     def gradient(self, y, y_pred):

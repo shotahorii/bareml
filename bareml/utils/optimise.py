@@ -1,77 +1,103 @@
 """
 Optimisers
 
+Author: Shota Horii <sh.sinker@gmail.com>
+
 References:
 https://www.coursera.org/lecture/ml-regression/how-to-handle-the-intercept-3KZiN
 
 """
-
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 from abc import ABC, abstractmethod
 import math
 import numpy as np
 
 from bareml.utils.misc import supremum_eigen
-from bareml.utils.model_tuning import initialise_random, initialise_zero, auto_learning_rate
-from bareml.utils.loss_functions import SquareError, L2Regularization, CrossEntropy
-from bareml.utils.activation_functions import Sigmoid, Softmax, Identity
+from bareml.utils.activation_functions import Sigmoid, Softmax
+
+
+#########################
+# Weight Initialisation #
+#########################
+
+
+def initialise_random(n, m=None):
+    """
+    Initialise (n * m) shaped weights randomly.
+
+    Parameters
+    ----------
+    n, m: int
+        shape of the weight to initialise. (n * m)
+        if m is none, weight is a 1d array of length = n
+
+    Returns
+    -------
+    w: np.ndarray (n, m) float
+    """
+    # initialise weights in [-1/sqrt(n), 1/sqrt(n)) 
+    # why? see below articles. 
+    # https://leimao.github.io/blog/Weights-Initialization/
+    # https://stats.stackexchange.com/questions/47590/what-are-good-initial-weights-in-a-neural-network
+    limit = 1 / math.sqrt(n) if m is None else 1 / math.sqrt(n * m)
+    size = n if m is None else (n, m)
+
+    return np.random.uniform(-limit, limit, size)
+
+
+def initialise_zero(n, m=None):
+    """
+    Initialise (n * m) shaped weights to zero. 
+
+    Parameters
+    ----------
+    n, m: int
+        shape of the weight to initialise. (n * m)
+        if m is none, weight is a 1d array of length = n
+
+    Returns
+    -------
+    w: np.ndarray (n, m) float
+    """
+    size = n if m is None else (n, m)
+    return np.zeros(size)
+
+
+###############################
+# Hyperparameter Optimisation #
+###############################
+
+
+def auto_lr(X):
+    """
+    Find good learning rate for square error minimisation. 
+    opt learning rate = 1/p where p is max eigen value of X.T @ X
+    Use Gershgorin circle theorem to estimate supremum of the 
+    eiven vectors, instead of calculating actual max eigen value. 
+    Ref(in JP): https://qiita.com/fujiisoup/items/e7f703fc57e2dfc441ad
+
+    Parameters
+    ----------
+    X: np.array (n,d)
+        feature matrix
+        n: number of samples
+        d: number of features
+    """
+    rho = supremum_eigen(X.T @ X)
+    return 1.0 / rho
+
+
+##############
+# Optimisers #
+##############
+
 
 class Optimiser(ABC):
 
     @abstractmethod
     def solve(self):
         pass
-
-class IterativeOptimiser(ABC):
-
-    @abstractmethod
-    def step(self):
-        pass
-
-
-class PInv(Optimiser):
-    """
-    Analytical solution to the normal equation using Moore-Penrose pseudoinverse.
-
-    Parameters
-    ----------
-    alpha: float >= 0
-        l2 reguralisation parameter
-    """
-
-    def __init__(self, alpha=0):
-        self.alpha = alpha
-
-    def solve(self, X, y, has_intercept=True):
-        """
-        Solve Linear regression and Ridge regression.
-
-        Parameters
-        ----------
-        X: np.ndarray (n, d) 
-            predictor variables matrix
-            n: number of samples
-            d: number of features
-        
-        y: np.ndarray (n,)
-            target variables
-            n: number of samples
-
-        has_intercept: bool
-            if X contains intercept (1st column filled with all 1.)
-
-        Returns
-        -------
-        w: 
-        """
-        I = np.eye(X.shape[1])
-        if has_intercept:
-            # do not penalise intercept
-            # https://www.coursera.org/lecture/ml-regression/how-to-handle-the-intercept-3KZiN
-            I[0,0] = 0
-        return (np.linalg.pinv( X.T @ X + self.alpha * I ) @ X.T ) @ y
-
+    
 
 class GradientDescent(Optimiser):
     """
@@ -79,124 +105,62 @@ class GradientDescent(Optimiser):
 
     Parameters
     ----------
-    activation: class
-        activation fucntion. options: Identity(), Sigmoid(), Softmax()
+    gradient: a function to calculate gradient of loss function w.r.t. w
+        parameters of the function must be (X, y, w)
+        return of the function must be a (d,) array representing gradient
 
-    loss: class
-        loss function. options: SquareError(), CrossEntropy()
-
-    alpha: float >= 0
-        l2 reguralisation parameter
-
-    max_iterations: int > 0
+    max_iter: int > 0
         max number of iterations
     
     tol: float >= 0
         conversion criterion. if delta of w is smaller than tol, 
         algorighm considers it's converged.
 
-    learning_rate: float > 0
+    lr: float > 0
     """
 
-    def __init__(self, activation, loss, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
-        self.max_iterations = max_iterations
+    def __init__(self, gradient, max_iter=1000, tol=1e-4, lr=None):
+        self.gradient = gradient
+        self.max_iter = max_iter
         self.tol = tol
-        self.learning_rate = learning_rate
+        self.lr = lr
 
-        self.activation = activation
-        self.loss = loss
-        self.l2 = L2Regularization(alpha)
-
-    def solve(self, X, y, has_intercept=True):
+    def solve(self, X, y):
         """
-        Solve Linear regression and Ridge regression.
-
         Parameters
         ----------
-        X: np.ndarray (n, d) 
-            predictor variables matrix
+        X: np.ndarray (n,d) 
             n: number of samples
             d: number of features
         
-        y: np.ndarray (n,)
-            target variables
+        y: np.ndarray (n,) or (n,c)
             n: number of samples
-
-        has_intercept: bool
-            if X contains intercept (1st column filled with all 1.)
+            c: number of classes
         """
 
         # if learning rate is not given, set automatically
-        lr = self.learning_rate if self.learning_rate else auto_learning_rate(X)
+        lr = self.lr if self.lr else auto_lr(X)
         
         # initialise the weights as zero
-        if y.ndim > 1: # multi class classification
-            w = initialise_zero(X.shape[1], y.shape[1])
-        else:
+        if y.ndim == 1:
             w = initialise_zero(X.shape[1])
+        else: # y.ndim == 2 i.e. classification
+            w = initialise_zero(X.shape[1], y.shape[1])
         
-        for _ in range(self.max_iterations):
-            y_pred = self.activation(X @ w)
-            penalty = self.l2.gradient(w)
-            if has_intercept:
-                # do not penalise intercept
-                # https://www.coursera.org/lecture/ml-regression/how-to-handle-the-intercept-3KZiN
-                if w.ndim > 1:
-                    penalty[0] = np.zeros(w.shape[1])
-                else:
-                    penalty[0] = 0
-                
-            grad_w = X.T @ self.loss.gradient(y, y_pred) + penalty
-            w_new = w - lr * grad_w
-
+        for _ in range(self.max_iter):
+            # step
+            grads = self.gradient(X, y, w)
+            w_new = w - lr * grads
+            # check the conversion
             if (np.abs(w_new - w) < self.tol).all():
                 print('Converged.')
                 return w_new
+            # update
             w = w_new
         
         print('Not converged.')
         return w
 
-
-class LeastSquareGD(GradientDescent):
-    """
-    Gradient Descent for Least Square Error. 
-    """
-    def __init__(self, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
-        super().__init__(
-            activation = Identity(), 
-            loss = SquareError(), 
-            alpha=alpha, 
-            max_iterations=max_iterations, 
-            tol=tol,
-            learning_rate=learning_rate)
-
-class CrossEntropyGD(GradientDescent):
-    """
-    Gradient Descent for Cross Entropy (Binary Classification). 
-    """
-    def __init__(self, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
-        super().__init__(
-            activation = Sigmoid(), 
-            loss = CrossEntropy(), 
-            alpha=alpha, 
-            max_iterations=max_iterations, 
-            tol=tol,
-            learning_rate=learning_rate)
-
-class CrossEntropyMultiGD(GradientDescent):
-    """
-    Gradient Descent for Cross Entropy (Multi Class Classification). 
-    """
-    def __init__(self, alpha=0, max_iterations=1000, tol=1e-4, learning_rate=None):
-        super().__init__(
-            activation = Softmax(), 
-            loss = CrossEntropy(), 
-            alpha=alpha, 
-            max_iterations=max_iterations, 
-            tol=tol,
-            learning_rate=learning_rate)
-    
 
 class LassoISTA(Optimiser):
     """
