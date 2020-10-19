@@ -2,6 +2,7 @@
 Logistic Regression
 
 Author: Shota Horii <sh.sinker@gmail.com>
+Test: tests/test_logistic_regresion.py
 
 References:
 C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 205-220.
