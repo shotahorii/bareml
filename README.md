@@ -32,6 +32,7 @@ $ pip install bareml
 
 ### Unsupervised Learning
 - [KMeans (KMeans++)](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/unsupervised/kmeans.py)
+- [DBSCAN](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/unsupervised/dbscan.py)
 
 ### Ensemble Learning 
 - [AdaBoost](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/ensemble/adaboost.py)

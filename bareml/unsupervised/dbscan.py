@@ -2,7 +2,7 @@
 DBSCAN clustering
 
 Author: Shota Horii <sh.sinker@gmail.com>
-Test: 
+Test: tests/test_dbscan.py
 
 References:
 https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf
