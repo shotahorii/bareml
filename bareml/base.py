@@ -4,6 +4,7 @@ base classes
 
 # Author: Shota Horii <sh.sinker@gmail.com>
 
+import inspect
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 import numpy as np
@@ -254,6 +255,17 @@ class BinaryClassifier(Classifier):
 
 
 class Clustering(Estimator):
+
+    def fit_predict(self, X):
+        """ fit and predict with the same data. """
+        # list of methods in this instance
+        methods = inspect.getmembers(self, predicate=inspect.ismethod)
+        # if the _fit_predict method is implemented in child class
+        if '_fit_predict' in [m[0] for m in methods]:
+            X = self._validate_X(X)
+            return self._fit_predict(X)
+        else:
+            return self.fit(X).predict(X)
 
     """ TODO!!! """
     def score(self, X, y):
