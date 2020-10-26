@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/shotahorii/ml-from-scratch.svg?branch=master)](https://travis-ci.org/shotahorii/ml-from-scratch)
+[![Build Status](https://travis-ci.org/shotahorii/bareml.svg?branch=master)](https://travis-ci.org/shotahorii/bareml)
 [![PyPI version](https://badge.fury.io/py/bareml.svg)](https://badge.fury.io/py/bareml)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/bareml)
 
