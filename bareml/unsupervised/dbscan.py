@@ -163,9 +163,6 @@ class DBSCAN(Clustering):
         distances = np.apply_along_axis(lambda q: self.dist(p,q), axis=1, arr=X)
         # list of idx of points around p (including p_idx itself)
         neighbours = np.where(distances <= self.eps)[0]
-
-        # remove the point p itself
-        # np.delete(neighbours, np.where(neighbours == p_idx)[0][0]) 
         
         return set(neighbours)
 

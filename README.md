@@ -46,3 +46,11 @@ $ pip install bareml
 - [Stacking](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/ensemble/stacking.py)
 - Voting
 - [XGBoost](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/ensemble/xgboost.py)
+
+### Utilities
+- [Data manipulators (Scaler, Encoder etc)](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/utils/manipulators.py)
+- [Distance metrics](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/utils/distances.py)
+- [Evaluation Metrics](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/utils/metrics.py)
+- [Kernel functions](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/utils/kernels.py)
+- [Probability Distributions](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/utils/probability_distribution.py)
+- [Tools for validation (KFold, StratifiedKFold etc)](https://github.com/shotahorii/ml-from-scratch/blob/master/bareml/utils/validators.py)
