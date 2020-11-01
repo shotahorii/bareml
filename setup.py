@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
@@ -19,7 +19,7 @@ reqs = [x.strip() for x in reqs if x.strip() != '']
 
 setup(
     name='bareml',
-    packages=['bareml'], 
+    packages=setuptools.find_packages(), 
     version=__version__,
     license='MIT', 
     install_requires=reqs,
