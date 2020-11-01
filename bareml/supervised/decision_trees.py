@@ -17,9 +17,9 @@ import math
 import random
 import numpy as np
 
-from bareml import Regressor, Classifier, Estimator
-from bareml.utils.metrics import entropy, gini_impurity, variance, mean_deviation, classification_error
-from bareml.utils.manipulators import prob2binary
+from ..base import Regressor, Classifier, Estimator
+from ..utils.metrics import entropy, gini_impurity, variance, mean_deviation, classification_error
+from ..utils.manipulators import prob2binary
 
 class TreeNode:
 

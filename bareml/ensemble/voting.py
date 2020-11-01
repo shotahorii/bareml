@@ -10,7 +10,7 @@ import math
 import numpy as np
 from abc import ABC, abstractmethod
 
-from bareml import Classifier, Regressor, Ensemble
+from ..base import Classifier, Regressor, Ensemble
 
 class Voting(Ensemble):
 

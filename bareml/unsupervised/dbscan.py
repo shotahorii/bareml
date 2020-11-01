@@ -10,8 +10,8 @@ https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf
 
 import numpy as np
 
-from bareml import Clustering
-from bareml.utils.distances import euclidean_distance
+from ..base import Clustering
+from ..utils.distances import euclidean_distance
 
 
 class DBSCAN(Clustering):

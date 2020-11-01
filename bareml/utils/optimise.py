@@ -12,8 +12,8 @@ from abc import ABC, abstractmethod
 import math
 import numpy as np
 
-from bareml.utils.misc import supremum_eigen
-from bareml.utils.activation_functions import Sigmoid, Softmax
+from .misc import supremum_eigen
+from .activation_functions import Sigmoid, Softmax
 
 
 #########################

@@ -10,8 +10,8 @@ import math
 import numpy as np
 from abc import ABC, abstractmethod
 
-from bareml import Classifier, Regressor, Ensemble
-from bareml.utils.validators import cross_val_predict
+from ..base import Classifier, Regressor, Ensemble
+from ..utils.validators import cross_val_predict
 
 class Stacking(Ensemble):
     """

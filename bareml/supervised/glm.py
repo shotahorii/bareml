@@ -14,10 +14,10 @@ import math
 import numpy as np
 import scipy.optimize
 
-from bareml import BinaryClassifier, Regressor
-from bareml.utils.manipulators import prob2binary
-from bareml.utils.model_tuning import initialise_random
-from bareml.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
+from ..base import BinaryClassifier, Regressor
+from ..utils.manipulators import prob2binary
+from ..utils.model_tuning import initialise_random
+from ..utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
 
 
 class _GLM:

@@ -14,9 +14,9 @@ import math
 import numpy as np
 from abc import ABC, abstractmethod
 
-from bareml import Classifier, Regressor, Ensemble
-from bareml.utils.loss_functions import SquareError
-from bareml.supervised.decision_trees import GBTree
+from ..base import Classifier, Regressor, Ensemble
+from ..utils.loss_functions import SquareError
+from ..supervised.decision_trees import GBTree
 
 class XGBoost(Ensemble, Regressor):
 

@@ -1,10 +1,11 @@
 """
 Sampling methods
 
+Author: Shota Horii <sh.sinker@gmail.com>
+
 References:
 """
 
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 import random

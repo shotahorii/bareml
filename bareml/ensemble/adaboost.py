@@ -41,10 +41,10 @@ References:
 import math
 import numpy as np
 
-from bareml import Classifier, Regressor, BinaryClassifier, Ensemble
-from bareml.utils.manipulators import prob2binary, binary2sign, sign2binary, OnehotEncoder
-from bareml.supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
-from bareml.utils.metrics import absolute_relative_errors, absolute_errors
+from ..base import Classifier, Regressor, BinaryClassifier, Ensemble
+from ..utils.manipulators import prob2binary, binary2sign, sign2binary, OnehotEncoder
+from ..supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
+from ..utils.metrics import absolute_relative_errors, absolute_errors
 
 class AdaBoost(Ensemble, BinaryClassifier):
     """
@@ -103,13 +103,13 @@ class AdaBoost(Ensemble, BinaryClassifier):
         y_preds = np.array([clf.predict(X) for clf in self.estimators])
         
         # convert labels from {0,1} to {-1,1}
-        y_preds = binary2sign(y_preds)
+        # y_preds = binary2sign(y_preds)
         
         # weighted majority vote
         y_pred = np.sign(np.sum(np.array(self.alphas)[:,None] * y_preds, axis=0))
 
         # back to {1,0} labels
-        y_pred = sign2binary(y_pred)
+        # y_pred = sign2binary(y_pred)
 
         return y_pred
 
@@ -133,7 +133,7 @@ class AdaBoostM1(Ensemble, Classifier):
 
         # treat binary classification as same data format as multi-class
         if y.ndim == 1:
-            y_onehot = self.onehot.encode(y)
+            y_onehot = self.onehot.fit_transform(y)
         else:
             y_onehot = y
 
@@ -143,7 +143,7 @@ class AdaBoostM1(Ensemble, Classifier):
 
             # treat binary classification as same data format as multi-class
             if y.ndim == 1:
-                y_pred = self.onehot.encode(y_pred)
+                y_pred = self.onehot.transform(y_pred)
             
             # assign 1 to the samples which are wrongly predicted, 
             # and assign 0 to the samples which are correctly predicted.
@@ -185,7 +185,7 @@ class AdaBoostM1(Ensemble, Classifier):
 
         # treat binary classification as same data format as multi-class
         if y_preds[0].ndim == 1:
-            y_preds = np.array([self.onehot.encode(y_pred) for y_pred in y_preds])
+            y_preds = np.array([self.onehot.transform(y_pred) for y_pred in y_preds])
         
         # weighted majority vote
         y_pred = np.zeros(y_preds[0].shape)
@@ -194,7 +194,7 @@ class AdaBoostM1(Ensemble, Classifier):
         
         y_pred = prob2binary(y_pred)
 
-        return self.onehot.decode(y_pred)
+        return self.onehot.inverse_transform(y_pred)
 
     
 class AdaBoostSamme(Ensemble, Classifier):
@@ -216,7 +216,7 @@ class AdaBoostSamme(Ensemble, Classifier):
 
         # treat binary classification as same data format as multi-class
         if y.ndim == 1:
-            y_onehot = self.onehot.encode(y)
+            y_onehot = self.onehot.fit_transform(y)
         else:
             y_onehot = y
 
@@ -228,7 +228,7 @@ class AdaBoostSamme(Ensemble, Classifier):
 
             # treat binary classification as same data format as multi-class
             if y.ndim == 1:
-                y_pred = self.onehot.encode(y_pred)
+                y_pred = self.onehot.transform(y_pred)
             
             # assign 1 to the samples which are wrongly predicted, 
             # and assign 0 to the samples which are correctly predicted.
@@ -260,7 +260,7 @@ class AdaBoostSamme(Ensemble, Classifier):
 
         # treat binary classification as same data format as multi-class
         if y_preds[0].ndim == 1:
-            y_preds = np.array([self.onehot.encode(y_pred) for y_pred in y_preds])
+            y_preds = np.array([self.onehot.transform(y_pred) for y_pred in y_preds])
         
         # weighted majority vote
         y_pred = np.zeros(y_preds[0].shape)
@@ -270,7 +270,7 @@ class AdaBoostSamme(Ensemble, Classifier):
         y_pred = prob2binary(y_pred)
 
         if y_preds[0].ndim == 1:
-            return self.onehot.decode(y_pred)
+            return self.onehot.inverse_transform(y_pred)
         else:
             return y_pred
 

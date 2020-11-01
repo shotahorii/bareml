@@ -11,8 +11,8 @@ ToDo: GroupKFold
 import math
 import numpy as np
 
-from bareml.utils.misc import split_array
-from bareml.utils.manipulators import OnehotEncoder
+from .misc import split_array
+from .manipulators import OnehotEncoder
 
 
 def shuffle_data(X, y, seed=None):
@@ -116,7 +116,7 @@ class StratifiedKFold:
 
         if y.ndim != 1: # multi-class classification
             onehot = OnehotEncoder()
-            y = onehot.decode(y) # express in 1d array
+            y = onehot.inverse_transform(y) # express in 1d array
 
         classes = np.unique(y) # list of classes
 

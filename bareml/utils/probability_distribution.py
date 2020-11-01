@@ -13,8 +13,8 @@ from abc import ABC, abstractmethod
 import math
 import numpy as np
 
-from bareml.utils.misc import ncr
-from bareml.utils.activation_functions import Sigmoid
+from .misc import ncr
+from .activation_functions import Sigmoid
 
 
 class DiscreteProbabilityDistribution(ABC):

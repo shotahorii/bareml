@@ -11,10 +11,10 @@ import math
 import random
 import numpy as np
 
-from bareml import Classifier, Regressor, Ensemble
-from bareml.utils.manipulators import prob2binary
-from bareml.utils.sampling import bootstrap_sampling
-from bareml.supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
+from ..base import Classifier, Regressor, Ensemble
+from ..utils.manipulators import prob2binary
+from ..utils.sampling import bootstrap_sampling
+from ..supervised.decision_trees import DecisionTreeClassifier, DecisionTreeRegressor
 
 class Bagging(Ensemble):
     

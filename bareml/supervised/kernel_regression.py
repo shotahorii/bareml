@@ -12,9 +12,9 @@ K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 494
 import math
 import numpy as np
 
-from bareml import Regressor
-from bareml.utils.manipulators import StandardScaler
-from bareml.utils.kernels import linear_kernel, polynomial_kernel, sigmoid_kernel, rbf_kernel
+from ..base import Regressor
+from ..utils.manipulators import StandardScaler
+from ..utils.kernels import linear_kernel, polynomial_kernel, sigmoid_kernel, rbf_kernel
 
 
 class KernelRidgeRegression(Regressor):

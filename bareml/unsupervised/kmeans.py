@@ -18,8 +18,8 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 155-156.
 import math
 import numpy as np
 
-from bareml import Clustering
-from bareml.utils.distances import euclidean_distance
+from ..base import Clustering
+from ..utils.distances import euclidean_distance
 
 class KMeans(Clustering):
     """ 

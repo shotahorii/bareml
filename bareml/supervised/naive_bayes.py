@@ -14,9 +14,9 @@ ToDo:
 import math
 import numpy as np
 
-from bareml import Classifier
-from bareml.utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
-from bareml.utils.manipulators import prob2binary, real2binary
+from ..base import Classifier
+from ..utils.probability_distribution import Bernoulli, Binomial, Poisson, Gaussian
+from ..utils.manipulators import prob2binary, real2binary
 
 
 class NaiveBayes(Classifier):

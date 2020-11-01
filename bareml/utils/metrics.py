@@ -10,7 +10,7 @@ References:
 import math
 import numpy as np
 
-from bareml.utils.manipulators import OnehotEncoder
+from .manipulators import OnehotEncoder
 
 
 #############################
@@ -390,8 +390,8 @@ def confusion_matrix(y, y_pred):
     onehot = OnehotEncoder()
 
     if y.ndim == 1: # binary classification
-        y = onehot.encode(y)
-        y_pred = onehot.encode(y_pred)
+        y = onehot.fit_transform(y)
+        y_pred = onehot.transform(y_pred)
 
     return y.T @ y_pred
 

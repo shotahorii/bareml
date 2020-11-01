@@ -1,11 +1,12 @@
 """
 Distance Metrics 
 
+Author: Shota Horii <sh.sinker@gmail.com>
+
 References:
 Y. Hirai (2012). はじめてのパターン認識. 森北出版. 153-154.
 """
 
-# Author: Shota Horii <sh.sinker@gmail.com>
 
 import math
 import numpy as np
@@ -102,3 +103,11 @@ def l2_norm(x):
 
 def sup_norm(x):
     return max(np.abs(x))
+
+
+def point_hyperplane_distance(x, w, b):
+    """
+    Distance from a point x to a hyperplane wTx + b
+    https://math.stackexchange.com/questions/1210545/distance-from-a-point-to-a-hyperplane
+    """
+    return np.abs(x @ w + b) / l2_norm(w)

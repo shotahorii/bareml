@@ -13,9 +13,9 @@ Y. Hirai (2012). はじめてのパターン認識. 森北出版. 54-69.
 
 import numpy as np
 
-from bareml import Classifier, Regressor
-from bareml.utils.distances import euclidean_distance
-from bareml.utils.manipulators import prob2binary
+from ..base import Classifier, Regressor
+from ..utils.distances import euclidean_distance
+from ..utils.manipulators import prob2binary
 
 class KNNClassifier(Classifier):
     """ 

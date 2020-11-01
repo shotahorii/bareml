@@ -11,7 +11,7 @@ https://scikit-learn.org/stable/modules/metrics.html#pairwise-metrics-affinities
 import math
 import numpy as np
 
-from bareml.utils.distances import l2_norm
+from .distances import l2_norm
 
 
 def kernel_eligible_pair(X, Y):

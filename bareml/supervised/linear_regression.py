@@ -16,9 +16,9 @@ K.P. Murphy (2012). Machine Learning A Probabilistic Perspective. MIT Press. 458
 import math
 import numpy as np
 
-from bareml import Regressor
-from bareml.utils.manipulators import StandardScaler, add_intercept
-from bareml.utils.optimise import LassoISTA, GradientDescent
+from ..base import Regressor
+from ..utils.manipulators import StandardScaler, add_intercept
+from ..utils.optimise import LassoISTA, GradientDescent
 
 class LinearRegression(Regressor):
     """

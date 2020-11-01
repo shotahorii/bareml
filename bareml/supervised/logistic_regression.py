@@ -18,10 +18,10 @@ H. Toyoda (2017). 実践ベイズモデリング. 朝倉書店. 64-66.
 import math
 import numpy as np
 
-from bareml import Classifier
-from bareml.utils.activation_functions import Sigmoid, Softmax
-from bareml.utils.manipulators import add_intercept, prob2binary, StandardScaler
-from bareml.utils.optimise import GradientDescent
+from ..base import Classifier
+from ..utils.activation_functions import Sigmoid, Softmax
+from ..utils.manipulators import add_intercept, prob2binary, StandardScaler
+from ..utils.optimise import GradientDescent
 
 class LogisticRegression(Classifier):
     """ 

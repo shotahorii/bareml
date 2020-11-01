@@ -7,42 +7,41 @@ References:
 """
 
 import math
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from itertools import combinations_with_replacement
 
 import numpy as np
 
-from bareml.utils.misc import flatten
+from .misc import flatten
 
 
 ########## Scalers and Encoders ##########
 
 
-class Scaler(ABC):
-    """ A base class for scalers """
+class Transform(metaclass=ABCMeta):
+    """ 
+    A base class for transform classes
+    including scalers and encoders
+    """
 
     @abstractmethod
     def fit(self):
         pass
-
+    
     @abstractmethod
     def transform(self):
         pass
 
-
-class Encoder(ABC):
-    """ A base class for encoders """
-
     @abstractmethod
-    def encode(self):
+    def fit_transform(self):
         pass
 
     @abstractmethod
-    def decode(self):
+    def inverse_transform(self):
         pass
 
 
-class StandardScaler(Scaler):
+class StandardScaler(Transform):
     """ 
     Feature Scaler (Standardisation)
     X -> (X - mu) / std 
@@ -78,98 +77,237 @@ class StandardScaler(Scaler):
             n: number of samples 
             d: number of features
         """
-        return (X - self.mu) / self.s
+        y = (X - self.mu) / self.s
+        return y
+
+    def fit_transform(self, X):
+        """
+        Perform fit and transform.
+        """
+        return self.fit(X).transform(X)
+
+    def inverse_transform(self, X):
+        """
+        Transform given X into the original representation.
+        """
+        y = self.s * X + self.mu
+        return y
 
 
-class OnehotEncoder(Encoder):
+class OnehotEncoder(Transform):
     """
     Onehot encoder.
     For example:
-    code = ['male', 'female', 'unknown']
-    encode(['male','unknown','female]) -> [[1,0,0], [0,0,1], [0,1,0]]
-    decode([[0,1,0],[0,0,1]]) -> ['female', 'unknown']
-
-    Parameters
-    ----------
-    code: np.array (c,)
-        an array of unique labels to be encoded into onehot expression
-        c: number of labels
+    labels_ = ['male', 'female', 'unknown']
+    transform(['male','unknown','female]) -> [[1,0,0], [0,0,1], [0,1,0]]
+    inverse_transform([[0,1,0],[0,0,1]]) -> ['female', 'unknown']
     """
 
-    def __init__(self, code=None):
-        self._code = self._codable(code)
+    def __init__(self):
+        self.labels_ = None
 
-    @property
-    def code(self):
-        return self._code
+    def _validate_X(self, X):
+        """ validate input X to be encoded """
+        X = np.array(X)
 
-    def _codable(self, code):
-        """ validate if the given code is valid. """
+        if X.ndim != 1:
+            raise ValueError('input array needs to be 1d')
 
-        if code is None:
-            return code
+        return X
 
-        if len(code) != len(set(code)):
-            raise ValueError('code needs to be an array of unique values.')
-        elif len(code) < 2:
-            raise ValueError('code needs to contain more than 1 values.')
+    def _validate_y(self, y):
+        y = np.array(y)
 
-        return code
-
-    def _encodable(self, y):
-        """ validate if the given y is encodable. """
-
-        if not set(y).issubset(self._code):
-            raise ValueError('input array includes value(s) not in the code.')
-
+        if y.ndim != 2:
+            raise ValueError('input array needs to be 2d')
+        elif not np.issubdtype(y.dtype, np.number):
+            raise ValueError('Data type of y needs to be numeric.')
+        elif not np.isin(y, [0,1]).all():
+            raise ValueError('Element in y needs to be 0 or 1.')
+        elif (y.sum(axis=1)>1).any():
+            raise ValueError('Each sample cannot be asigned to more than 1 class.')
+        
         return y
 
-    def encode(self, y):
+    def fit(self, X):
+        """ 
+        fit
+        
+        Parameters
+        ----------
+        X: np.array (n,)
+            n: number of samples 
+
+        Returns
+        -------
+        self
+        """
+        X = self._validate_X(X)
+        X_uniq = np.unique(X)
+        
+        if len(X_uniq) == 1:
+            raise ValueError('Cannot fit with only 1 unique value array.')
+        else:
+            self.labels_ = np.unique(X)
+
+        return self
+
+    def transform(self, X):
         """ 
         Encode nominal values to one-hot encoding 
         
         Parameters
         ----------
-        y: np.array (n,)
+        X: np.array (n,)
             n: number of samples 
 
         Returns
         -------
-        Y: np.array (n, c) int/float in {0, 1}
+        y: np.array (n, c) int/float in {0, 1}
             n: number of samples 
             c: number of classes
         """
+        X = self._validate_X(X)
 
-        if self._code is None:
-            self._code = self._codable(np.unique(y))
-        else:
-            y = self._encodable(y)
+        if self.labels_ is None:
+            raise ValueError('labels needed to be fitted.')
+        elif not set(X).issubset(self.labels_):
+            raise ValueError('input array includes value(s) not in the labels.')
+        
+        y = np.array([(y==v).astype(int) for v in self.labels_]).T 
+        return y
 
-        return np.array([(y==v).astype(int) for v in self._code]).T 
+    def fit_transform(self, X):
+        """ fit and transform """
+        return self.fit(X).transform(X)
 
-    def decode(self, Y):
+    def inverse_transform(self, y):
         """ 
         Decodes one-hot encoding to nominal values 
 
         Parameters
         ----------
-        Y: np.array (n, c) int/float in {0, 1}
+        y: np.array (n, c) int/float in {0, 1}
             n: number of samples 
             c: number of classes
 
         Returns
         -------
-        y: np.array (n,)
+        X: np.array (n,)
             n: number of samples 
         """
+        y = self._validate_y(y)
 
-        if self._code is None:
-            self._code = np.arange(Y.shape[1])
+        if self.labels_ is None:
+            self.labels_ = np.arange(y.shape[1])
 
-        return np.array([self._code[i] for i in np.argmax(Y, axis=1)])
+        return np.array([self.labels_[i] for i in np.argmax(y, axis=1)])
 
-    def clear(self):
-        self._code = None
+
+class BinaryEncoder(Transform):
+    """
+    Binary encoder
+    """
+
+    def __init__(self, neg_val=-1, pos_val=1):
+        self.labels_ = None
+
+        if neg_val == pos_val:
+            raise ValueError('neg_val and pos_val cannot be the same value.')
+
+        self.neg_val = neg_val
+        self.pos_val = pos_val
+
+    def _validate_X(self, X):
+        """ validate input X to be encoded """
+        X = np.array(X)
+
+        if X.ndim != 1:
+            raise ValueError('input array needs to be 1d')
+
+        return X
+
+    def _validate_y(self, y):
+        y = np.array(y)
+
+        if y.ndim != 1:
+            raise ValueError('input array needs to be 1d')
+        elif not np.isin(y, [self.neg_val,self.pos_val]).all():
+            raise ValueError('Element in y needs to be one of the 2 designated values.')
+        
+        return y
+
+    def fit(self, X):
+        """ 
+        fit
+        
+        Parameters
+        ----------
+        X: np.array (n,)
+            n: number of samples 
+
+        Returns
+        -------
+        self
+        """
+        X = self._validate_X(X)
+
+        if len(X_uniq) != 2:
+            raise ValueError('input needs to have exact 2 classes.')
+        else:
+            self.labels_ = np.unique(X)
+
+        return self
+
+    def transform(self, X):
+        """ 
+        Encode real values to binary encoding 
+        
+        Parameters
+        ----------
+        X: np.array (n,)
+            n: number of samples 
+
+        Returns
+        -------
+        y: np.array (n,) int in {self.neg_val, self.pos_val}
+            n: number of samples
+        """
+        X = self._validate_X(X)
+
+        if self.labels_ is None:
+            raise ValueError('labels needed to be fitted.')
+        elif not set(X).issubset(self.labels_):
+            raise ValueError('input array includes value(s) not in the labels.')
+
+        y = np.array([self.neg_val if x==self.labels_[0] else self.pos_val for x in X])
+        return y
+
+    def fit_transform(self, X):
+        """ fit and transform """
+        return self.fit(X).transform(X)
+
+    def inverse_transform(self, y):
+        """ 
+        Decode
+
+        Parameters
+        ----------
+        y: np.array (n,) int/float in {self.neg_val, self.pos_val}
+            n: number of samples 
+
+        Returns
+        -------
+        X: np.array (n,)
+            n: number of samples 
+        """
+        y = self._validate_y(y)
+
+        if self.labels_ is None:
+            self.labels_ = (self.neg_val, self.pos_val) # no encoding/decoding
+
+        X = np.array([self.labels_[0] if yi==self.neg_val else self.labels_[1] for yi in y])
+        return X    
 
 
 ########## Other functions ##########

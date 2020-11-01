@@ -10,6 +10,8 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+long_description = long_description.replace('![Logo](/logo.png)\n','') # remove logo
+
 with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
     reqs = f.read().split('\n')
 
@@ -23,7 +25,7 @@ setup(
     install_requires=reqs,
     author='shotahorii',
     author_email='sh.sinker@gmail.com',
-    url='https://github.com/shotahorii/ml-from-scratch', 
+    url='https://github.com/shotahorii/bareml', 
     description='A Python module containing various machine learning algorithms.',
     long_description=long_description,
     long_description_content_type='text/markdown',

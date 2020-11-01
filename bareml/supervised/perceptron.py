@@ -12,8 +12,8 @@ C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer. 192-196.
 
 import numpy as np
 
-from bareml import BinaryClassifier
-from bareml.utils.manipulators import binary2sign, real2sign, real2binary
+from ..base import BinaryClassifier
+from ..utils.manipulators import real2sign
 
 
 class Perceptron(BinaryClassifier):
@@ -47,7 +47,7 @@ class Perceptron(BinaryClassifier):
             n: number of samples
             d: number of features
         
-        y: np.ndarray (n,) of int {0,1}
+        y: np.ndarray (n,) of int {-1,1}
             n: number of samples 
 
         Returns 
@@ -55,7 +55,7 @@ class Perceptron(BinaryClassifier):
         self: Perceptron
         """
         # convert target variable from {0,1} -> {-1, 1}
-        y = binary2sign(y)
+        #y = binary2sign(y)
 
         # initialise the weights and bias
         self.w = np.zeros(X.shape[1])
@@ -92,7 +92,7 @@ class Perceptron(BinaryClassifier):
 
         Returns 
         -------
-        np.ndarray (n,) of int {0,1}
+        np.ndarray (n,) of int {-1,1}
             n: number of samples
         """
-        return real2binary(self.w @ X.T + self.b, threshold=0)
+        return real2sign(self.w @ X.T + self.b)
