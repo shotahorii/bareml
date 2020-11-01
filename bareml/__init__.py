@@ -1,1 +1,8 @@
-from .base import Estimator, Regressor, Classifier, BinaryClassifier, Clustering, Ensemble
+
+__version__ = '0.0.5'
+__all__ = [
+    'ensemble',
+    'supervised',
+    'unsupervised',
+    'utils',
+]
