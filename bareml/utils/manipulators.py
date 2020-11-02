@@ -174,7 +174,7 @@ class OnehotEncoder(Transform):
         elif not set(X).issubset(self.labels_):
             raise ValueError('input array includes value(s) not in the labels.')
         
-        y = np.array([(y==v).astype(int) for v in self.labels_]).T 
+        y = np.array([(X==v).astype(int) for v in self.labels_]).T 
         return y
 
     def fit_transform(self, X):
