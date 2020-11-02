@@ -19,7 +19,7 @@ reqs = [x.strip() for x in reqs if x.strip() != '']
 
 setup(
     name='bareml',
-    packages=setuptools.find_packages(), 
+    packages=find_packages(), 
     version=__version__,
     license='MIT', 
     install_requires=reqs,

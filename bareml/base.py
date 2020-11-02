@@ -63,7 +63,7 @@ class Estimator(metaclass=ABCMeta):
 
         # validate
         if len(inputs) == 1:
-            inputs = (self._validate_X(*inputs))
+            inputs = [self._validate_X(*inputs)]
         elif len(inputs) == 2:
             inputs = self._validate_Xy(*inputs)
         elif len(inputs) == 3:
