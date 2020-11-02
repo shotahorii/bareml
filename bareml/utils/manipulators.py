@@ -251,6 +251,7 @@ class BinaryEncoder(Transform):
         self
         """
         X = self._validate_X(X)
+        X_uniq = np.unique(X)
 
         if len(X_uniq) != 2:
             raise ValueError('input needs to have exact 2 classes.')
