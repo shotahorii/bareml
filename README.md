@@ -4,16 +4,15 @@
 
 ![Logo](/logo.png)
 
-## About
-**bareml** is a set of "bare" implementations of machine learning / deep learning algorithms from scratch (only depending on numpy). "bare" here means to aim at:
+**bareml** is a set of "bare" implementations of machine learning / deep learning algorithms from scratch (only depending on numpy) in Python. "bare" means to aim at:
 1. Code as a direct translation of the algorithm / formula
 2. With minimum error handling and efficiency gain tricks
 
-To maximise understandability of the code, interface of machine learning modules `bareml/machinelearning/` are aligned to *Scikit-learn*, and interface of deep learning modules `bareml/deeplearning/` are aligned to *PyTorch*, as seen in below 2 examples.
+To maximise understandability of the code, interface of modules in `bareml/machinelearning/` is aligned to *Scikit-learn*, and interface of modules in `bareml/deeplearning/` is aligned to *PyTorch*, as seen in below 2 examples.
 
 Example1: 
 ```
-from bareml.machinelearning.utils import train_test_split
+from bareml.machinelearning.utils.model_selection import train_test_split
 from bareml.machinelearning.supervised import KernelRidge
 
 # assume the data X, y are defined
@@ -27,7 +26,6 @@ print(reg.score(X_test, y_test))
 
 Example2:
 ```
-from
 from bareml.deeplearning import layers as nn
 from bareml.deeplearning import functions as F
 
@@ -70,7 +68,8 @@ $ python setup.py install
 ## Dependencies 
 
 **Mandatory**
-- numpy 
+- numpy  
+
 **Optional**
 - cupy
 - PIL
