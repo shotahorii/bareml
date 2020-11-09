@@ -3,10 +3,10 @@ from sklearn.datasets import load_iris
 from sklearn.cluster import KMeans as SklKMeans
 
 import sys
-sys.path.append('./')
 sys.path.append('../')
 
-from bareml.unsupervised import KMeans
+from bareml.machinelearning.unsupervised import KMeans
+
 
 def test_kmeans():
     data = load_iris()

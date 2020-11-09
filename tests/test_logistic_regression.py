@@ -4,11 +4,10 @@ from sklearn.datasets import load_iris, load_breast_cancer
 from sklearn.linear_model import LogisticRegression as LogisticRegression_skl
 
 import sys
-sys.path.append('./')
 sys.path.append('../')
 
-from bareml.supervised import LogisticRegression
-from bareml.utils.validators import KFold, StratifiedKFold
+from bareml.machinelearning.supervised import LogisticRegression
+from bareml.machinelearning.utils.model_selection import KFold, StratifiedKFold
 
 
 def test_binary_classification():

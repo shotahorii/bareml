@@ -1,24 +1,24 @@
 import numpy as np
 import pandas as pd
 from sklearn.datasets import load_boston
-from sklearn.kernel_ridge import KernelRidge
+from sklearn.kernel_ridge import KernelRidge as SklKernelRidge
 
 import sys
-sys.path.append('./')
 sys.path.append('../')
 
-from bareml.supervised import KernelRidgeRegression
-from bareml.utils.validators import train_test_split
+from bareml.machinelearning.supervised import KernelRidge
+from bareml.machinelearning.utils.model_selection import train_test_split
+
 
 def test_linear_kernel():
     data = load_boston()
     X = data.data
     y = data.target
 
-    reg_skl = KernelRidge(alpha=1.0)
-    reg_bareml = KernelRidgeRegression(alpha=1.0)
+    reg_skl = SklKernelRidge(alpha=1.0)
+    reg_bareml = KernelRidge(alpha=1.0)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     reg_skl.fit(X_train,y_train)
     reg_bareml.fit(X_train,y_train)
@@ -36,10 +36,10 @@ def test_rbf_kernel():
     X = data.data
     y = data.target
 
-    reg_skl = KernelRidge(alpha=1.0,kernel='rbf')
-    reg_bareml = KernelRidgeRegression(alpha=1.0,kernel='rbf')
+    reg_skl = SklKernelRidge(alpha=1.0,kernel='rbf')
+    reg_bareml = KernelRidge(alpha=1.0,kernel='rbf')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     reg_skl.fit(X_train,y_train)
     reg_bareml.fit(X_train,y_train)
@@ -57,10 +57,10 @@ def test_sigmoid_kernel():
     X = data.data
     y = data.target
 
-    reg_skl = KernelRidge(alpha=1.0,kernel='sigmoid')
-    reg_bareml = KernelRidgeRegression(alpha=1.0,kernel='sigmoid')
+    reg_skl = SklKernelRidge(alpha=1.0,kernel='sigmoid')
+    reg_bareml = KernelRidge(alpha=1.0,kernel='sigmoid')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     reg_skl.fit(X_train,y_train)
     reg_bareml.fit(X_train,y_train)
@@ -78,10 +78,10 @@ def test_polynomial_kernel():
     X = data.data
     y = data.target
 
-    reg_skl = KernelRidge(alpha=2.0,kernel='polynomial',degree=2)
-    reg_bareml = KernelRidgeRegression(alpha=2.0,kernel='polynomial',degree=2)
+    reg_skl = SklKernelRidge(alpha=2.0,kernel='polynomial',degree=2)
+    reg_bareml = KernelRidge(alpha=2.0,kernel='polynomial',degree=2)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     reg_skl.fit(X_train,y_train)
     reg_bareml.fit(X_train,y_train)

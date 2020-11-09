@@ -5,11 +5,11 @@ from sklearn.naive_bayes import GaussianNB as GaussianNB_skl
 from sklearn.naive_bayes import BernoulliNB as BernoulliNB_skl
 
 import sys
-sys.path.append('./')
 sys.path.append('../')
 
-from bareml.supervised import GaussianNB, BernoulliNB
-from bareml.utils.validators import train_test_split
+from bareml.machinelearning.supervised import GaussianNB, BernoulliNB
+from bareml.machinelearning.utils.model_selection import train_test_split
+
 
 def test_gaussian():
     data = load_iris()
@@ -19,7 +19,7 @@ def test_gaussian():
     clf_skl = GaussianNB_skl()
     clf_bareml = GaussianNB()
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     clf_skl.fit(X_train, y_train)
     clf_bareml.fit(X_train, y_train)
@@ -39,7 +39,7 @@ def test_gaussian_onehot():
     clf_skl = GaussianNB_skl()
     clf_bareml = GaussianNB()
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
     
     # one-hot encoding for bareml classifier
     y_train_onehot = pd.get_dummies(y_train).values

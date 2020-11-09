@@ -5,11 +5,11 @@ from sklearn.linear_model import LinearRegression as SklLinearRegression
 from sklearn.linear_model import Ridge
 
 import sys
-sys.path.append('./')
 sys.path.append('../')
 
-from bareml.supervised import LinearRegression, RidgeRegression
-from bareml.utils.validators import train_test_split
+from bareml.machinelearning.supervised import LinearRegression, RidgeRegression
+from bareml.machinelearning.utils.model_selection import train_test_split
+
 
 def test_analytical():
     data = load_boston()
@@ -19,7 +19,7 @@ def test_analytical():
     reg_skl = SklLinearRegression()
     reg_bareml = LinearRegression(solver='analytical')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     reg_skl.fit(X_train,y_train)
     reg_bareml.fit(X_train,y_train)
@@ -40,7 +40,7 @@ def test_gradient_descent():
     reg_skl = SklLinearRegression()
     reg_bareml = LinearRegression(solver='GD')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     reg_skl.fit(X_train,y_train)
     reg_bareml.fit(X_train,y_train)
@@ -60,7 +60,7 @@ def test_ridge_analytical():
     reg_skl = Ridge(alpha=1.0)
     reg_bareml = RidgeRegression(alpha=1.0,solver='analytical')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     reg_skl.fit(X_train,y_train)
     reg_bareml.fit(X_train,y_train)
@@ -81,7 +81,7 @@ def test_ridge_gradient_descent():
     reg_skl = Ridge(alpha=1.0)
     reg_bareml = RidgeRegression(alpha=1.0,solver='GD')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     reg_skl.fit(X_train,y_train)
     reg_bareml.fit(X_train,y_train)

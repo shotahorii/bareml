@@ -3,11 +3,11 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import Perceptron as SklPerceptron
 
 import sys
-sys.path.append('./')
 sys.path.append('../')
 
-from bareml.supervised import Perceptron
-from bareml.utils.validators import KFold
+from bareml.machinelearning.supervised import Perceptron
+from bareml.machinelearning.utils.model_selection import KFold
+
 
 def test_perceptron():
     data = load_breast_cancer()

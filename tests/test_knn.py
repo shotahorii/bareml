@@ -4,11 +4,11 @@ from sklearn.datasets import load_boston, load_iris, load_breast_cancer
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 
 import sys
-sys.path.append('./')
 sys.path.append('../')
 
-from bareml.supervised import KNNClassifier, KNNRegressor
-from bareml.utils.validators import train_test_split
+from bareml.machinelearning.supervised import KNNClassifier, KNNRegressor
+from bareml.machinelearning.utils.model_selection import train_test_split
+
 
 def test_regressor():
     data = load_boston()
@@ -18,7 +18,7 @@ def test_regressor():
     reg_skl = KNeighborsRegressor(3) #k=3
     reg_bareml = KNNRegressor(3) #k=3
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     reg_skl.fit(X_train,y_train)
     reg_bareml.fit(X_train,y_train)
@@ -38,7 +38,7 @@ def test_classifier_multi():
     clf_skl = KNeighborsClassifier(3) #k=3
     clf_bareml = KNNClassifier(3) #k=3
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     clf_skl.fit(X_train,y_train)
     clf_bareml.fit(X_train,y_train)
@@ -57,7 +57,7 @@ def test_classifier_multi_onehot():
     clf_skl = KNeighborsClassifier(3) #k=3
     clf_bareml = KNNClassifier(3) #k=3
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
     
     # one-hot encoding for bareml classifier
     y_train_onehot = pd.get_dummies(y_train).values
@@ -81,7 +81,7 @@ def test_classifier_binary():
     clf_skl = KNeighborsClassifier(3) #k=3
     clf_bareml = KNNClassifier(3) #k=3
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_ratio=0.3, seed=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     clf_skl.fit(X_train,y_train)
     clf_bareml.fit(X_train,y_train)

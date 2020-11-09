@@ -3,11 +3,11 @@ from sklearn.datasets import make_blobs
 from sklearn.cluster import DBSCAN as DBSCAN_skl
 
 import sys
-sys.path.append('./')
 sys.path.append('../')
 
-from bareml.utils.manipulators import StandardScaler
-from bareml.unsupervised import DBSCAN
+from bareml.machinelearning.utils.preprocessing import StandardScaler
+from bareml.machinelearning.unsupervised import DBSCAN
+
 
 def test_dbscan():
 
