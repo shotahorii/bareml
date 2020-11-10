@@ -1,5 +1,5 @@
-import .functions as F
-import .layers as L
+import bareml.deeplearning.functions as F
+import bareml.deeplearning.layers as L
 
 
 class MLP(L.Module):

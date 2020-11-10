@@ -3,7 +3,7 @@ import weakref
 from abc import ABCMeta, abstractmethod
 import numpy as np
 from .core import Parameter, get_array_module, flatten, reshape, cupy
-import baredl.functions as F
+import bareml.deeplearning.functions as F
 from .utils import pair
 from .config import Config
 from .cuda import is_available
