@@ -77,7 +77,9 @@ $ python setup.py install
 
 ## Examples
 #### Generating handwriting digits by GAN
-[[Google Colab]]()
+[[Google Colab]](https://github.com/shotahorii/bareml/blob/master/examples/GAN.ipynb)
+
+![gif](https://media.giphy.com/media/FaQuqE6Otws0EL8RQ5/giphy.gif)
 
 ## Implementations 
 
