@@ -81,6 +81,11 @@ $ python setup.py install
 
 ![gif](https://media.giphy.com/media/FaQuqE6Otws0EL8RQ5/giphy.gif)
 
+#### Cart Pole Problem with Q-Learning
+[[Notebook]](https://github.com/shotahorii/bareml/blob/master/examples/q_learning.ipynb)
+
+![gif](https://media.giphy.com/media/0YSkWnyRmFdLth4YMg/giphy.gif)
+
 ## Implementations 
 
 ### Deep Learning
