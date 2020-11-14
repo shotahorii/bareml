@@ -33,7 +33,7 @@ class DBSCAN(Clustering):
         distance metrics to be used to calculate distance between 2 points.
     """
 
-    def __init__(self, eps, minpts, distance=euclidean_distance):
+    def __init__(self, eps=0.5, minpts=5, distance=euclidean_distance):
         self.eps = eps
         self.minpts = minpts
         self.dist = distance

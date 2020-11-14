@@ -86,6 +86,11 @@ $ python setup.py install
 
 ![gif](https://media.giphy.com/media/0YSkWnyRmFdLth4YMg/giphy.gif)
 
+#### Clustering by DBSCAN
+[[Notebook]](https://github.com/shotahorii/bareml/blob/master/examples/DBSCAN.ipynb)
+
+![gif](https://media.giphy.com/media/KUAzkpSBJ4QmPsX9Kp/giphy.gif)
+
 ## Implementations 
 
 ### Deep Learning
