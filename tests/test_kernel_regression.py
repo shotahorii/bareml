@@ -28,7 +28,7 @@ def test_linear_kernel():
     preds_bareml = np.round(reg_bareml.predict(X_test),4).tolist()
 
     # should be the same result
-    assert all([a == b for a, b in zip(preds_bareml, preds_skl)])
+    assert np.allclose(preds_bareml, preds_skl)
 
 
 def test_rbf_kernel():
@@ -49,7 +49,7 @@ def test_rbf_kernel():
     preds_bareml = np.round(reg_bareml.predict(X_test),4).tolist()
 
     # should be the same result
-    assert all([a == b for a, b in zip(preds_bareml, preds_skl)])
+    assert np.allclose(preds_bareml, preds_skl)
 
 
 def test_sigmoid_kernel():
@@ -70,7 +70,7 @@ def test_sigmoid_kernel():
     preds_bareml = np.round(reg_bareml.predict(X_test),4).tolist()
 
     # should be the same result
-    assert all([a == b for a, b in zip(preds_bareml, preds_skl)])
+    assert np.allclose(preds_bareml, preds_skl)
 
 
 def test_polynomial_kernel():
@@ -92,4 +92,4 @@ def test_polynomial_kernel():
     preds_bareml = np.round(reg_bareml.predict(X_test),1).tolist()
 
     # should be the same result
-    assert all([a == b for a, b in zip(preds_bareml, preds_skl)])
+    assert np.allclose(preds_bareml, preds_skl)
