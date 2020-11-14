@@ -91,6 +91,11 @@ $ python setup.py install
 
 ![gif](https://media.giphy.com/media/KUAzkpSBJ4QmPsX9Kp/giphy.gif)
 
+#### Fitting Sin function with Polynomial Linear Regression
+[[Notebook]](https://github.com/shotahorii/bareml/blob/master/examples/PolynomialLinearRegression.ipynb)
+
+![gif](https://media.giphy.com/media/x5QYnmM7asaoT9sCmr/giphy.gif)
+
 ## Implementations 
 
 ### Deep Learning

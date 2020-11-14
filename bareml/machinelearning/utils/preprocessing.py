@@ -312,6 +312,47 @@ class BinaryEncoder(Transform):
         return X    
 
 
+class PolynomialFeatures(Transform):
+
+    def __init__(self, degree, include_bias=True):
+        self.degree = degree
+        self.include_bias = include_bias
+        self.n_input_features_ = None
+
+    def _validate_X(self, X):
+        """ validate input X to be encoded """
+        X = np.array(X)
+
+        if X.ndim != 2:
+            raise ValueError('input array needs to be 2d')
+
+        return X
+
+    def fit(self, X):
+        X = self._validate_X(X)
+        self.n_input_features_ = X.shape[1]
+        return self
+    
+    def transform(self, X):
+        X = self._validate_X(X)
+        if self.n_input_features_ is None:
+            raise Exception('need to fit first.')
+        if X.shape[1] != self.n_input_features_:
+            raise ValueError
+
+        X = polynomial_features(X, self.degree)
+        if not self.include_bias:
+            X = X[:,1:]
+
+        return X
+
+    def fit_transform(self, X):
+        return self.fit(X).transform(X)
+
+    def inverse_transform(self, X):
+        raise NotImplementedError
+
+
 # -------------------------------------------------------------
 # Other functions
 # -------------------------------------------------------------
