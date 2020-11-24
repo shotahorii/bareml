@@ -277,7 +277,7 @@ class Tensor:
 
         while funcs:
             f = funcs.pop() # since funcs is sorted by generation, this always gives the func with the largest generation.
-            
+
             # gradients of all outputs of f. The order of elements is corresponding to the order of ys = f.forward(*xs).
             # Note: we access like "output()"" not just "output" because it's a weakref.
             gys = [output().grad for output in f.outputs]
@@ -637,7 +637,7 @@ class GetItemGrad(Function):
 
     def forward(self, gy):
         xp = get_array_module(gy)
-        gx = xp.zeros_like(self.in_shape)
+        gx = xp.zeros(self.in_shape, dtype=gy.dtype)
 
         if xp is np:
             np.add.at(gx, self.slices, gy)
@@ -673,6 +673,7 @@ def reshape(x, shape):
 
 
 def flatten(x):
+    """Flattens the input. Does not affect the batch size."""
     return reshape(x, (x.shape[0], -1))
 
 

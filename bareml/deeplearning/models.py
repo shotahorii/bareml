@@ -1,5 +1,7 @@
 import bareml.deeplearning.functions as F
 import bareml.deeplearning.layers as L
+from .utils import UnigramSampler
+from .core import get_array_module
 
 
 class MLP(L.Module):
@@ -73,3 +75,46 @@ class VGG16(L.Module):
         x = self.classifier(x)
         return x
         
+
+class CBOW(L.Module):
+    def __init__(self, corpus, embedding_dim=100, neg_sample_size=5):
+        super().__init__()
+        self.embedding_dim = embedding_dim
+        self.neg_sample_size = neg_sample_size
+        self.num_embeddings = len(set(corpus)) # vocab size
+        
+        self.emb_in = L.Embedding(self.num_embeddings, self.embedding_dim)
+        self.emb_out = L.Embedding(self.num_embeddings, self.embedding_dim)
+        self.sampler = UnigramSampler(corpus, sample_size=neg_sample_size, include_positive=True,prioritise_speed=True)
+    
+    def forward(self, x, t):
+        """
+        Parameters
+        ----------
+        x: bareml.Tensor (n, c) int 
+            n: batch size
+            c: number of contexts to be embedded
+        
+        t: np.ndarray (n,) int
+            n: batch size
+        """
+        num_context = x.shape[1]
+
+        x = self.emb_in(x) # (n, c, embedding_dim)
+        x = x.sum(axis=1)/num_context # (n, embedding_dim)
+        
+        t = self.sampler.get_negative_samples(t) # (n, 1 + neg_sample_size)
+        t = self.emb_out(t) # (n, 1 + neg_sample_size, embedding_dim)
+        
+        y = x.repeat_interleave(dim=0,repeats=self.neg_sample_size+1).reshape(*t.shape) * t # (n, 1 + neg_sample_size, embedding_dim)
+        y = y.sum(axis=2) # (n, 1 + neg_sample_size)
+        y = F.sigmoid(y)
+
+        xp = get_array_module(y)
+        correct_labels = xp.zeros_like(y)
+        correct_labels[:,0] = 1
+
+        y = y.reshape(-1)
+        correct_labels = correct_labels.reshape(-1)
+
+        return y, correct_labels

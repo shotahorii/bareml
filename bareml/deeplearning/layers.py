@@ -55,7 +55,6 @@ class Layer(metaclass=ABCMeta):
         
         return iter(layers)
 
-
     def train(self, mode=True):
         Config.training = mode
 
@@ -409,4 +408,39 @@ class Upsample(Layer):
 
     def forward(self, x):
         y = F.upsample(x, self.scale_factor, self.mode)
+        return y
+
+
+# -------------------------------------------------------------
+# Embedding
+# -------------------------------------------------------------
+
+
+class Embedding(Layer):
+    def __init__(self, num_embeddings, embedding_dim):
+        super().__init__()
+        self.num_embeddings = num_embeddings
+        self.embedding_dim = embedding_dim
+        self.weight = Parameter(None, name='weight')
+        self._init_weight()
+
+    def _init_weight(self):
+        self.weight.data = np.random.randn(self.num_embeddings, self.embedding_dim)
+
+    def forward(self, idx):
+        """
+        Parameters
+        ----------
+        idx: np.ndarray (n, c)
+            n: batch size
+            c: number of contexts to be embedded 
+
+        Returns
+        -------
+        y: bareml.Tensor (n, c, embedding_dim)
+            n: batch size
+            c: number of contexts to be embedded
+            embedding_dim: self.embedding_dim
+        """
+        y = F.embedding(self.weight, idx)
         return y

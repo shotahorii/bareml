@@ -2,6 +2,7 @@
 Helper functions.
 """
 
+from collections import Counter
 import numpy as np
 from .core import Tensor, get_array_module, cupy
 
@@ -418,3 +419,87 @@ def _col2im_gpu(col, sy, sx, ph, pw, h, w):
                   h, w, out_h, out_w, kh, kw, sy, sx, ph, pw, dx, dy, img)
     return img
 
+
+# -------------------------------------------------------------
+# Helper functions & class for word2vec
+# -------------------------------------------------------------
+
+
+def make_corpus(text):
+    text = text.lower()
+    text = text.replace('.',' .')
+    words = text.split(' ')
+    
+    word2id = {}
+    id2word = {}
+    for word in words:
+        if word not in word2id:
+            new_id = len(word2id)
+            word2id[word] = new_id
+            id2word[new_id] = word
+    
+    corpus = np.array([word2id[w] for w in words])
+    
+    return corpus, word2id, id2word
+
+
+class UnigramSampler:
+    """
+    Parameters
+    ----------
+    include_positive: bool
+        If True, include positive labels in the result
+
+    prioritise_speed: bool
+        If True, prioritise process speed over accuracy
+    """
+
+    def __init__(self, corpus, sample_size=5, power=0.75, 
+                 include_positive=False, prioritise_speed=False):
+        self.sample_size = sample_size
+        self.include_positive = include_positive
+        self.prioritise_speed = prioritise_speed
+        self.vocab_size = None
+        self.word_p = None
+
+        counts = Counter()
+        for word_id in corpus:
+            counts[word_id] += 1
+
+        vocab_size = len(counts)
+        self.vocab_size = vocab_size
+
+        self.word_p = np.zeros(vocab_size)
+        for i in range(vocab_size):
+            self.word_p[i] = counts[i]
+
+        self.word_p = np.power(self.word_p, power)
+        self.word_p /= np.sum(self.word_p)
+
+    def get_negative_samples(self, positive):
+        """
+        Parameters
+        ----------
+        positive: np.ndarray (n,) of int
+            n: batch size
+            list of index of target word (positive label)
+        """
+        batch_size = len(positive)
+
+        if self.prioritise_speed:
+            # in this implementation, positive sample could be included in the negative_samples
+            negative_samples = np.random.choice(self.vocab_size, size=(batch_size, self.sample_size),
+                                               replace=True, p=self.word_p)
+        else:
+            negative_samples = np.zeros((batch_size, self.sample_size), dtype=np.int32)
+            for i in range(batch_size):
+                p = self.word_p.copy()
+                positive_idx = positive[i]
+                p[positive_idx] = 0
+                p /= p.sum()
+                negative_samples[i, :] = np.random.choice(self.vocab_size, size=self.sample_size, replace=False, p=p)
+
+        if self.include_positive:
+            return np.concatenate([positive[:,None],negative_samples],axis=1)
+        else:
+            return negative_samples

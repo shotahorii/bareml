@@ -214,7 +214,7 @@ def leaky_relu(x, slope=0.2):
 
 
 # -------------------------------------------------------------
-# Loss functions: MSELoss, CrossEntropyLoss
+# Loss functions: MSELoss, CrossEntropyLoss, NegativeSamplingLoss
 # -------------------------------------------------------------
 
 
@@ -876,4 +876,12 @@ def upsample(x, scale_factor, mode='nearest'):
 
     return y
         
+
+# -------------------------------------------------------------
+# Functions for NLP
+# -------------------------------------------------------------
+
+
+def embedding(W, idx):
+    return W[idx] # backward is already implemented in core.GetItem
 

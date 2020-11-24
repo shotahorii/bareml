@@ -19,7 +19,7 @@ except ImportError:
 
 
 # path to the directory to put any cache files.
-CACHE_DIR = os.path.join(os.path.expanduser('~'), '.baredl')
+CACHE_DIR = os.path.join(os.path.expanduser('~'), '.bareml')
 
 
 def show_progress(block_num, block_size, total_size):
@@ -37,7 +37,7 @@ def show_progress(block_num, block_size, total_size):
 def get_file(url, file_name=None):
     """
     Download a file from the given url if it is not in the cache.
-    The file at the given url is downloaded to the '~/.baredl'.
+    The file at the given url is downloaded to the '~/.bareml'.
 
     Parameters
     ----------
