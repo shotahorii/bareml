@@ -111,7 +111,7 @@ class CBOW(L.Module):
         y = F.sigmoid(y)
 
         xp = get_array_module(y)
-        correct_labels = xp.zeros_like(y, dtype=xp.float32)
+        correct_labels = xp.zeros_like(y.data, dtype=xp.float32)
         correct_labels[:,0] = 1
 
         y = y.reshape(-1).astype(xp.float32)
