@@ -185,7 +185,8 @@ class Tensor:
         return transpose(self)
 
     def astype(self, dtype):
-        self.data.dtype = dtype
+        #self.data.dtype = dtype
+        self.data = self.data.astype(dtype)
         return self
 
     def flatten(self):
