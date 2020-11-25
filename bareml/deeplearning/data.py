@@ -171,10 +171,10 @@ class Corpus(Dataset):
         self.corpus = [item for sublist in self.data for item in sublist]
                 
     def get_word(self, word_id):
-        return self.id2word(word_id)
+        return self.id2word[word_id]
     
     def get_id(self, word):
-        return self.word2id(word)
+        return self.word2id[word]
 
 
 class DataLoader:
