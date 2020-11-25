@@ -288,9 +288,9 @@ def binary_cross_entropy(p, t):
     if p.ndim != t.ndim:
         t = t.reshape(*p.shape)
     N = len(t)
-    p = clip(p, 1e-15, 0.999)
+    p = clip(p, 1e-5, 0.999)
     tlog_p = t * log(p) + (1 - t) * log(1 - p)
-    y = -1 * sum(tlog_p) / N
+    y = -1 * sum(tlog_p) / np.float32(N)
     return y
 
 
@@ -299,7 +299,7 @@ def binary_cross_entropy_with_logits(p, t):
         t = t.reshape(*p.shape)
     N = len(t)
     p = sigmoid(p)
-    p = clip(p, 1e-15, 0.999)
+    p = clip(p, 1e-5, 0.999)
     tlog_p = t * log(p) + (1 - t) * log(1 - p)
     y = -1 * sum(tlog_p) / N
     return y

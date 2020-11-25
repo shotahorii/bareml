@@ -2,6 +2,7 @@
 Helper functions.
 """
 
+import re
 from collections import Counter
 import numpy as np
 from .core import Tensor, get_array_module, cupy
@@ -503,3 +504,42 @@ class UnigramSampler:
             return np.concatenate([positive[:,None],negative_samples],axis=1)
         else:
             return negative_samples
+
+
+# -------------------------------------------------------------
+# Regular expressions
+# -------------------------------------------------------------
+
+# https://en.wikipedia.org/wiki/ASCII
+RE_ALL_SYMBOLS = re.compile("[!-/:-@[-`{-~]")
+RE_SYMBOLS = re.compile("[!-+:-@[-`{-~\-]") # except . and ,
+RE_EMAIL = re.compile("[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
+RE_NUM = re.compile("[0-9]+\.*[0-9]*")
+RE_MULTISPACES = re.compile("  +")
+RE_MULTIDOTS = re.compile("\.\.+")
+RE_MULTICOMMAS = re.compile(",,+")
+
+def replace_symbols(s, replace=' '):
+    return re.sub(RE_SYMBOLS, replace, s)
+
+def replace_symbols(s, replace=' ', keep_essential=True):
+    pat = RE_SYMBOLS if keep_essential else RE_ALL_SYMBOLS
+    return re.sub(pat, replace, s)
+
+def replace_email(s, replace=' '):
+    return re.sub(RE_EMAIL, replace, s)
+
+def replace_numbers(s, replace=' '):
+    return re.sub(RE_NUM, replace, s)
+
+def replace_tab(s, replace=' '):
+    return s.replace('\t', replace)
+
+def single_spacing(s):
+    return re.sub(RE_MULTISPACES, ' ', s)
+
+def fix_multidots(s):
+    return re.sub(RE_MULTIDOTS, '.', s)
+
+def fix_multicommas(s):
+    return re.sub(RE_MULTICOMMAS, ',', s)

@@ -252,7 +252,7 @@ class Tensor:
         # where the starting point dL/dL is always 1. 
         if self.grad is None:
             xp = get_array_module(self.data)
-            self.grad = Tensor(xp.ones_like(self.data)) # grad is also a Tensor! This allows us double backprop.
+            self.grad = Tensor(xp.ones_like(self.data).astype(xp.float32)) # grad is also a Tensor! This allows us double backprop.
 
         # funcs is a list to store Function instances of which 
         # backward need to be called.
@@ -487,6 +487,7 @@ class Mul(Function):
         if x0.shape != x1.shape:
             gx0 = reverse_broadcast_to(gx0, x0.shape)
             gx1 = reverse_broadcast_to(gx1, x1.shape)
+
         return gx0, gx1
 
 
@@ -525,6 +526,7 @@ class Div(Function):
         if x0.shape != x1.shape:
             gx0 = reverse_broadcast_to(gx0, x0.shape)
             gx1 = reverse_broadcast_to(gx1, x1.shape)
+
         return gx0, gx1
 
 

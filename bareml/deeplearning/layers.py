@@ -425,7 +425,7 @@ class Embedding(Layer):
         self._init_weight()
 
     def _init_weight(self):
-        self.weight.data = np.random.randn(self.num_embeddings, self.embedding_dim)
+        self.weight.data = np.random.randn(self.num_embeddings, self.embedding_dim).astype(np.float32)
 
     def forward(self, idx):
         """
