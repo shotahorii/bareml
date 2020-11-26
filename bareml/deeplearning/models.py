@@ -77,8 +77,18 @@ class VGG16(L.Module):
         
 
 class CBOW(L.Module):
+    """
+    Parameters
+    ----------
+    corpus: a list of word_id or a list of list of word_id ( = list of docs)
+    """
+
     def __init__(self, corpus, embedding_dim=100, neg_sample_size=5):
         super().__init__()
+
+        if isinstance(corpus[0],list):
+            corpus = [item for sublist in corpus for item in sublist] # flatten
+
         self.embedding_dim = embedding_dim
         self.neg_sample_size = neg_sample_size
         self.num_embeddings = len(set(corpus)) # vocab size
