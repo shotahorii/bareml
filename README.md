@@ -2,7 +2,7 @@
 [![PyPI version](https://badge.fury.io/py/bareml.svg)](https://badge.fury.io/py/bareml)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/bareml)
 
-![Logo](/logo.png)
+![Logo](/images/logo.png)
 
 **bareml** is a set of "bare" implementations of machine learning / deep learning algorithms from scratch (only depending on numpy) in Python. "bare" means to aim at:
 1. Code as a direct translation of the algorithm / formula
@@ -80,6 +80,11 @@ $ python setup.py install
 [[Google Colab]](https://github.com/shotahorii/bareml/blob/master/examples/GAN.ipynb)
 
 ![gif](https://media.giphy.com/media/FaQuqE6Otws0EL8RQ5/giphy.gif)
+
+#### Word embeddings by word2vec (CBoW) 
+[[Google Colab]](https://github.com/shotahorii/bareml/blob/master/examples/word2vec.ipynb)
+
+![img](/images/word2vec_example.png)
 
 #### Cart Pole Problem with Q-Learning
 [[Notebook]](https://github.com/shotahorii/bareml/blob/master/examples/q_learning.ipynb)

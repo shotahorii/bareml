@@ -13,6 +13,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 long_description = long_description.replace('![Logo](/logo.png)\n','') # remove logo
 long_description = re.sub('!\[gif\].*\)', "", long_description) # remove gif 
+long_description = re.sub('!\[img\].*\)', "", long_description) # remove images 
 
 with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
     reqs = f.read().split('\n')
