@@ -77,7 +77,7 @@ def get_file(url, file_name=None):
 
 
 # -------------------------------------------------------------
-# Core classes: Dataset / DataLoader
+# Core classes: Dataset / RefDataset / DataLoader
 # -------------------------------------------------------------
 
 
@@ -112,69 +112,63 @@ class Dataset(metaclass=ABCMeta):
         pass
 
 
-class LargeDataset(Dataset):
+class RefDataset(Dataset):
+    """
+    self.data only stores filepath to the data, instead of putting all data in the init. 
+    actual data is read only when it's called. 
+    """
 
-    def __init__(self, train=True, transform=None, target_transform=None):
-        super().__init__(train, transform, target_transform)
+    def __init__(self, train=True, transform=None, target_transform=None,
+                 mode='rb', encoding=None):
+        self.mode = mode
+        self.encoding = encoding
 
-    def __getitem__(self, index):
-        if self.get_target(0) is None:
-            return self.transform(self.get_data(index)), None
+        if transform is None:
+            new_transform = self._load_data
         else:
-            return self.transform(self.get_data(index)), self.target_transform(self.get_target(index))
+            new_transform = Compose([self._load_data, transform])
 
-    @abstractmethod
-    def __len__(self):
-        pass
-
-    @abstractmethod
-    def get_data(self, index):
-        pass
-
-    def get_target(self, index):
-        return None
-
-    @abstractmethod
-    def prepare(self):
-        """ implement data creation and set self.size """
-        pass
-
-
-class Corpus(Dataset):
-    def __init__(self, dataset, transform=None, target_transform=None):
-        self.dataset = dataset
-        self.word2id = {}
-        self.id2word = {}
-        super().__init__(transform=transform, target_transform=target_transform)
+        if target_transform is None:
+            new_target_transform = self._load_target
+        else:
+            new_target_transform = Compose([self._load_target, target_transform])
         
-    def _process_words(self, words):
-        corpus = []
-        for word in words:
-            if word not in self.word2id:
-                new_id = len(self.word2id)
-                self.word2id[word] = new_id
-                self.id2word[new_id] = word
-            corpus.append(self.word2id[word])
-        
-        self.data.append(corpus)
-                
-    def prepare(self):
-        
-        self.target = self.dataset.target
-        self.data = []
-        
-        for i, (x, t) in enumerate(self.dataset):
-            self._process_words(x[0].split(' '))
-            if i % 1000 == 0 and i != 0:
-                print(i, "/" + str(len(self.dataset)) + " data processed.")
+        super().__init__(train, new_transform, new_target_transform)
 
-        self.corpus = [item for sublist in self.data for item in sublist]
-                
-    def get_word(self, word_id):
-        return self.id2word[word_id]
-    
-    def get_id(self, word):
-        return self.word2id[word]
+    def _load_data(self, x):
+        """
+        By default, just read given filepath(s) and return as a list.
+        Override if any other process needed. 
+
+        Parameters
+        ----------
+        x: list of filepaths or a filepath
+
+        Returns 
+        -------
+        y: list of data
+           note - dtype is always list, even if only 1 data is read. 
+        """
+        if not isinstance(x, list):
+            x = [x]
+        return [open(f, self.mode, encoding=self.encoding).read() for f in x]
+        
+    def _load_target(self, t):
+        """
+        By default, assume self.target contains actual target data, unlike self.data. 
+        Override if any other process needed. 
+
+        Parameters
+        ----------
+        t: list of target values or a target value
+
+        Returns 
+        -------
+        y: list of target values or a target value
+           note - if you override this, make sure this returns a value when len(t)==1, 
+                  and returns a list when len(t) > 1
+        """
+        return t
 
 
 class DataLoader:
@@ -214,11 +208,58 @@ class DataLoader:
 
 
 # -------------------------------------------------------------
+# For NLP
+# -------------------------------------------------------------
+
+
+class Corpus:
+    """
+    Parameters
+    ----------
+    docs: a list of strings, a string or bareml.Dataset
+    """
+    def __init__(self, docs):
+        if isinstance(docs, str):
+            docs = [docs]
+        self.docs = docs
+        self.word2id = {}
+        self.id2word = {}
+        self.make_corpus()
+
+    def make_corpus(self):
+        print("-- Creating the corpus --")
+
+        self.corpus = []
+        for i, doc in enumerate(self.docs):
+            if isinstance(self.docs, Dataset):
+                doc = doc[0][0] # doc[0] is Dataset.data, where doc[1] here is Dataset.target
+
+            encoded_doc = []
+            for word in doc.split(' '):
+                if word not in self.word2id:
+                    new_id = len(self.word2id)
+                    self.word2id[word] = new_id
+                    self.id2word[new_id] = word
+                encoded_doc.append(self.word2id[word])
+            self.corpus.append(encoded_doc)
+
+            if i % 1000 == 0 and i != 0:
+                print(str(i)+"/"+str(len(self.docs)) + " docs")
+                
+    def get_word(self, word_id):
+        return self.id2word[word_id]
+    
+    def get_id(self, word):
+        return self.word2id[word]
+
+
+# -------------------------------------------------------------
 # Datasets: MNIST, 20Newsgroups
 # -------------------------------------------------------------
 
 
 class MNIST(Dataset):
+    """ MNIST dataset 28x28 """
 
     def __init__(self, train=True,
                  transform=Compose([Flatten(), ToFloat(), Normalise(0., 255.)]),
@@ -291,21 +332,13 @@ class MNIST(Dataset):
         return {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9'}
 
 
-class NewsGroups(LargeDataset):
-    """ 20 News groups data set"""
+class NewsGroups(RefDataset):
+    """ 20 News groups data set"""   
 
-    headers = ('from:', 'subject:', 'organization:', 'lines:', 'nntp-posting-host:', 
-               'reply-to:', 'in-reply-to:', 'keywords:', 'nf-id:', 'nf-from:', 'originator:',
-               'in article ', 'distribution:', '> in article', '>>in article', '>> in article',
-               'article-i.d.:')
-
-    def __init__(self, train=True,
-                 transform=None,
-                 target_transform=None,
-                 preprocess=True):
-        super().__init__(train, transform, target_transform)
+    def __init__(self, train=True, transform=None, target_transform=None, preprocess=True):
         self.preprocess = preprocess
-
+        super().__init__(train, transform, target_transform, mode='r', encoding='latin1')
+        
     def prepare(self):
         url = 'http://qwone.com/~jason/20Newsgroups/20news-bydate.tar.gz'
         filepath = get_file(url)
@@ -320,52 +353,51 @@ class NewsGroups(LargeDataset):
 
         folders = [f for f in os.listdir(datapath)]
 
-        self.filepaths = []
+        self.data = []
         self.target = []
         self.labels = {}
         for i, folder_name in enumerate(folders):
             self.labels[i] = folder_name
             folderpath = os.path.join(datapath, folder_name)
-            self.filepaths += [os.path.join(folderpath, file_name) for file_name in os.listdir(folderpath)]
+            self.data += [os.path.join(folderpath, file_name) for file_name in os.listdir(folderpath)]
             self.target += [i] * len(os.listdir(folderpath))
 
-    def _is_header(self, line):
-        return line.lower().startswith(NewsGroups.headers)
+    def _load_data(self, x):
+        if not isinstance(x, list):
+            x = [x]
 
-    def _clean(self, s):
-        s = replace_tab(s)
-        s = replace_email(s)
-        s = s.replace("'", '') # don't -> dont
-        s = replace_symbols(s)
-        s = s.replace(',', ' ') # remove commas
-        s = s.replace('.', ' .') # consider . as a single word
-        s = replace_numbers(s, '<N>')
-        s = fix_multidots(s)
-        s = single_spacing(s)
-        return s.strip()
-    
-    def _preprocess(self, lines):
-        lines = [self._clean(line) for line in lines if not self._is_header(line)]
-        return ' '.join([line for line in lines if line != '']).lower()
-
-    def __len__(self):
-        return len(self.filepaths)
-
-    def get_data(self, index):
-        filepaths = self.filepaths[index]
-        if not isinstance(filepaths, list):
-            filepaths = [filepaths]
-        
         if self.preprocess:
-            return [self._preprocess(open(f, 'r', encoding='latin1').readlines()) for f in filepaths]
+            return [NewsGroups.preprocess(open(f, self.mode, encoding=self.encoding).readlines()) for f in x]
         else:
-            return [open(f, 'r', encoding='latin1').read() for f in filepaths]
-
-    def get_target(self, index):
-        return self.target[index]
+            return [open(f, self.mode, encoding=self.encoding).read() for f in x]
 
     def labels(self):
         return self.labels
+
+    @staticmethod
+    def preprocess(lines):
+        
+        def is_header(line):
+            headers = ('from:', 'subject:', 'organization:', 'lines:', 'nntp-posting-host:', 
+                       'reply-to:', 'in-reply-to:', 'keywords:', 'nf-id:', 'nf-from:', 'originator:',
+                       'in article ', 'distribution:', '> in article', '>>in article', '>> in article',
+                       'article-i.d.:')
+            return line.lower().startswith(headers)
+        
+        def clean(line):
+            line = replace_tab(line)
+            line = replace_email(line)
+            line = line.replace("'", '') # don't -> dont
+            line = replace_symbols(line)
+            line = line.replace(',', ' ') # remove commas
+            line = line.replace('.', ' .') # consider . as a single word
+            line = replace_numbers(line, '<N>')
+            line = fix_multidots(line)
+            line = single_spacing(line)
+            return line.strip()
+
+        lines = [clean(line) for line in lines if not is_header(line)]
+        return ' '.join([line for line in lines if line != '']).lower() 
 
 
 class NewsGroupsWordInference(Dataset):
@@ -375,13 +407,13 @@ class NewsGroupsWordInference(Dataset):
 
     def prepare(self):
 
-        print('-- Step 1/2 --')
+        print('Creating NewsGroupsWordInference Dataset: Step 1/2')
         self.corpus = Corpus(NewsGroups(self.train))
         
-        print('-- Step 2/2 --')
+        print('Creating NewsGroupsWordInference Dataset: Step 2/2')
         target_col = self.window_size//2
-        for i, (x, _) in enumerate(self.corpus):
-            y = np.array([x[i:i+self.window_size] for i in range(len(x) - self.window_size + 1)])
+        for i, doc in enumerate(self.corpus.corpus):
+            y = np.array([doc[i:i+self.window_size] for i in range(len(doc) - self.window_size + 1)])
             if len(y) != 0:
                 if self.data is None:
                     self.data = np.delete(y, target_col, 1)
@@ -391,7 +423,7 @@ class NewsGroupsWordInference(Dataset):
                     self.target = np.concatenate((self.target, y[:,target_col]))
 
             if i % 1000 == 0 and i != 0:
-                print(i, "/" + str(len(self.corpus)) + " data processed.")
+                print(str(i)+"/"+str(len(self.corpus.corpus)) + " docs")
 
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-from .core import Tensor, as_tensor, as_array
+from .core import Tensor, as_tensor, as_array, get_array_module
 
 def accuracy(y, t):
     """
@@ -20,3 +20,15 @@ def accuracy(y, t):
     result = (pred == t.data)
     acc = result.mean()
     return Tensor(as_array(acc))
+
+
+def cos_similarity(x, y, eps=1e-8):
+    if isinstance(x, Tensor):
+        x = x.data
+    if isinstance(y, Tensor):
+        y = y.data
+    
+    xp = get_array_module(x)
+    nx = x / (xp.sqrt(xp.sum(x**2))+eps)
+    ny = y / (xp.sqrt(xp.sum(y**2))+eps)
+    return xp.dot(nx, ny)

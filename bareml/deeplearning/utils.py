@@ -448,6 +448,8 @@ class UnigramSampler:
     """
     Parameters
     ----------
+    corpus: a list of word_id or a list of list of word_id ( = list of docs)
+
     include_positive: bool
         If True, include positive labels in the result
 
@@ -462,6 +464,9 @@ class UnigramSampler:
         self.prioritise_speed = prioritise_speed
         self.vocab_size = None
         self.word_p = None
+
+        if isinstance(corpus[0],list):
+            corpus = [item for sublist in corpus for item in sublist] # flatten
 
         counts = Counter()
         for word_id in corpus:
