@@ -74,6 +74,7 @@ $ python setup.py install
 - cupy
 - PIL
 - matplotlib
+- graphviz
 
 ## Examples
 #### Generating handwriting digits by GAN

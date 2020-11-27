@@ -9,6 +9,62 @@ from .core import Tensor, get_array_module, cupy
 
 
 # -------------------------------------------------------------
+# Function to draw computational graphs
+# -------------------------------------------------------------
+
+
+try:
+    from graphviz import Digraph
+    
+    def draw_graph(in_t):
+        
+        # init
+        dot = Digraph()
+        funcs = []
+        seen_set = set()
+        
+        def draw_tensor(t):
+            name = '' if t.name is None else t.name
+            dot.node(str(id(t)), label=name, style='filled', fillcolor='orange')
+
+        def draw_function(f):
+            dot.node(str(id(f)), label=f.__class__.__name__, 
+                    style='filled', shape='box', fillcolor='lightblue')
+
+            for x in f.inputs:
+                dot.edge(str(id(x)), str(id(f)))
+            for y in f.outputs:
+                dot.edge(str(id(f)), str(id(y())))
+        
+        def add_func(f):
+            if f not in seen_set:
+                funcs.append(f)
+                seen_set.add(f)
+        
+        # draw the first node
+        draw_tensor(in_t)
+        
+        # drawing backwards
+        add_func(in_t.creator)
+        while funcs:
+            func = funcs.pop()
+            draw_function(func)
+            
+            for x in func.inputs:
+                draw_tensor(x)
+                if x.creator is not None:
+                    add_func(x.creator)
+                    
+        return dot
+
+except ImportError:
+
+    def draw_graph(in_t):
+        print("draw_graph doesn't work. install graphviz.")
+        return None
+
+
+# -------------------------------------------------------------
 # General helper functions: logsumexp, pair
 # -------------------------------------------------------------
 

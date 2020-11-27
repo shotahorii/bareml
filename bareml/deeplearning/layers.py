@@ -2,7 +2,7 @@ import os
 import weakref
 from abc import ABCMeta, abstractmethod
 import numpy as np
-from .core import Parameter, get_array_module, flatten, reshape, cupy
+from .core import Parameter, Tensor, get_array_module, flatten, reshape, cupy, as_tensor
 import bareml.deeplearning.functions as F
 from .utils import pair
 from .config import Config
@@ -15,6 +15,19 @@ from .cuda import is_available
 
 
 class Layer(metaclass=ABCMeta):
+    """
+    Base layer class. 
+    Defines common behaviours across all layers.
+    
+    Forward path is like below.     
+    --
+    l = SomeLayer()
+    y = l(x)
+    --
+    x can be either xp.ndarray or bareml.Tensor
+    y is always bareml.Tensor
+
+    """
     def __init__(self):
         self._params = set()
 
@@ -33,6 +46,10 @@ class Layer(metaclass=ABCMeta):
     
     @abstractmethod
     def forward(self, inputs):
+        """
+        inputs: either xp.ndarray or bareml.Tensor
+        outputs: bareml.Tensor
+        """
         pass
 
     def parameters(self):
@@ -175,6 +192,16 @@ class Linear(Layer):
         # http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf
         W_data = xp.random.randn(I, O).astype(self.dtype) * xp.sqrt(1 / I)
         self.W.data = W_data
+
+    def set_W(self, W_data):
+        if self.W.data.shape != W_data.shape:
+            raise ValueError('W shape unmatch.')
+        self.W.data = W_data
+
+    def set_b(self, b_data):
+        if self.b.data.shape != b_data.shape:
+            raise ValueError('b shape unmatch.')
+        self.b.data = b_data
 
     def forward(self, x):
         if self.W.data is None:
@@ -444,3 +471,112 @@ class Embedding(Layer):
         """
         y = F.embedding(self.weight, idx)
         return y
+
+
+# -------------------------------------------------------------
+# RNN: RNNCell / RNN
+# -------------------------------------------------------------
+
+
+class RNNCell(Layer):
+    """ An Elman RNN cell with tanh or ReLU non-linearity. """
+    def __init__(self, hidden_size, input_size=None, bias=True, nonlinearity='tanh'):
+        super().__init__()
+        if nonlinearity == 'tanh':
+            self.f = F.tanh
+        elif nonlinearity == 'relu':
+            self.f = F.relu
+        else:
+            raise ValueError('nonlinearity must be either "tanh" or "relu".')
+
+        self.x2h = Linear(out_features=hidden_size, in_features=input_size, bias=bias)
+        self.h2h = Linear(out_features=hidden_size, in_features=hidden_size, bias=bias)
+
+        # init weight & bias
+        W_x2h = np.random.randn(*self.x2h.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        self.x2h.set_W(W_x2h)
+        W_h2h = np.random.randn(*self.h2h.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        self.h2h.set_W(W_h2h)
+        if bias:
+            b_x2h = np.random.randn(*self.x2h.b.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+            self.x2h.set_b(b_x2h)
+            b_h2h = np.random.randn(*self.h2h.b.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+            self.h2h.set_b(b_h2h)
+
+    def forward(self, x, h=Tensor(None, name='h_0')):
+        """
+        Parameters
+        ----------
+        x: bareml.Tensor (n, in_size)
+            n: batch size
+            in_size: input size
+
+        h: bareml.Tensor (n, hidden_size)
+            n: batch size
+            hidden_size: hidden size
+
+        Returns
+        -------
+        h_new: bareml.Tensor (n, hidden_size)
+            n: batch size
+            hidden_size: hidden size
+        """
+        
+        if h.data is None:
+            # init as zero
+            batch_size = x.shape[0]
+            hidden_size = self.h2h.out_features
+            h.data = np.zeros((batch_size, hidden_size), dtype=np.float32)
+
+        h_new = self.f(self.x2h(x) + self.h2h(h))
+        return h_new
+
+
+class RNN(Layer):
+
+    def __init__(self, hidden_size, input_size=None, bias=True, nonlinearity='tanh'):
+        super().__init__()
+        self.rnn_params = {
+            'hidden_size': hidden_size,
+            'input_size': input_size,
+            'bias': bias,
+            'nonlinearity':nonlinearity
+        }
+        self.rnns = []
+
+    def forward(self, xs, h_0=Tensor(None, name='h_0')):
+        """
+        Parameters
+        ----------
+        xs: bareml.Tensor (l, n, in_size)
+            l: length of sequence
+            n: batch size
+            in_size: input size
+
+        h_0: bareml.Tensor (n, hidden_size)
+            n: batch size
+            hidden_size: hidden_size
+
+        Returns
+        -------
+        hs: bareml.Tensor (l, n, hidden_size)
+            l: length of sequence
+            n: batch size
+            hidden_size: hidden_size
+
+        h_n: bareml.Tensor (n, hidden_size)
+            n: batch size
+            hidden_size: hidden_size
+        """
+        hs = Tensor(np.zeros((xs.shape[0], xs.shape[1], self.rnn_params['hidden_size']),dtype=np.float32))
+        h_n = h_0
+        for i, x in enumerate(xs):
+            if len(self.rnns) <= i:
+                self.rnns.append(RNNCell(**self.rnn_params))
+            h_n = self.rnns[i](x, h_n)
+            hs[i] = h_n
+        return hs, h_n
+
+
+
+

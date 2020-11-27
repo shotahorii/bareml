@@ -1,7 +1,7 @@
 import bareml.deeplearning.functions as F
 import bareml.deeplearning.layers as L
 from .utils import UnigramSampler
-from .core import get_array_module
+from .core import get_array_module, Tensor
 
 
 class MLP(L.Module):
@@ -128,3 +128,46 @@ class CBOW(L.Module):
         correct_labels = correct_labels.reshape(-1)
 
         return y, correct_labels
+
+
+class RNNLM(L.Module):
+    def __init__(self, vocab_size, hidden_size, embedding_dim, stateful=True):
+        super().__init__()
+        self.embedding = L.Embedding(vocab_size, embedding_dim)
+        self.rnn = L.RNN(input_size=embedding_dim, hidden_size=hidden_size)
+        self.fc = L.Linear(in_features=hidden_size, out_features=vocab_size)
+        self.stateful = stateful
+        self.h_0 = Tensor(None, name='h_0')
+
+    def forward(self, x):
+        """
+        Parameters
+        ----------
+        x: bareml.Tensor (n, l_seq)
+            n: batch size
+            l_seq: length of the sequence
+        """
+        if self.h_0.data is not None:
+            # make sure not to go further before h_0 when backprop
+            self.h_0.unchain_backward()
+
+        n, l_seq = x.shape
+        embedded = self.embedding(x) # embedded.shape is (n, l_seq, embedding_dim)
+        embedded = embedded.transpose(1,0,2) # embedded (l_seq, n, embedding_dim)
+        hs, h_n = self.rnn(embedded, self.h_0) # hs (l_seq, n, hidden_size)  h_n (n, hidden_size)
+
+        if self.stateful:
+            self.h_0 = h_n
+
+        #out = self.fc(h_n) # out (n, vocab_size)
+        #out = F.softmax(out) # out (n, vocab_size)
+        #return out
+
+        hs = hs.reshape(l_seq * n, -1) # hs (l_seq * n, hidden_size)
+        outs = self.fc(hs) # outs (l_seq * n, vocab_size)
+        outs = F.softmax(outs) # outs (l_seq * n, vocab_size)
+        #outs = outs.reshape(l_seq, n, -1) # outs (l_seq, n, vocab_size)
+        #outs = outs.transpose(1,0,2) # outs (n, l_seq, vocab_size)
+        return outs
+
+

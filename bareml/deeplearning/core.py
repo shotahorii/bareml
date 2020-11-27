@@ -1,4 +1,5 @@
 import weakref
+from copy import deepcopy, copy
 from abc import ABCMeta, abstractmethod
 import numpy as np
 from .config import Config, using_config
@@ -130,6 +131,12 @@ class Tensor:
         e.g. Tensor[:,2] , Tensor[1,1], Tensor[[0,1,1]]
         """
         return get_item(self, slices)
+
+    def __setitem__(self, slices, y):
+        """ 
+        define Tensor[...] = y
+        """
+        set_item(self, slices, y)
 
     def __add__(self, other):
         return add(self, other)
@@ -327,6 +334,20 @@ class Tensor:
             raise ValueError('device can be either "cpu" or "cuda".') 
 
         return self
+
+    def unchain(self):
+        self.creator = None
+
+    def unchain_backward(self):
+        if self.creator is not None:
+            funcs = [self.creator]
+            self.unchain() # this line isn't in the original. isn't this needed?
+            while funcs:
+                f = funcs.pop()
+                for x in f.inputs:
+                    if x.creator is not None:
+                        funcs.append(x.creator)
+                        x.unchain()
 
 
 class Parameter(Tensor):
@@ -656,6 +677,66 @@ def get_item(x, slices):
     return GetItem(slices)(x)
 
 
+class SetItem(Function):
+    def __init__(self, slices):
+        self.slices = slices
+
+    # override since set func is special...
+    def __call__(self, x, y): 
+        # Note that x is always a tensor. 
+
+        # copy, NOT deepcopy - to keep all refs as same as x.
+        # then, further copy x.data to keep it's unchagnged on the x_keep
+        x_keep = copy(x) 
+        x_keep.data = copy(x.data)
+        # then, remove all refs from x.
+        x.grad = None
+        x.name = None
+        # x's creator info will be updated later in this function.
+
+        # make sure every input is Tensor datatype
+        y = as_tensor(y)
+
+        # perform operation on the data (np.ndarray)
+        self.forward(x.data, y.data) # y: np.ndarray
+
+        if Config.enable_backprop:
+            self.generation = np.max([x.generation, y.generation])
+
+            # update x's creator
+            if x.creator is not None:
+                f = x.creator
+                f.outputs.remove(weakref.ref(x))
+                f.outputs.append(weakref.ref(x_keep))
+            x.set_creator(self)
+
+            # store the reference to the inputs, so that 
+            # this Function instance can refer to them when backprop.
+            self.inputs = [x_keep, y]
+
+            # also needs to store the reference to the outputs,
+            # as we use outputs' grads for self.backward().
+            # however, as outputs have also reference to this Function instance.
+            # to prevent a circular reference issue, we use weakref.
+            self.outputs = [weakref.ref(x)]
+
+    def forward(self, x, y):
+        x[self.slices] = y
+
+    def backward(self, gy):
+        x, y = self.inputs
+        # gy.shape is same as x.shape
+        ggy = gy[self.slices]
+        xp = get_array_module(gy)
+        gx = deepcopy(gy)
+        gx[self.slices] = xp.zeros(ggy.shape) 
+        return gx, ggy
+
+
+def set_item(x, slices, y):
+    return SetItem(slices)(x,y)
+
+
 class Reshape(Function):
     def __init__(self, shape):
         self.shape = shape
@@ -700,7 +781,7 @@ class Transpose(Function):
             return tanspose(gy)
 
         inv_axes = tuple(np.argsort(self.axes)) # should I use tuple(np.argsort([ax % len(self.axes) for ax in self.axes])) ??
-        return transpose(x, inv_axes)
+        return transpose(gy, inv_axes)
 
 
 def transpose(x, axes=None):
