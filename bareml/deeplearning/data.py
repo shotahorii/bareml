@@ -77,11 +77,15 @@ def get_file(url, file_name=None):
 
 
 # -------------------------------------------------------------
-# Core classes: Dataset / RefDataset / DataLoader
+# Dataset core classes: RawDataset / Dataset / RefRawDataset
 # -------------------------------------------------------------
 
 
-class Dataset(metaclass=ABCMeta):
+class RawDataset(metaclass=ABCMeta):
+    """
+    Dataset which can be either ready / not ready to be used in the models directly.
+    dtype of the data can be non np.number. 
+    """
 
     def __init__(self, train=True, transform=None, target_transform=None):
         self.train = train
@@ -97,6 +101,9 @@ class Dataset(metaclass=ABCMeta):
         self.target = None
         self.prepare()
 
+        if not self.valid_type():
+            raise ValueError
+
     def __getitem__(self, index):
         if self.target is None:
             return self.transform(self.data[index]), None
@@ -106,13 +113,26 @@ class Dataset(metaclass=ABCMeta):
     def __len__(self):
         return len(self.data)
 
+    def valid_type(self):
+        return True
+
     @abstractmethod
     def prepare(self):
         """ implement data creation for self.data and self.target """
         pass
 
 
-class RefDataset(Dataset):
+class Dataset(RawDataset):
+    """
+    Dataset ready to be an input of models.
+    dtype of the data must be one of np.number. 
+    """
+    def valid_type(self):
+        return np.issubdtype(self.data.dtype, np.number) \
+               and np.issubdtype(self.target.dtype, np.number)
+    
+
+class RefRawDataset(RawDataset):
     """
     self.data only stores filepath to the data, instead of putting all data in the init. 
     actual data is read only when it's called. 
@@ -171,6 +191,11 @@ class RefDataset(Dataset):
         return t
 
 
+# -------------------------------------------------------------
+# Data Loader core classes: DataLoader / SequentialDataLoader
+# -------------------------------------------------------------
+
+
 class DataLoader:
     def __init__(self, dataset, batch_size, shuffle=True):
         self.dataset = dataset
@@ -207,6 +232,23 @@ class DataLoader:
         return self.__next__()
 
 
+class SequentialDataLoader(DataLoader):
+    def __init__(self, dataset, batch_size):
+        super().__init__(dataset, batch_size, shuffle=False)
+    
+    def __next__(self):
+        if self.iteration >= self.max_iter:
+            self.reset()
+            raise StopIteration
+
+        jump = self.data_size // self.batch_size
+        batch_index = [(i*jump + self.iteration) % self.data_size for i in range(self.batch_size)]
+        batch_x, batch_t = self.dataset[batch_index]
+
+        self.iteration += 1
+        return batch_x, batch_t
+
+
 # -------------------------------------------------------------
 # For NLP
 # -------------------------------------------------------------
@@ -216,22 +258,39 @@ class Corpus:
     """
     Parameters
     ----------
-    docs: a list of strings, a string or bareml.Dataset
+    docs: a list of strings, a string or bareml.RawDataset
+
+    flatten: bool
+        if True, consider all docs in the given docs as one long document
+        hence self.corpus will be a long 1d list of word
+        if False, consider each doc in the given docs as separated
+        hence self.corpus will be a list of list (each inner list is a list of word)
+    
+    max_doc: int
+        if not None, limit the number of doc to read.
+        set if you want to make smaller corpus not to use entire given dataset.
     """
-    def __init__(self, docs):
+    def __init__(self, docs, flatten=False, max_doc=None):
         if isinstance(docs, str):
             docs = [docs]
         self.docs = docs
+        self.flatten = flatten
+        self.max_doc = max_doc
+
         self.word2id = {}
         self.id2word = {}
+        self.corpus = []
         self.make_corpus()
 
     def make_corpus(self):
         print("-- Creating the corpus --")
 
-        self.corpus = []
         for i, doc in enumerate(self.docs):
-            if isinstance(self.docs, Dataset):
+            
+            if self.max_doc is not None and i >= self.max_doc:
+                break
+
+            if isinstance(self.docs, RawDataset):
                 doc = doc[0][0] # doc[0] is Dataset.data, where doc[1] here is Dataset.target
 
             encoded_doc = []
@@ -241,7 +300,10 @@ class Corpus:
                     self.word2id[word] = new_id
                     self.id2word[new_id] = word
                 encoded_doc.append(self.word2id[word])
-            self.corpus.append(encoded_doc)
+            if self.flatten:
+                self.corpus += encoded_doc
+            else:
+                self.corpus.append(encoded_doc)
 
             if i % 1000 == 0 and i != 0:
                 print(str(i)+"/"+str(len(self.docs)) + " docs")
@@ -332,7 +394,7 @@ class MNIST(Dataset):
         return {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9'}
 
 
-class NewsGroups(RefDataset):
+class NewsGroups(RefRawDataset):
     """ 20 News groups data set"""   
 
     def __init__(self, train=True, transform=None, target_transform=None, preprocess=True):
@@ -426,6 +488,37 @@ class NewsGroupsWordInference(Dataset):
                 print(str(i)+"/"+str(len(self.corpus.corpus)) + " docs")
 
 
+class NewsGroupsLanguageModel(Dataset):
+    def __init__(self, train=True, len_seq=10, max_doc=None):
+        self.len_seq = len_seq
+        self.max_doc = max_doc
+        super().__init__(train)
 
+    def prepare(self):
 
+        print('Creating NewsGroupsLanguageModel Dataset: Step 1/2')
+        self.corpus = Corpus(NewsGroups(self.train), flatten=True, max_doc=self.max_doc)
+        
+        print('Creating NewsGroupsLanguageModel Dataset: Step 2/2')
+        if len(self.corpus.corpus) <= self.len_seq + 1:
+            raise ValueError('corpus is too short.')
+
+        num_data = len(self.corpus.corpus) - self.len_seq
+
+        self.data = np.zeros((num_data, self.len_seq), dtype=np.int32)
+        self.target = np.zeros((num_data, self.len_seq), dtype=np.int32)
+
+        # display progress
+        num_display = 10
+        display_points = [(len(self.corpus.corpus)//num_display)*j for j in range(num_display)]
+
+        for i in range(num_data):
+            x = self.corpus.corpus[i:i+self.len_seq]
+            t = self.corpus.corpus[i+1:i+1+self.len_seq]
+            self.data[i] = x
+            self.target[i] = t
+
+            if i in display_points:
+                perc = round(display_points.index(i) * (100.0/num_display), 2)
+                print(str(perc), "%")
 
