@@ -493,14 +493,15 @@ class RNNCell(Layer):
         self.h2h = Linear(out_features=hidden_size, in_features=hidden_size, bias=bias)
 
         # init weight & bias
-        W_x2h = np.random.randn(*self.x2h.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        xp = cupy if is_available() else np
+        W_x2h = xp.random.randn(*self.x2h.W.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
         self.x2h.set_W(W_x2h)
-        W_h2h = np.random.randn(*self.h2h.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        W_h2h = xp.random.randn(*self.h2h.W.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
         self.h2h.set_W(W_h2h)
         if bias:
-            b_x2h = np.random.randn(*self.x2h.b.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+            b_x2h = xp.random.randn(*self.x2h.b.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
             self.x2h.set_b(b_x2h)
-            b_h2h = np.random.randn(*self.h2h.b.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+            b_h2h = xp.random.randn(*self.h2h.b.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
             self.h2h.set_b(b_h2h)
 
     def forward(self, x, h=Tensor(None, name='h_0')):
@@ -521,12 +522,13 @@ class RNNCell(Layer):
             n: batch size
             hidden_size: hidden size
         """
+        xp = get_array_module(x)
         
         if h.data is None:
             # init as zero
             batch_size = x.shape[0]
             hidden_size = self.h2h.out_features
-            h.data = np.zeros((batch_size, hidden_size), dtype=np.float32)
+            h.data = xp.zeros((batch_size, hidden_size), dtype=np.float32)
 
         h_new = self.f(self.x2h(x) + self.h2h(h))
         return h_new
@@ -568,7 +570,8 @@ class RNN(Layer):
             n: batch size
             hidden_size: hidden_size
         """
-        hs = Tensor(np.zeros((xs.shape[0], xs.shape[1], self.rnn_params['hidden_size']),dtype=np.float32))
+        xp = get_array_module(xs)
+        hs = Tensor(xp.zeros((xs.shape[0], xs.shape[1], self.rnn_params['hidden_size']),dtype=np.float32))
         h_n = h_0
         for i, x in enumerate(xs):
             if len(self.rnns) <= i:
