@@ -490,7 +490,7 @@ class RNNCell(Layer):
             raise ValueError('nonlinearity must be either "tanh" or "relu".')
 
         self.x2h = Linear(out_features=hidden_size, in_features=input_size, bias=bias)
-        self.h2h = Linear(out_features=hidden_size, in_features=hidden_size, bias=bias)
+        self.h2h = Linear(out_features=hidden_size, in_features=hidden_size, bias=None)
 
         # init weight & bias
         xp = cupy if is_available() else np
@@ -501,10 +501,10 @@ class RNNCell(Layer):
         if bias:
             b_x2h = xp.random.randn(*self.x2h.b.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
             self.x2h.set_b(b_x2h)
-            b_h2h = xp.random.randn(*self.h2h.b.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
-            self.h2h.set_b(b_h2h)
+            #b_h2h = xp.random.randn(*self.h2h.b.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
+            #self.h2h.set_b(b_h2h)
 
-    def forward(self, x, h=Tensor(None, name='h_0')):
+    def forward(self, x, h): 
         """
         Parameters
         ----------
@@ -522,31 +522,21 @@ class RNNCell(Layer):
             n: batch size
             hidden_size: hidden size
         """
-        xp = get_array_module(x)
-        
-        if h.data is None:
-            # init as zero
-            batch_size = x.shape[0]
-            hidden_size = self.h2h.out_features
-            h.data = xp.zeros((batch_size, hidden_size), dtype=np.float32)
-
         h_new = self.f(self.x2h(x) + self.h2h(h))
         return h_new
 
 
-class RNN(Layer):
+class RNN(RNNCell):
 
-    def __init__(self, hidden_size, input_size=None, bias=True, nonlinearity='tanh'):
-        super().__init__()
-        self.rnn_params = {
-            'hidden_size': hidden_size,
-            'input_size': input_size,
-            'bias': bias,
-            'nonlinearity':nonlinearity
-        }
-        self.rnns = []
+    def __init__(self, hidden_size, input_size=None, bias=True, nonlinearity='tanh', batch_first=False):
+        super().__init__(hidden_size, input_size, bias, nonlinearity)
+        self.batch_first = batch_first
 
-    def forward(self, xs, h_0=Tensor(None, name='h_0')):
+    def forward_one(self, x, h):
+        h_new = self.f(self.x2h(x) + self.h2h(h))
+        return h_new
+
+    def forward(self, xs, h_0): #h_0=Tensor(None, name='h_0')
         """
         Parameters
         ----------
@@ -554,6 +544,7 @@ class RNN(Layer):
             l: length of sequence
             n: batch size
             in_size: input size
+            if self.batch_first, shape is (n, l, in_size)
 
         h_0: bareml.Tensor (n, hidden_size)
             n: batch size
@@ -565,21 +556,28 @@ class RNN(Layer):
             l: length of sequence
             n: batch size
             hidden_size: hidden_size
+            if self.batch_first, shape is (n, l, hidden_size)
 
         h_n: bareml.Tensor (n, hidden_size)
             n: batch size
             hidden_size: hidden_size
         """
+
+        if self.batch_first:
+            xs = xs.transpose(1,0,2)
+
+        len_seq = xs.shape[0]
+        batch_size = xs.shape[1]
+        hidden_size = self.h2h.out_features
+        
         xp = get_array_module(xs)
-        hs = Tensor(xp.zeros((xs.shape[0], xs.shape[1], self.rnn_params['hidden_size']),dtype=np.float32))
+        hs = Tensor(xp.zeros((len_seq, batch_size, hidden_size),dtype=np.float32))
         h_n = h_0
         for i, x in enumerate(xs):
-            if len(self.rnns) <= i:
-                self.rnns.append(RNNCell(**self.rnn_params))
-            h_n = self.rnns[i](x, h_n)
+            h_n = self.forward_one(x, h_n)
             hs[i] = h_n
+
+        if self.batch_first:
+            hs = hs.transpose(1,0,2)
         return hs, h_n
-
-
-
 

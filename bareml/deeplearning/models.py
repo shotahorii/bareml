@@ -130,44 +130,86 @@ class CBOW(L.Module):
         return y, correct_labels
 
 
+class SimpleRNN(L.Module):
+    def __init__(self, input_size, output_size, hidden_size):
+        super().__init__()
+        self.hidden_size = hidden_size
+
+        self.rnn = L.RNN(input_size=input_size, hidden_size=hidden_size)
+        self.fc = L.Linear(in_features=hidden_size, out_features=output_size)
+    
+    def forward(self, xs, h=None):
+        """
+        Parameters
+        ----------
+        xs: bareml.Tensor (len_seq, batch_size, input_size)
+        h: bareml.Tensor (batch_size, hidden_size)
+        
+        Returns
+        -------
+        out: bareml.Tensor (len_seq*batch_size, output_size)
+        h: bareml.Tensor (batch_size, hidden_size)
+        """
+        len_seq = xs.shape[0]
+        batch_size = xs.shape[1]
+        
+        if h is None:
+            xp = get_array_module(xs)
+            h = self._h0(batch_size, xp)
+        else:
+            # make sure not to go further before h_0 when backprop
+            h.unchain_backward()
+
+        out, h = self.rnn(xs, h)
+        
+        # Reshaping the outputs such that it can be fit into the fully connected layer
+        out = out.reshape(len_seq*batch_size, self.hidden_size)
+        out = self.fc(out)
+        
+        return out, h
+    
+    def _h0(self, batch_size, xp):
+        h = Tensor(xp.zeros((batch_size, self.hidden_size)))
+        return h
+
+
 class RNNLM(L.Module):
-    def __init__(self, vocab_size, hidden_size, embedding_dim, stateful=True):
+    def __init__(self, vocab_size, hidden_size, embedding_dim):
         super().__init__()
         self.embedding = L.Embedding(vocab_size, embedding_dim)
         self.rnn = L.RNN(input_size=embedding_dim, hidden_size=hidden_size)
         self.fc = L.Linear(in_features=hidden_size, out_features=vocab_size)
-        self.stateful = stateful
-        self.h_0 = Tensor(None, name='h_0')
 
-    def forward(self, x):
+    def forward(self, x, h=None):
         """
         Parameters
         ----------
-        x: bareml.Tensor (n, l_seq)
+        x: bareml.Tensor (n, len_seq)
             n: batch size
-            l_seq: length of the sequence
+            len_seq: length of the sequence
         """
-        if self.h_0.data is not None:
+
+        batch_size, len_seq = x.shape
+
+        if h is None:
+            xp = get_array_module(x)
+            h = self._h0(batch_size, xp)
+        else:
             # make sure not to go further before h_0 when backprop
-            self.h_0.unchain_backward()
+            h.unchain_backward()
 
-        n, l_seq = x.shape
-        embedded = self.embedding(x) # embedded.shape is (n, l_seq, embedding_dim)
-        embedded = embedded.transpose(1,0,2) # embedded (l_seq, n, embedding_dim)
-        hs, h_n = self.rnn(embedded, self.h_0) # hs (l_seq, n, hidden_size)  h_n (n, hidden_size)
+        embedded = self.embedding(x) # embedded.shape is (batch_size, len_seq, embedding_dim)
+        embedded = embedded.transpose(1,0,2) # embedded (len_seq, batch_size, embedding_dim)
+        hs, h_n = self.rnn(embedded, h) # hs (len_seq, batch_size, hidden_size)  h_n (batch_size, hidden_size)
 
-        if self.stateful:
-            self.h_0 = h_n
+        hs = hs.reshape(len_seq * batch_size, -1) # hs (len_seq * batch_size, hidden_size)
+        out = self.fc(hs) # out (len_seq * batch_size, vocab_size)
+        #out = F.softmax(out) # out (len_seq * batch_size, vocab_size)
+        #out = out.reshape(len_seq, batch_size, -1) # out (l_seq, n, vocab_size)
+        #out = out.transpose(1,0,2) # out (n, l_seq, vocab_size)
+        return out
 
-        #out = self.fc(h_n) # out (n, vocab_size)
-        #out = F.softmax(out) # out (n, vocab_size)
-        #return out
-
-        hs = hs.reshape(l_seq * n, -1) # hs (l_seq * n, hidden_size)
-        outs = self.fc(hs) # outs (l_seq * n, vocab_size)
-        outs = F.softmax(outs) # outs (l_seq * n, vocab_size)
-        #outs = outs.reshape(l_seq, n, -1) # outs (l_seq, n, vocab_size)
-        #outs = outs.transpose(1,0,2) # outs (n, l_seq, vocab_size)
-        return outs
-
+    def _h0(self, batch_size, xp):
+        h = Tensor(xp.zeros((batch_size, self.hidden_size)))
+        return h
 

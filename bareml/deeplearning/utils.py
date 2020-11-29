@@ -5,7 +5,7 @@ Helper functions.
 import re
 from collections import Counter
 import numpy as np
-from .core import Tensor, get_array_module, cupy
+from .core import Tensor, Parameter, get_array_module, cupy
 
 
 # -------------------------------------------------------------
@@ -25,7 +25,18 @@ try:
         
         def draw_tensor(t):
             name = '' if t.name is None else t.name
-            dot.node(str(id(t)), label=name, style='filled', fillcolor='orange')
+            if t.data is None:
+                name = '(None)'
+
+            name = str(t.generation) + ':' + name
+            
+            if isinstance(t, Parameter):
+                color = 'yellow'
+            elif t.data is None:
+                color = 'gray'
+            else:
+                color = 'orange'
+            dot.node(str(id(t)), label=name, style='filled', fillcolor=color)
 
         def draw_function(f):
             dot.node(str(id(f)), label=f.__class__.__name__, 
