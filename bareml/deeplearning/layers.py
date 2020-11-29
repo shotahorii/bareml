@@ -6,7 +6,6 @@ from .core import Parameter, Tensor, get_array_module, flatten, reshape, cupy, a
 import bareml.deeplearning.functions as F
 from .utils import pair
 from .config import Config
-from .cuda import is_available
 
 
 # -------------------------------------------------------------
@@ -27,6 +26,7 @@ class Layer(metaclass=ABCMeta):
     x can be either xp.ndarray or bareml.Tensor
     y is always bareml.Tensor
 
+    Parameters in layers should be initialised with np (not xp) by default. 
     """
     def __init__(self):
         self._params = set()
@@ -184,8 +184,9 @@ class Linear(Layer):
         if self.in_features is not None:
             self._init_W()
         # init bias
-        xp = cupy if is_available() else np
-        self.b = None if not bias else Parameter(xp.zeros(out_features, dtype=dtype), name='b')
+        #xp = cupy if is_available() else np
+        # init with numpy as default. to use cp, use to_gpu()
+        self.b = None if not bias else Parameter(np.zeros(out_features, dtype=dtype), name='b')
 
     def _init_W(self, xp=np):
         I, O = self.in_features, self.out_features
@@ -452,6 +453,7 @@ class Embedding(Layer):
         self._init_weight()
 
     def _init_weight(self):
+        # init with numpy by default. to use cp, use to_gpu()
         self.weight.data = np.random.randn(self.num_embeddings, self.embedding_dim).astype(np.float32)
 
     def forward(self, idx):
@@ -493,15 +495,16 @@ class RNNCell(Layer):
         self.h2h = Linear(out_features=hidden_size, in_features=hidden_size, bias=None)
 
         # init weight & bias
-        xp = cupy if is_available() else np
-        W_x2h = xp.random.randn(*self.x2h.W.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
+        # xp = cupy if is_available() else np
+        # init with numpy by default. to use cp, use to_gpu()
+        W_x2h = np.random.randn(*self.x2h.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
         self.x2h.set_W(W_x2h)
-        W_h2h = xp.random.randn(*self.h2h.W.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
+        W_h2h = np.random.randn(*self.h2h.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
         self.h2h.set_W(W_h2h)
         if bias:
-            b_x2h = xp.random.randn(*self.x2h.b.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
+            b_x2h = np.random.randn(*self.x2h.b.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
             self.x2h.set_b(b_x2h)
-            #b_h2h = xp.random.randn(*self.h2h.b.shape).astype(np.float32) * xp.sqrt(1 / hidden_size)
+            #b_h2h = np.random.randn(*self.h2h.b.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
             #self.h2h.set_b(b_h2h)
 
     def forward(self, x, h): 

@@ -207,7 +207,7 @@ class RNNLM(L.Module):
         #out = F.softmax(out) # out (len_seq * batch_size, vocab_size)
         #out = out.reshape(len_seq, batch_size, -1) # out (l_seq, n, vocab_size)
         #out = out.transpose(1,0,2) # out (n, l_seq, vocab_size)
-        return out
+        return out, h_n
 
     def _h0(self, batch_size, xp):
         hidden_size = self.fc.in_features

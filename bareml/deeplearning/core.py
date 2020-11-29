@@ -100,11 +100,8 @@ class Tensor:
     # also same for __rmul__ vs np.ndarray's __mul__
     __array_priority__ = 200  
     
-    def __init__(self, data, name=None):
-        if data is not None:
-            if not isinstance(data, array_types):
-                raise TypeError('{} is not supported'.format(type(data)))
-
+    def __init__(self, data, name=None):        
+        self.device = None # in __init__, define before self.data
         self.data = data
         self.name = name
         self.grad = None
@@ -113,6 +110,19 @@ class Tensor:
         # in the calculation graph. This is important when we perform
         # backprop in a complex calculation graph.
         self.generation = 0
+
+    def __setattr__(self, name, value):
+        if name == 'data':
+            if value is None:
+                self.device = None
+            else:
+                if not isinstance(value, array_types):
+                    raise TypeError('{} is not supported'.format(type(value)))
+                if get_array_module(value) is np:
+                    self.device = 'cpu'
+                else:
+                    self.device = 'cuda'
+        super().__setattr__(name, value)
 
     def __len__(self):
         """ define len(Tensor) """
