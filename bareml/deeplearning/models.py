@@ -210,6 +210,7 @@ class RNNLM(L.Module):
         return out
 
     def _h0(self, batch_size, xp):
-        h = Tensor(xp.zeros((batch_size, self.hidden_size)))
+        hidden_size = self.fc.in_features
+        h = Tensor(xp.zeros((batch_size, hidden_size)))
         return h
 
