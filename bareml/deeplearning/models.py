@@ -225,12 +225,14 @@ class RNNLM(L.Module):
         ----------
         x: bareml.Tensor or np.ndarray (len_seq,)
         """
+        xp = get_array_module(self.fc.W)
+        x = xp.array(x)
+
         x = x.reshape(1, len(x)) # (len_seq,) -> (1, len_seq)
         with no_training():
             out, h_n = self.forward(x) # out (len_seq, vocab_size)
             
         p = F.softmax(out[-1],axis=0).data
-        xp = get_array_module(p)
         sampled = xp.random.choice(len(p), size=1, p=p)
         return sampled
 
@@ -239,10 +241,8 @@ class RNNLM(L.Module):
         Parameters
         ----------
         length: int
-        start_with: xp.array (len_seq,)
+        start_with: list (len_seq,)
         """
-        xp = get_array_module(starts_with)
-
         for i in starts_with:
             if i >= self.embedding.num_embeddings:
                 raise ValueError('id not found in embeddings.')
@@ -253,6 +253,6 @@ class RNNLM(L.Module):
 
         for i in range(size):
             sampled = self.predict(starts_with)
-            starts_with = xp.insert(starts_with,len(starts_with),4)
+            starts_with.append(sampled)
 
         return starts_with
