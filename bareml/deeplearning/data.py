@@ -307,12 +307,50 @@ class Corpus:
 
             if i % 1000 == 0 and i != 0:
                 print(str(i)+"/"+str(len(self.docs)) + " docs")
+        
+        if self.flatten:
+            self.corpus = [self.corpus]
                 
     def get_word(self, word_id):
         return self.id2word[word_id]
     
     def get_id(self, word):
         return self.word2id[word]
+
+
+class LanguageModelDataset(Dataset):
+    def __init__(self, corpus, train=True, len_seq=10):
+        self.corpus = corpus
+        self.len_seq = len_seq
+        super().__init__(train)
+
+    def prepare(self):
+
+        max_doc_length = max([len(doc) for doc in self.corpus.corpus])
+        num_data = sum([max(len(doc) - self.len_seq, 0) for doc in self.corpus.corpus])
+        
+        if num_data == 0:
+            raise ValueError('corpus is too short.')
+
+        self.data = np.zeros((num_data, self.len_seq), dtype=np.int32)
+        self.target = np.zeros((num_data, self.len_seq), dtype=np.int32)
+
+        num_display = 10
+        display_points = [(num_data//num_display)*j for j in range(num_display)]
+
+        counter = 0
+        for doc in self.corpus.corpus:
+            if len(doc) > self.len_seq:
+                for i in range(len(doc)-self.len_seq):
+                    x = doc[i:i+self.len_seq]
+                    t = doc[i+1:i+1+self.len_seq]
+                    self.data[counter] = x
+                    self.target[counter] = t
+                    counter += 1
+
+                    if counter in display_points:
+                        perc = round(display_points.index(counter) * (100.0/num_display), 2)
+                        print(str(perc), "%")
 
 
 # -------------------------------------------------------------
@@ -488,37 +526,8 @@ class NewsGroupsWordInference(Dataset):
                 print(str(i)+"/"+str(len(self.corpus.corpus)) + " docs")
 
 
-class NewsGroupsLanguageModel(Dataset):
+class NewsGroupsLanguageModel(LanguageModelDataset):
     def __init__(self, train=True, len_seq=10, max_doc=None):
-        self.len_seq = len_seq
-        self.max_doc = max_doc
-        super().__init__(train)
-
-    def prepare(self):
-
-        print('Creating NewsGroupsLanguageModel Dataset: Step 1/2')
-        self.corpus = Corpus(NewsGroups(self.train), flatten=True, max_doc=self.max_doc)
-        
-        print('Creating NewsGroupsLanguageModel Dataset: Step 2/2')
-        if len(self.corpus.corpus) <= self.len_seq + 1:
-            raise ValueError('corpus is too short.')
-
-        num_data = len(self.corpus.corpus) - self.len_seq
-
-        self.data = np.zeros((num_data, self.len_seq), dtype=np.int32)
-        self.target = np.zeros((num_data, self.len_seq), dtype=np.int32)
-
-        # display progress
-        num_display = 10
-        display_points = [(len(self.corpus.corpus)//num_display)*j for j in range(num_display)]
-
-        for i in range(num_data):
-            x = self.corpus.corpus[i:i+self.len_seq]
-            t = self.corpus.corpus[i+1:i+1+self.len_seq]
-            self.data[i] = x
-            self.target[i] = t
-
-            if i in display_points:
-                perc = round(display_points.index(i) * (100.0/num_display), 2)
-                print(str(perc), "%")
+        corpus = Corpus(NewsGroups(train), flatten=True, max_doc=max_doc)
+        super().__init__(corpus, train, len_seq)
 
