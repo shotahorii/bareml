@@ -234,7 +234,7 @@ class RNNLM(L.Module):
             out, h_n = self.forward(x) # out (len_seq, vocab_size)
             
         p = F.softmax(out[-1],axis=0).data
-        sampled = xp.random.choice(len(p), size=1, p=p)
+        sampled = xp.random.choice(len(p), size=1, p=p).item()
         return sampled
 
     def generate(self, length, starts_with):
