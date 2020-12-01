@@ -20,5 +20,5 @@ def no_grad():
     return using_config('enable_backprop', False)
 
 
-def test_mode():
+def no_training():
     return using_config('training', False)

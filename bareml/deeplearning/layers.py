@@ -529,40 +529,61 @@ class RNNCell(Layer):
         return h_new
 
 
-class RNN(RNNCell):
+class RNNCellWithDropout(Layer):
+    def __init__(self, hidden_size, input_size=None, bias=True, nonlinearity='tanh', dropout=0.5):
+        super().__init__()
+        self.rnn = RNNCell(hidden_size, input_size, bias, nonlinearity)
+        self.dropout = Dropout(dropout)
+    
+    def forward(self, x, h):
+        y = self.rnn(x, h)
+        y = self.dropout(y)
+        return y
 
-    def __init__(self, hidden_size, input_size=None, bias=True, nonlinearity='tanh', batch_first=False):
-        super().__init__(hidden_size, input_size, bias, nonlinearity)
+
+class RNN(Layer):
+
+    def __init__(self, hidden_size, input_size=None, num_layers=1, 
+                 bias=True, nonlinearity='tanh', batch_first=False, dropout=0):
+        super().__init__()
         self.batch_first = batch_first
+        self.hidden_size = hidden_size
+        self.rnns = []
+        for i in range(num_layers):
+            in_size = input_size if i == 0 else hidden_size
+            if dropout > 0 and i < num_layers - 1:
+                rnn = RNNCellWithDropout(hidden_size, in_size, bias, nonlinearity, dropout)
+            else:
+                rnn = RNNCell(hidden_size, in_size, bias, nonlinearity)
+            setattr(self, 'rnn'+str(i), rnn)
+            self.rnns.append(rnn)
 
-    def forward_one(self, x, h):
-        h_new = self.f(self.x2h(x) + self.h2h(h))
-        return h_new
-
-    def forward(self, xs, h_0): #h_0=Tensor(None, name='h_0')
+    def forward(self, xs, h_0):
         """
         Parameters
         ----------
-        xs: bareml.Tensor (l, n, in_size)
+        xs: bareml.Tensor (l, batch_size, in_size)
             l: length of sequence
-            n: batch size
+            batch_size: batch size
             in_size: input size
-            if self.batch_first, shape is (n, l, in_size)
+            if self.batch_first, shape is (batch_size, l, in_size)
 
-        h_0: bareml.Tensor (n, hidden_size)
-            n: batch size
+        h_0: bareml.Tensor (num_layers, batch_size, hidden_size)
+            num_layers: num_layers
+            batch_size: batch size
             hidden_size: hidden_size
 
         Returns
         -------
-        hs: bareml.Tensor (l, n, hidden_size)
+        hs: bareml.Tensor (l, batch_size, hidden_size)
             l: length of sequence
-            n: batch size
+            batch_size: batch size
             hidden_size: hidden_size
-            if self.batch_first, shape is (n, l, hidden_size)
+            if self.batch_first, shape is (batch_size, l, hidden_size)
 
-        h_n: bareml.Tensor (n, hidden_size)
-            n: batch size
+        h_n: bareml.Tensor (num_layers, batch_size, hidden_size)
+            num_layers: num_layers
+            batch_size: batch size
             hidden_size: hidden_size
         """
 
@@ -571,15 +592,18 @@ class RNN(RNNCell):
 
         len_seq = xs.shape[0]
         batch_size = xs.shape[1]
-        hidden_size = self.h2h.out_features
         
         xp = get_array_module(xs)
-        hs = Tensor(xp.zeros((len_seq, batch_size, hidden_size),dtype=np.float32))
-        h_n = h_0
-        for i, x in enumerate(xs):
-            h_n = self.forward_one(x, h_n)
-            hs[i] = h_n
-
+        h_n = Tensor(xp.zeros((len(self.rnns), batch_size, self.hidden_size),dtype=np.float32))
+        for k, rnn in enumerate(self.rnns):
+            h_k = h_0[k]
+            hs = Tensor(xp.zeros((len_seq, batch_size, self.hidden_size),dtype=np.float32))
+            for i, x in enumerate(xs):
+                h_k = rnn(x, h_k)
+                hs[i] = h_k
+            xs = hs
+            h_n[k] = h_k
+        
         if self.batch_first:
             hs = hs.transpose(1,0,2)
         return hs, h_n

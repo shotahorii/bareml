@@ -1138,3 +1138,27 @@ class RepeatInterleave(Function):
 
 def repeat_interleave(x, repeats=2, dim=None):
     return RepeatInterleave(repeats, dim)(x)
+
+
+# -------------------------------------------------------------
+# vstack
+# -------------------------------------------------------------
+
+
+# !!! need unit test !!!
+class Vstack(Function):
+    def forward(self, x0, x1):
+        self.x0_shape = x0.shape
+        self.x1_shape = x1.shape
+        xp = get_array_module(x0)
+        y = xp.vstack((x0, x1))
+        return y
+
+    def backward(self, gy):
+        gx0 = gy[:self.x0_shape[0]].reshape(self.x0_shape) # reshape for in case self.x0_shape[0] is 1
+        gx1 = gy[self.x0_shape[0]:].reshape(self.x1_shape)
+        return gx0, gx1
+
+def vstack(x0, x1):
+    return Vstack()(x0, x1)
+        

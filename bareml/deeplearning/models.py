@@ -2,6 +2,7 @@ import bareml.deeplearning.functions as F
 import bareml.deeplearning.layers as L
 from .utils import UnigramSampler
 from .core import get_array_module, Tensor
+from .config import no_training
 
 
 class MLP(L.Module):
@@ -131,11 +132,13 @@ class CBOW(L.Module):
 
 
 class SimpleRNN(L.Module):
-    def __init__(self, input_size, output_size, hidden_size):
+    def __init__(self, input_size, output_size, hidden_size, num_layers=1, dropout=0):
         super().__init__()
         self.hidden_size = hidden_size
+        self.num_layers = num_layers
 
-        self.rnn = L.RNN(input_size=input_size, hidden_size=hidden_size)
+        self.rnn = L.RNN(input_size=input_size, hidden_size=hidden_size,
+                         num_layers=num_layers, dropout=dropout)
         self.fc = L.Linear(in_features=hidden_size, out_features=output_size)
     
     def forward(self, xs, h=None):
@@ -169,23 +172,25 @@ class SimpleRNN(L.Module):
         return out, h
     
     def _h0(self, batch_size, xp):
-        h = Tensor(xp.zeros((batch_size, self.hidden_size)))
+        h = Tensor(xp.zeros((self.num_layers, batch_size, self.hidden_size)))
         return h
 
 
 class RNNLM(L.Module):
-    def __init__(self, vocab_size, hidden_size, embedding_dim):
+    def __init__(self, vocab_size, hidden_size, embedding_dim, num_layers=1, dropout=0):
         super().__init__()
+        self.num_layers = num_layers
         self.embedding = L.Embedding(vocab_size, embedding_dim)
-        self.rnn = L.RNN(input_size=embedding_dim, hidden_size=hidden_size)
+        self.rnn = L.RNN(input_size=embedding_dim, hidden_size=hidden_size, 
+                         num_layers=num_layers, dropout=dropout)
         self.fc = L.Linear(in_features=hidden_size, out_features=vocab_size)
 
     def forward(self, x, h=None):
         """
         Parameters
         ----------
-        x: bareml.Tensor (n, len_seq)
-            n: batch size
+        x: bareml.Tensor (batch_size, len_seq)
+            batch_size: batch size
             len_seq: length of the sequence
         """
 
@@ -211,6 +216,43 @@ class RNNLM(L.Module):
 
     def _h0(self, batch_size, xp):
         hidden_size = self.fc.in_features
-        h = Tensor(xp.zeros((batch_size, hidden_size)))
+        h = Tensor(xp.zeros((self.num_layers, batch_size, hidden_size)))
         return h
 
+    def predict(self, x):
+        """
+        Parameters
+        ----------
+        x: bareml.Tensor or np.ndarray (len_seq,)
+        """
+        x = x.reshape(1, len(x)) # (len_seq,) -> (1, len_seq)
+        with no_training():
+            out, h_n = self.forward(x) # out (len_seq, vocab_size)
+            
+        p = F.softmax(out[-1],axis=0).data
+        xp = get_array_module(p)
+        sampled = xp.random.choice(len(p), size=1, p=p)
+        return sampled
+
+    def generate(self, length, starts_with):
+        """
+        Parameters
+        ----------
+        length: int
+        start_with: xp.array (len_seq,)
+        """
+        xp = get_array_module(starts_with)
+
+        for i in starts_with:
+            if i >= self.embedding.num_embeddings:
+                raise ValueError('id not found in embeddings.')
+
+        size = length - len(starts_with)
+        if size <= 0:
+            raise ValueError('too many start words for given length.')
+
+        for i in range(size):
+            sampled = self.predict(starts_with)
+            starts_with = xp.insert(starts_with,len(starts_with),4)
+
+        return starts_with
