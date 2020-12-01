@@ -3,6 +3,7 @@ import bareml.deeplearning.layers as L
 from .utils import UnigramSampler
 from .core import get_array_module, Tensor
 from .config import no_training
+import numpy as np
 
 
 class MLP(L.Module):
@@ -226,7 +227,7 @@ class RNNLM(L.Module):
         x: bareml.Tensor or np.ndarray (len_seq,)
         """
         xp = get_array_module(self.fc.W)
-        x = xp.array(x)
+        x = xp.asarray(np.array(x,dtype=np.int32))
 
         x = x.reshape(1, len(x)) # (len_seq,) -> (1, len_seq)
         with no_training():
