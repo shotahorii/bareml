@@ -608,3 +608,157 @@ class RNN(Layer):
             hs = hs.transpose(1,0,2)
         return hs, h_n
 
+
+class LSTMCell(Layer):
+    """ A LSTM cell with tanh or ReLU non-linearity. """
+    def __init__(self, hidden_size, input_size=None, bias=True):
+        super().__init__()
+
+        self.x2f = Linear(out_features=hidden_size, in_features=input_size, bias=bias)
+        self.x2i = Linear(out_features=hidden_size, in_features=input_size, bias=bias)
+        self.x2o = Linear(out_features=hidden_size, in_features=input_size, bias=bias)
+        self.x2g = Linear(out_features=hidden_size, in_features=input_size, bias=bias)
+        self.h2f = Linear(out_features=hidden_size, in_features=hidden_size, bias=False)
+        self.h2i = Linear(out_features=hidden_size, in_features=hidden_size, bias=False)
+        self.h2o = Linear(out_features=hidden_size, in_features=hidden_size, bias=False)
+        self.h2g = Linear(out_features=hidden_size, in_features=hidden_size, bias=False)
+
+        # init weight & bias
+        # xp = cupy if is_available() else np
+        # init with numpy by default. to use cp, use to_gpu()
+        W_x2f = np.random.randn(*self.x2f.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        self.x2f.set_W(W_x2f)
+        W_x2i = np.random.randn(*self.x2i.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        self.x2i.set_W(W_x2i)
+        W_x2o = np.random.randn(*self.x2o.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        self.x2o.set_W(W_x2o)
+        W_x2g = np.random.randn(*self.x2g.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        self.x2g.set_W(W_x2g)
+        W_h2f = np.random.randn(*self.h2f.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        self.h2f.set_W(W_h2f)
+        W_h2i = np.random.randn(*self.h2i.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        self.h2i.set_W(W_h2i)
+        W_h2o = np.random.randn(*self.h2o.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        self.h2o.set_W(W_h2o)
+        W_h2g = np.random.randn(*self.h2g.W.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+        self.h2g.set_W(W_h2g)
+
+        if bias:
+            b_x2f = np.random.randn(*self.x2f.b.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+            self.x2f.set_b(b_x2f)
+            b_x2i = np.random.randn(*self.x2i.b.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+            self.x2i.set_b(b_x2i)
+            b_x2o = np.random.randn(*self.x2o.b.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+            self.x2o.set_b(b_x2o)
+            b_x2g = np.random.randn(*self.x2g.b.shape).astype(np.float32) * np.sqrt(1 / hidden_size)
+            self.x2g.set_b(b_x2g)
+
+    def forward(self, x, h, c): 
+        """
+        Parameters
+        ----------
+        x: bareml.Tensor (n, in_size)
+            n: batch size
+            in_size: input size
+
+        h: bareml.Tensor (n, hidden_size)
+            n: batch size
+            hidden_size: hidden size
+
+        Returns
+        -------
+        h_new: bareml.Tensor (n, hidden_size)
+            n: batch size
+            hidden_size: hidden size
+        """
+        f = F.sigmoid(self.x2f(x) + self.h2f(h))
+        i = F.sigmoid(self.x2i(x) + self.h2i(h))
+        o = F.sigmoid(self.x2o(x) + self.h2o(h))
+        g = F.tanh(self.x2g(x) + self.h2g(h))
+
+        c_new = (f * c) + (i * g)
+        h_new = o * F.tanh(c_new)
+        return h_new, c_new
+
+
+class LSTMCellWithDropout(Layer):
+    def __init__(self, hidden_size, input_size=None, bias=True, dropout=0.5):
+        super().__init__()
+        self.lstm = LSTMCell(hidden_size, input_size, bias)
+        self.dropout = Dropout(dropout)
+    
+    def forward(self, x, h, c):
+        new_h, new_c = self.lstm(x, h, c)
+        new_h = self.dropout(new_h)
+        return new_h, new_c
+
+
+class LSTM(Layer):
+
+    def __init__(self, hidden_size, input_size=None, num_layers=1, 
+                 bias=True, batch_first=False, dropout=0):
+        super().__init__()
+        self.batch_first = batch_first
+        self.hidden_size = hidden_size
+        self.lstms = []
+        for i in range(num_layers):
+            in_size = input_size if i == 0 else hidden_size
+            if dropout > 0 and i < num_layers - 1:
+                lstm = LSTMCellWithDropout(hidden_size, in_size, bias, dropout)
+            else:
+                lstm = LSTMCell(hidden_size, in_size, bias)
+            setattr(self, 'lstm'+str(i), lstm)
+            self.lstms.append(lstm)
+
+    def forward(self, xs, h_0, c_0):
+        """
+        Parameters
+        ----------
+        xs: bareml.Tensor (l, batch_size, in_size)
+            l: length of sequence
+            batch_size: batch size
+            in_size: input size
+            if self.batch_first, shape is (batch_size, l, in_size)
+
+        h_0: bareml.Tensor (num_layers, batch_size, hidden_size)
+            num_layers: num_layers
+            batch_size: batch size
+            hidden_size: hidden_size
+
+        Returns
+        -------
+        hs: bareml.Tensor (l, batch_size, hidden_size)
+            l: length of sequence
+            batch_size: batch size
+            hidden_size: hidden_size
+            if self.batch_first, shape is (batch_size, l, hidden_size)
+
+        h_n: bareml.Tensor (num_layers, batch_size, hidden_size)
+            num_layers: num_layers
+            batch_size: batch size
+            hidden_size: hidden_size
+        """
+
+        if self.batch_first:
+            xs = xs.transpose(1,0,2)
+
+        len_seq = xs.shape[0]
+        batch_size = xs.shape[1]
+        
+        xp = get_array_module(xs)
+        h_n = Tensor(xp.zeros((len(self.lstms), batch_size, self.hidden_size),dtype=np.float32))
+        c_n = Tensor(xp.zeros((len(self.lstms), batch_size, self.hidden_size),dtype=np.float32))
+        for k, lstm in enumerate(self.lstms):
+            h_k = h_0[k]
+            c_k = c_0[k]
+            hs = Tensor(xp.zeros((len_seq, batch_size, self.hidden_size),dtype=np.float32))
+            for i, x in enumerate(xs):
+                h_k, c_k = lstm(x, h_k, c_k)
+                hs[i] = h_k
+            xs = hs
+            h_n[k] = h_k
+            c_n[k] = c_k
+        
+        if self.batch_first:
+            hs = hs.transpose(1,0,2)
+        return hs, h_n, c_n
